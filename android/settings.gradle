@@ -19,8 +19,10 @@ pluginManagement {
 
 plugins {
     id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-    id "com.android.application" version "8.2.1" apply false
-    id "org.jetbrains.kotlin.android" version "1.9.22" apply false
+    // Bumped to AGP 8.6.0 to keep Flutter support and match compatibility
+    id "com.android.application" version "8.6.0" apply false
+    // Bumped Kotlin to 2.1.0 as requested by Flutter warning; verify plugin compatibility
+    id "org.jetbrains.kotlin.android" version "2.1.0" apply false
 }
 
 include ":app"

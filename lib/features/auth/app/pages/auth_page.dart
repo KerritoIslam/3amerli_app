@@ -6,6 +6,7 @@ import '../../../auth/app/bloc/auth_state.dart';
 import '../../../auth/app/bloc/auth_event.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../widgets/app_text_feild.dart';
+import '../../../../widgets/app_button.dart';
 
 class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
@@ -93,6 +94,21 @@ class _AuthPageState extends State<AuthPage> {
                 authBloc.add(ToggleAuthEvent());
               },
               child: const Text('Toggle Auth (demo)'),
+            ),
+
+            const SizedBox(height: 8),
+            // Demo app-styled button
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: AppButton(
+                text: 'Passer',
+                onPressed: () {
+                  GoRouter.of(context).go('/home');
+                },
+                // default full circular primary-filled style
+                tooltip: 'Passer (demo)',
+                height: 48,
+              ),
             ),
 
             const SizedBox(height: 8),
