@@ -13,6 +13,8 @@ class AppDimensions {
   static const double radiusSmall = 6.0;
   static const double radius = 12.0;
   static const double radiusLarge = 20.0;
+  // Full circular radius (e.g., for pill shaped inputs)
+  static const double radiusFull = 999.0;
 
   // Icon & image sizes
   static const double iconSmall = 16.0;

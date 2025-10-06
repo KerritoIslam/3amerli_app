@@ -24,6 +24,9 @@ class AppColors {
   static const Color darkOnBackground = Colors.white;
   static const Color darkOnSurface = Colors.white70;
 
+  // Additional neutral colors
+  static const Color greyBorder = Color(0xFFBDBDBD); // neutral grey for borders
+
   // Convenience ColorSchemes
   static const ColorScheme lightScheme = ColorScheme(
     brightness: Brightness.light,
