@@ -28,12 +28,15 @@ android {
     ndkVersion flutter.ndkVersion
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        // Target modern Java to avoid obsolete -source/-target warnings
+        // AGP 8.6+ and Kotlin 2.1+ expect JDK 17 compatibility
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        // Use Java 17 target for Kotlin bytecode
+        jvmTarget = '17'
     }
 
     sourceSets {

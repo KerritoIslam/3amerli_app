@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../utils/constants/app_colors.dart';
 import '../utils/constants/app_dimensions.dart';
+import '../utils/constants/app_text_styles.dart';
 
 /// AppButton
 ///
@@ -20,7 +21,7 @@ class AppButton extends StatelessWidget {
     this.borderRadius = AppDimensions.radiusFull,
     this.borderColor,
     this.borderWidth = 1.0,
-    this.padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    this.padding,
     this.height,
     this.width,
     this.isLoading = false,
@@ -43,7 +44,7 @@ class AppButton extends StatelessWidget {
   final double borderRadius;
   final Color? borderColor;
   final double borderWidth;
-  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry? padding;
   final double? height;
   final double? width;
 
@@ -68,11 +69,14 @@ class AppButton extends StatelessWidget {
     final Color primary = backgroundColor ?? theme.colorScheme.primary;
     final Color onPrimary = textColor ?? theme.colorScheme.onPrimary;
     final Color resolvedBorderColor = borderColor ?? AppColors.greyBorder;
+  final EdgeInsetsGeometry defaultPadding = padding ?? const EdgeInsets.symmetric(horizontal: AppDimensions.spacingM, vertical: AppDimensions.spacing);
+  final double defaultHeight = height ?? 48.0; // fallback if not provided
+  final TextStyle defaultTextStyle = (textStyle ?? AppTextStyles.buttonLargeBold).copyWith(color: onPrimary);
 
     final child = isLoading
         ? SizedBox(
-            height: height != null ? (height! * 0.5) : 16,
-            width: height != null ? (height! * 0.5) : 16,
+            height: (defaultHeight * 0.5),
+            width: (defaultHeight * 0.5),
             child: const Center(
               child: CircularProgressIndicator(strokeWidth: 2.0),
             ),
@@ -89,14 +93,14 @@ class AppButton extends StatelessWidget {
                 child: Text(
                   text,
                   overflow: TextOverflow.ellipsis,
-                  style: textStyle ?? theme.textTheme.labelLarge?.copyWith(color: onPrimary),
+                  style: defaultTextStyle,
                 ),
               ),
             ],
           );
 
     final buttonChild = Padding(
-      padding: padding,
+      padding: defaultPadding,
       child: Center(child: child),
     );
 
@@ -117,7 +121,7 @@ class AppButton extends StatelessWidget {
           shape: shape,
           foregroundColor: textColor ?? theme.textTheme.labelLarge?.color,
         ),
-        child: SizedBox(width: width, height: height, child: buttonChild),
+        child: SizedBox(width: width, height: defaultHeight, child: buttonChild),
       );
     } else if (isOutlined) {
       button = OutlinedButton(
@@ -129,7 +133,7 @@ class AppButton extends StatelessWidget {
           foregroundColor: textColor ?? theme.colorScheme.primary,
           backgroundColor: isFilled ? primary.withOpacity(0.02) : Colors.transparent,
         ),
-        child: SizedBox(width: width, height: height, child: buttonChild),
+        child: SizedBox(width: width, height: defaultHeight, child: buttonChild),
       );
     } else {
       // Filled (default)
@@ -141,7 +145,7 @@ class AppButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
           padding: EdgeInsets.zero,
         ),
-        child: SizedBox(width: width, height: height, child: buttonChild),
+        child: SizedBox(width: width, height: defaultHeight, child: buttonChild),
       );
     }
 

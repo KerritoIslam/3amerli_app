@@ -40,6 +40,12 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
   );
 
+  // Larger, bolder button style used as default for primary buttons
+  static const TextStyle buttonLargeBold = TextStyle(
+    fontSize: 18.0,
+    fontWeight: FontWeight.w700,
+  );
+
   // Small helper styles
   static const TextStyle small = TextStyle(
     fontSize: 10.0,
