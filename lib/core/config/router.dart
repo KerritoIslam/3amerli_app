@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:amerli_app/features/auth/app/pages/credentials_page.dart';
+import 'package:amerli_app/features/auth/app/pages/location_page.dart';
 import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
 import 'package:amerli_app/features/onboarding/app/pages/first_intro.dart';
 import 'package:amerli_app/features/onboarding/app/pages/onboarding_flow.dart';
@@ -61,7 +63,7 @@ GoRouter createRouter({required AuthBloc authBloc}) {
       ),
       GoRoute(
         path: '/auth',
-        builder: (context, state) =>OnboardingFlow(),
+        builder: (context, state) => LocationPage(),
       ),
       GoRoute(
         path: '/home',

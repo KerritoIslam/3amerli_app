@@ -5,14 +5,14 @@ import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class FirstIntro extends StatefulWidget {
-  const FirstIntro({super.key});
+class ThirdIntro extends StatefulWidget {
+  const ThirdIntro({super.key});
 
   @override
-  State<FirstIntro> createState() => _FirstIntroState();
+  State<ThirdIntro> createState() => _ThirdIntroState();
 }
 
-class _FirstIntroState extends State<FirstIntro>
+class _ThirdIntroState extends State<ThirdIntro>
     with SingleTickerProviderStateMixin {
 
 

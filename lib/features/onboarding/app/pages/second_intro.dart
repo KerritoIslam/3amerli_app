@@ -5,14 +5,14 @@ import 'onboarding_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class FirstIntro extends StatefulWidget {
-  const FirstIntro({super.key});
+class SecondIntro extends StatefulWidget {
+  const SecondIntro({super.key});
 
   @override
-  State<FirstIntro> createState() => _FirstIntroState();
+  State<SecondIntro> createState() => _SecondIntroState();
 }
 
-class _FirstIntroState extends State<FirstIntro>
+class _SecondIntroState extends State<SecondIntro>
     with SingleTickerProviderStateMixin {
 
 

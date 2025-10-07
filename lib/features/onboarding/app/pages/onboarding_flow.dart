@@ -71,8 +71,8 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
                   onPageChanged: (p) => setState(() => _index = p),
                   children: [
                     const first_intro.FirstIntro(),
-                    const second_intro.FirstIntro(),
-                    const third_intro.FirstIntro(),
+                    const second_intro.SecondIntro(),
+                    const third_intro.ThirdIntro(),
                     const auth_sign_up.SignUpPage(),
                   ],
                 ),
