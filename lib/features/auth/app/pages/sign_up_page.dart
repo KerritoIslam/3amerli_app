@@ -2,8 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter/gestures.dart';
 
 import '../../../../widgets/app_text_feild.dart';
 import '../../../../widgets/app_button.dart';
@@ -72,9 +70,6 @@ class _SignUpView extends StatefulWidget {
 
 class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
   final _phoneController = TextEditingController();
-  // Four controllers/nodes for separate OTP boxes
-  final List<TextEditingController> _otpControllers = List.generate(4, (_) => TextEditingController());
-  final List<FocusNode> _otpFocusNodes = List.generate(4, (_) => FocusNode());
   final FocusNode _phoneFocusNode = FocusNode();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   // track previous raw viewInsets bottom (physical pixels) to detect keyboard hide
@@ -83,12 +78,6 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
   @override
   void dispose() {
     _phoneController.dispose();
-    for (final c in _otpControllers) {
-      c.dispose();
-    }
-    for (final n in _otpFocusNodes) {
-      n.dispose();
-    }
     _phoneFocusNode.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -101,10 +90,6 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
     _prevViewInsetsBottom = WidgetsBinding.instance.window.viewInsets.bottom;
     // Rebuild when focus changes so the AnimatedSwitcher updates automatically.
     _phoneFocusNode.addListener(() => setState(() {}));
-    // Ensure OTP focus nodes also trigger rebuilds so underline colors update
-    for (final fn in _otpFocusNodes) {
-      fn.addListener(() => setState(() {}));
-    }
   }
 
   @override
@@ -125,9 +110,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-  final cubit = context.read<SignUpCubit>();
-  // Watch state so we can lock the panel expanded when entering OTP
-  final signUpState = context.watch<SignUpCubit>().state;
+    final cubit = context.read<SignUpCubit>();
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
@@ -147,15 +130,14 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
           // the top edge when expanded, making it truly full-screen.
           final statusBar = MediaQuery.of(context).padding.top;
 
-          // When focused or when we're in OTP entry, expand to fill the screen
-          // (move up by statusBar so the panel covers the system status bar).
-          // Otherwise collapse to half screen.
-          final bool shouldExpand = _phoneFocusNode.hasFocus || signUpState.status == VerificationStatus.enteringOtp;
-          final targetTop = shouldExpand ? -statusBar : halfTop;
+          // When focused, expand to fill the screen (move up by statusBar so
+          // the panel covers the system status bar). Otherwise collapse to
+          // half screen.
+          final targetTop = _phoneFocusNode.hasFocus ? -statusBar : halfTop;
 
           // When expanded we want no top curve so the panel reads as a
           // full-screen rectangle. Use dynamic curve height for the clipper.
-          final panelCurveHeight = shouldExpand ? 0.0 : AppDimensions.panelCurveHeight;
+          final panelCurveHeight = _phoneFocusNode.hasFocus ? 0.0 : AppDimensions.panelCurveHeight;
 
           // Clip the whole area to avoid any visual overflow when the panel
           // animates; paint the top area with the app background so the panel
@@ -222,7 +204,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                       final double curveH = panelCurveHeight;
                       // When expanded (focused), increase top padding so the content
                       // is pushed down and not crowded by the status bar.
-                      final bool expanded = _phoneFocusNode.hasFocus || signUpState.status == VerificationStatus.enteringOtp;
+                      final bool expanded = _phoneFocusNode.hasFocus;
                       final topPadding = contentTopPadding + curveH + AppDimensions.spacing - AppDimensions.panelTopOffset + (expanded ? AppDimensions.panelExpandedExtra : 0.0);
 
                       return Padding(
@@ -232,191 +214,78 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Switch title/subtitle depending on verification status
                                 Text(
-                                  state.status == VerificationStatus.enteringOtp
-                                      ? AppLanguage.verifyNumber
-                                      : AppLanguage.phoneNumberTitle,
+                                  AppLanguage.phoneNumberTitle,
                                   style: AppTextStyles.headline1,
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  state.status == VerificationStatus.enteringOtp
-                                      ? AppLanguage.codeSent
-                                      : AppLanguage.phoneNumberSubtitle,
+                                  AppLanguage.phoneNumberSubtitle,
                                   style: AppTextStyles.body,
                                 ),
                                 const SizedBox(height: 12),
                                 // Form around the phone field to support validation
                                 Form(
                                   key: _formKey,
-                                  child: state.status == VerificationStatus.enteringOtp
-                                      ? Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                          child: Column(
-                                            children: [
-                                              // Four separate OTP boxes
-                                              Row(
-                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                children: [
-                                                  for (int i = 0; i < 4; i++)
-                                                    SizedBox(
-                                                      width: 64,
-                                                      child: Container(
-                                                        decoration: BoxDecoration(
-                                                          border: Border(
-                                                            bottom: BorderSide(
-                                                              color: _otpControllers[i].text.isEmpty
-                                                                  ? Theme.of(context).hintColor
-                                                                  : (_otpFocusNodes[i].hasFocus ? Theme.of(context).colorScheme.primary : Colors.black),
-                                                              width: AppDimensions.spacingXS,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        child: TextFormField(
-                                                          controller: _otpControllers[i],
-                                                          focusNode: _otpFocusNodes[i],
-                                                          keyboardType: TextInputType.number,
-                                                          textAlign: TextAlign.center,
-                                                          style: AppTextStyles.headline1.copyWith(fontSize: 28),
-                                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(1)],
-                                                          decoration: InputDecoration(
-                                                            hintText: '0',
-                                                            hintStyle: TextStyle(color: Theme.of(context).hintColor),
-                                                            border: InputBorder.none,
-                                                            counterText: '',
-                                                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
-                                                          ),
-                                                          onChanged: (val) {
-                                                            if (val.length > 1) {
-                                                              final chars = val.split('');
-                                                              for (var k = 0; k < chars.length && (i + k) < 4; k++) {
-                                                                _otpControllers[i + k].text = chars[k];
-                                                              }
-                                                              final next = (i + chars.length) < 4 ? (i + chars.length) : 3;
-                                                              _otpFocusNodes[next].requestFocus();
-                                                              setState(() {});
-                                                              return;
-                                                            }
-                                                            if (val.isNotEmpty) {
-                                                              final next = i + 1;
-                                                              if (next < 4) {
-                                                                _otpFocusNodes[next].requestFocus();
-                                                              } else {
-                                                                _otpFocusNodes[i].unfocus();
-                                                              }
-                                                            } else {
-                                                              final prev = i - 1;
-                                                              if (prev >= 0) {
-                                                                _otpFocusNodes[prev].requestFocus();
-                                                              }
-                                                            }
-                                                            setState(() {});
-                                                          },
-                                                        ),
-                                                      ),
-                                                    ),
-                                                ],
-                                              ),
-                                              // validator for combined OTP
-                                              Builder(builder: (context) {
-                                                return SizedBox.shrink();
-                                              }),
-                                            ],
-                                          ),
-                                        )
-                                      : AppTextField(
-                                          controller: _phoneController,
-                                          focusNode: _phoneFocusNode,
-                                          keyboardType: TextInputType.phone,
-                                          hintText: null,
-                                          // validate phone: must be digits and at least 8 chars
-                                          validator: (v) {
-                                            final value = v?.trim() ?? '';
-                                            if (value.isEmpty) return AppLanguage.phoneEmptyError;
-
-                                            // Allow only digits and optional leading +
-                                            final charsPattern = RegExp(r'^\+?[0-9]+$');
-                                            if (!charsPattern.hasMatch(value)) return AppLanguage.phoneInvalidCharactersError;
-
-                                            // Normalize for checking: remove '+'
-                                            final normalized = value.startsWith('+') ? value.substring(1) : value;
-
-                                            // Check prefix: Algeria numbers should start with 213 or 0
-                                            if (!(normalized.startsWith('213') || normalized.startsWith('0'))) {
-                                              return AppLanguage.phoneInvalidPrefixError;
-                                            }
-
-                                            // After prefix, check expected length
-                                            if (normalized.startsWith('213')) {
-                                              if (normalized.length != 12) return AppLanguage.phoneInvalidLengthError;
-                                            } else if (normalized.startsWith('0')) {
-                                              if (normalized.length != 10) return AppLanguage.phoneInvalidLengthError;
-                                            }
-
-                                            // Final strict pattern for Algerian numbers
-                                            final pattern = RegExp(r'^(?:\+213|0)(5|6|7)[0-9]{8}$');
-                                            if (!pattern.hasMatch(value)) return AppLanguage.phoneInvalidError;
-                                            return null;
-                                          },
-                                          autovalidateMode: AutovalidateMode.disabled,
-                                          leading: SizedBox(
-                                            width: AppDimensions.flagButtonWidth,
-                                            child: Padding(
-                                              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                                              child: _FlagButton(
-                                                currentAsset: 'assets/images/flags/algeria.svg',
-                                                onSelected: (asset) => cubit.setCountryCode(asset),
-                                                preserveFocus: _phoneFocusNode,
-                                              ),
-                                            ),
-                                          ),
-                                          onChanged: (v) => cubit.setPhoneNumber(v),
-                                        ),
-                                ),
+                                  child: AppTextField(
+                                  controller: _phoneController,
+                                  focusNode: _phoneFocusNode,
+                                  keyboardType: TextInputType.phone,
+                                  hintText: null,
+                                  // validate phone: must be digits and at least 8 chars
+                                  validator: (v) {
+                                    final value = v?.trim() ?? '';
+                                    if (value.isEmpty) return AppLanguage.phoneEmptyError;
+                                    // Strict Algerian number pattern: ^(?:\+213|0)(5|6|7)[0-9]{8}$
+                                    final pattern = r'^(?:\+213|0)(5|6|7)[0-9]{8}$';
+                                    final reg = RegExp(pattern);
+                                    if (!reg.hasMatch(value)) return AppLanguage.phoneInvalidError;
+                                    return null;
+                                  },
+                                  // Disable live validation; validation will be
+                                  // triggered explicitly when the Send button is pressed.
+                                  autovalidateMode: AutovalidateMode.disabled,
+                                  // leading is a button containing the flag and an up-arrow.
+                                  leading: SizedBox(
+                                    width: AppDimensions.flagButtonWidth,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                                      child: _FlagButton(
+                                        currentAsset: 'assets/images/flags/algeria.svg',
+                                        onSelected: (asset) => cubit.setCountryCode(asset),
+                                        preserveFocus: _phoneFocusNode,
+                                      ),
+                                    ),
+                                  ),
+                                  onChanged: (v) => cubit.setPhoneNumber(v),
+                                )),
 
                                 // Flexible spacer pushes the following content to the bottom
                                 const Spacer(),
 
-                                // If focused: show consent (or OTP resend message) above the button, then the button.
+                                // If focused: show consent above the button, then the button.
                                 // Otherwise: the button is hidden and consent sits at the bottom.
-                                if (_phoneFocusNode.hasFocus || state.status == VerificationStatus.enteringOtp) ...[
+                                if (_phoneFocusNode.hasFocus) ...[
                                   Align(
                                     alignment: Alignment.center,
-                                    child: state.status == VerificationStatus.enteringOtp
-                                        ? Padding(
-                                            padding: const EdgeInsets.only(bottom: AppDimensions.spacingXXL),
-                                            child: RichText(
-                                              textAlign: TextAlign.center,
-                                              text: TextSpan(
-                                                style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                                children: [
-                                                  TextSpan(
-                                                    text: AppLanguage.noCodeReceived + ' ',
-                                                    style: AppTextStyles.caption.copyWith(decoration: TextDecoration.underline, color: Theme.of(context).colorScheme.onSurface),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          )
-                                        : RichText(
-                                            textAlign: TextAlign.center,
-                                            text: TextSpan(
-                                              style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                              children: [
-                                                TextSpan(text: AppLanguage.consentPrefix + ' '),
-                                                TextSpan(
-                                                  text: AppLanguage.termsOfUse,
-                                                  style: const TextStyle(decoration: TextDecoration.underline),
-                                                ),
-                                                TextSpan(text: ' ' + AppLanguage.and + ' '),
-                                                TextSpan(
-                                                  text: AppLanguage.privacyPolicy,
-                                                  style: const TextStyle(decoration: TextDecoration.underline),
-                                                ),
-                                              ],
-                                            ),
+                                    child: RichText(
+                                      textAlign: TextAlign.center,
+                                      text: TextSpan(
+                                        style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                                        children: [
+                                          TextSpan(text: AppLanguage.consentPrefix + ' '),
+                                          TextSpan(
+                                            text: AppLanguage.termsOfUse,
+                                            style: const TextStyle(decoration: TextDecoration.underline),
                                           ),
+                                          TextSpan(text: ' ' + AppLanguage.and + ' '),
+                                          TextSpan(
+                                            text: AppLanguage.privacyPolicy,
+                                            style: const TextStyle(decoration: TextDecoration.underline),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                                   const SizedBox(height: 12),
                                   AnimatedSwitcher(
@@ -427,16 +296,10 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                       key: const ValueKey('send_button'),
                                       width: double.infinity,
                                           child: AppButton(
-                                            text: state.status == VerificationStatus.enteringOtp ? AppLanguage.verifyMyNumber : AppLanguage.sendCode,
+                                            text: AppLanguage.sendCode,
                                             onPressed: state.status == VerificationStatus.loading
                                                 ? null
                                                 : () async {
-                                                    if (state.status == VerificationStatus.enteringOtp) {
-                                                      final otp = _otpControllers.map((c) => c.text.trim()).join();
-                                                      if (otp.length < 4) return;
-                                                      cubit.verifyOtp(otp);
-                                                      return;
-                                                    }
                                                     // Validate the form before sending
                                                     final valid = _formKey.currentState?.validate() ?? false;
                                                     if (!valid) return;

@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
+import 'package:amerli_app/features/onboarding/app/pages/first_intro.dart';
+import 'package:amerli_app/features/onboarding/app/pages/onboarding_flow.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 // GetIt is not used here; AuthBloc is injected by the caller
@@ -59,7 +61,7 @@ GoRouter createRouter({required AuthBloc authBloc}) {
       ),
       GoRoute(
         path: '/auth',
-        builder: (context, state) => const SignUpPage(),
+        builder: (context, state) =>OnboardingFlow(),
       ),
       GoRoute(
         path: '/home',

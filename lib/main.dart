@@ -92,6 +92,7 @@ class _MyAppState extends State<MyApp> {
         BlocProvider.value(value: di.sl<NotificationsBloc>()),
       ],
       child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
         title: '3amerli',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

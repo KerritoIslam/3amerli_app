@@ -6,59 +6,6 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // ---------------------------------------------------------------------------
-  // Color swatches (levels 50..900) to provide tonal variations for design.
-  // These are additive and won't affect existing single-token constants.
-  // Use these where a MaterialColor or shade lookup is helpful.
-  // ---------------------------------------------------------------------------
-
-  // Neutral / black swatch (from very light grey to pure black)
-  static const Map<int, Color> _blackSwatch = {
-    50: Color(0xFFF5F5F5),
-    100: Color(0xFFEEEEEE),
-    200: Color(0xFFE0E0E0),
-    300: Color(0xFFBDBDBD),
-    400: Color(0xFF9E9E9E),
-    500: Color(0xFF757575),
-    600: Color(0xFF616161),
-    700: Color(0xFF424242),
-    800: Color(0xFF212121),
-    900: Color(0xFF000000),
-  };
-
-  // Red / error swatch
-  static const Map<int, Color> _redSwatch = {
-    50: Color(0xFFFFEBEE),
-    100: Color(0xFFFFCDD2),
-    200: Color(0xFFEF9A9A),
-    300: Color(0xFFE57373),
-    400: Color(0xFFEF5350),
-    500: Color(0xFFF44336),
-    600: Color(0xFFE53935),
-    700: Color(0xFFD32F2F),
-    800: Color(0xFFC62828),
-    900: Color(0xFFB00020),
-  };
-
-  // Neutral grey swatch for surfaces and outlines
-  static const Map<int, Color> _greySwatch = {
-    50: Color(0xFFF9FAFB),
-    100: Color(0xFFF2F4F6),
-    200: Color(0xFFE6E9EE),
-    300: Color(0xFFCDD6DE),
-    400: Color(0xFFB7C4CF),
-    500: Color(0xFF98A5B2),
-    600: Color(0xFF6F7E8A),
-    700: Color(0xFF4B5563),
-    800: Color(0xFF374151),
-    900: Color(0xFF111827),
-  };
-
-  // Public MaterialColor swatches
-  static const MaterialColor blackSwatch = MaterialColor(0xFF000000, _blackSwatch);
-  static const MaterialColor errorSwatch = MaterialColor(0xFFB00020, _redSwatch);
-  static const MaterialColor greySwatch = MaterialColor(0xFF98A5B2, _greySwatch);
-
   // Light theme colors (black on white)
   static const Color lightPrimary = Colors.black;
   static const Color lightOnPrimary = Colors.white;
@@ -123,10 +70,15 @@ class AppColors {
 
   // Additional neutral colors
   static const Color greyBorder = Color(0xFFBDBDBD); // neutral grey for borders
+  // Neutral light used for hints and subtle borders (#D3D3D3)
+  static const Color neutralLight300 = Color(0xFFD3D3D3);
+  // A convenient alias for UI hint color usage (match Theme.hintColor)
+  static const Color hint = neutralLight300;
 
   // Convenience ColorSchemes
   static const ColorScheme lightScheme = ColorScheme(
     brightness: Brightness.light,
+    
     primary: lightPrimary,
     onPrimary: lightOnPrimary,
     primaryContainer: lightPrimaryContainer,

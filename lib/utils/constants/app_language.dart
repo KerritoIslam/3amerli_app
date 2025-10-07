@@ -7,8 +7,7 @@ enum AppLocale { en, fr, ar }
 class AppLanguage {
   AppLanguage._();
 
-  // For now show French texts for all locales by default
-  static AppLocale current = AppLocale.fr;
+  static AppLocale current = AppLocale.en;
 
   static final Map<String, Map<AppLocale, String>> _translations = {
     'welcomeTitle': {
@@ -110,9 +109,9 @@ class AppLanguage {
       AppLocale.ar: 'Un code à 6 chiffres a été envoyé par SMS à votre numéro.',
     },
     'noCodeReceived': {
-      AppLocale.en: 'Vous n\'avez pas reçu de code? Renvoyer le code',
-      AppLocale.fr: 'Vous n\'avez pas reçu de code? Renvoyer le code',
-      AppLocale.ar: 'Vous n\'avez pas reçu de code? Renvoyer le code',
+      AppLocale.en: 'Vous n\'avez pas recu de code? Renvoyer le code',
+      AppLocale.fr: 'Vous n\'avez pas recu de code? Renvoyer le code',
+      AppLocale.ar: 'Vous n\'avez pas recu de code? Renvoyer le code',
     },
     'verifyMyNumber': {
       AppLocale.en: 'Vérifier mon numero',
@@ -140,29 +139,14 @@ class AppLanguage {
       AppLocale.ar: 'politique de confidentialité.',
     },
     'phoneEmptyError': {
-      AppLocale.en: 'Veuillez entrer votre numéro de téléphone',
+      AppLocale.en: 'Please enter your phone number',
       AppLocale.fr: 'Veuillez entrer votre numéro de téléphone',
       AppLocale.ar: 'Veuillez entrer votre numéro de téléphone',
     },
     'phoneInvalidError': {
-      AppLocale.en: 'Numéro invalide',
+      AppLocale.en: 'Invalid phone number',
       AppLocale.fr: 'Numéro invalide',
       AppLocale.ar: 'Numéro invalide',
-    },
-    'phoneInvalidCharactersError': {
-      AppLocale.en: 'Le numéro contient des caractères invalides',
-      AppLocale.fr: 'Le numéro contient des caractères invalides',
-      AppLocale.ar: 'Le numéro contient des caractères invalides',
-    },
-    'phoneInvalidPrefixError': {
-      AppLocale.en: 'Le préfixe du numéro est invalide. Commencez par +213 ou 0',
-      AppLocale.fr: 'Le préfixe du numéro est invalide. Commencez par +213 ou 0',
-      AppLocale.ar: 'Le préfixe du numéro est invalide. Commencez par +213 ou 0',
-    },
-    'phoneInvalidLengthError': {
-      AppLocale.en: 'Le numéro a une longueur invalide',
-      AppLocale.fr: 'Le numéro a une longueur invalide',
-      AppLocale.ar: 'Le numéro a une longueur invalide',
     },
   };
 
@@ -197,9 +181,6 @@ class AppLanguage {
   static String get privacyPolicy => _t('privacyPolicy');
   static String get phoneEmptyError => _t('phoneEmptyError');
   static String get phoneInvalidError => _t('phoneInvalidError');
-  static String get phoneInvalidCharactersError => _t('phoneInvalidCharactersError');
-  static String get phoneInvalidPrefixError => _t('phoneInvalidPrefixError');
-  static String get phoneInvalidLengthError => _t('phoneInvalidLengthError');
 }
 
 /// Backwards compatible misspelling alias used in some notes: AppLaungage

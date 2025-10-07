@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../utils/constants/app_dimensions.dart';
 
 /// A small, reusable custom tab bar with an animated bottom indicator.
 ///
@@ -22,9 +23,9 @@ class CustomTabBar extends StatefulWidget {
     required this.tabs,
     required this.currentIndex,
     required this.onTap,
-    this.indicatorColor = Colors.black,
-    this.inactiveColor = const Color(0xFFD3D3D3),
-    this.indicatorHeight = 4.0,
+  this.indicatorColor = Colors.black,
+  this.inactiveColor = const Color(0xFFD3D3D3),
+  this.indicatorHeight = AppDimensions.spacing,
     this.duration = const Duration(milliseconds: 220),
     this.activeTextStyle,
     this.inactiveTextStyle,
@@ -74,31 +75,56 @@ class _CustomTabBarState extends State<CustomTabBar> {
               }),
             ),
 
-            // Animated indicator
+            // Draw inactive segments (one per tab) with gaps between them so
+            // inactiveColor is visible as discrete ticks instead of a single bar.
+            if (tabWidth > 0)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                height: widget.indicatorHeight,
+                child: Row(
+                  children: List.generate(tabCount, (i) {
+                    final segWidth = (tabWidth > AppDimensions.spacing) ? tabWidth - AppDimensions.spacing : tabWidth * 0.8;
+                    return SizedBox(
+                      width: tabWidth,
+                      child: Center(
+                        child: Container(
+                          width: segWidth,
+                          height: widget.indicatorHeight,
+                          decoration: BoxDecoration(
+                            color: widget.inactiveColor.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(widget.indicatorHeight / 2),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+
+            // Animated indicator (narrower than full tab width so gaps show)
             if (tabWidth > 0)
               AnimatedPositioned(
                 duration: widget.duration,
                 curve: Curves.easeInOut,
-                left: widget.currentIndex * tabWidth,
+                left: widget.currentIndex * tabWidth + (AppDimensions.spacing / 2),
                 bottom: 0,
-                width: tabWidth,
+                width: (tabWidth > AppDimensions.spacing) ? tabWidth - AppDimensions.spacing : tabWidth * 0.8,
                 height: widget.indicatorHeight,
                 child: Container(
                   alignment: Alignment.center,
                   child: Container(
                     height: widget.indicatorHeight,
-                    color: widget.indicatorColor,
+                    decoration: BoxDecoration(
+                      color: widget.indicatorColor,
+                      borderRadius: BorderRadius.circular(widget.indicatorHeight / 2),
+                    ),
                   ),
                 ),
               ),
 
-            // Thin top divider to match the subtle tick look from the design
-            Positioned(
-              left: 0,
-              right: 0,
-              top: 0,
-              child: Container(height: 1, color: widget.inactiveColor.withOpacity(0.25)),
-            ),
+            // (top divider removed as per design request)
           ],
         ),
       );
