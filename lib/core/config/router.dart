@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/app/bloc/auth_bloc.dart';
 import '../../features/auth/app/bloc/auth_state.dart';
 
-import '../../features/auth/app/pages/sign_up_page.dart';
+import '../../features/onboarding/onboarding_flow.dart';
 import '../../features/catalog/app/pages/catalog_page.dart';
 import '../../features/orders/app/pages/orders_page.dart';
 import '../../features/payments/app/pages/payments_page.dart';
@@ -58,7 +58,7 @@ GoRouter createRouter({required AuthBloc authBloc}) {
       ),
       GoRoute(
         path: '/auth',
-        builder: (context, state) => const SignUpPage(),
+        builder: (context, state) => const OnboardingFlow(),
       ),
       GoRoute(
         path: '/home',
