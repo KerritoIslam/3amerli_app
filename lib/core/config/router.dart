@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/app/bloc/auth_bloc.dart';
 import '../../features/auth/app/bloc/auth_state.dart';
 
-import '../../features/auth/app/pages/auth_page.dart';
+import '../../features/auth/app/pages/sign_up_page.dart';
 import '../../features/catalog/app/pages/catalog_page.dart';
 import '../../features/orders/app/pages/orders_page.dart';
 import '../../features/payments/app/pages/payments_page.dart';
@@ -19,9 +19,8 @@ import '../../features/admin/app/pages/admin_page.dart';
 
 class _StreamChangeNotifier extends ChangeNotifier {
   _StreamChangeNotifier(Stream<dynamic> stream) {
-    _sub = stream.listen((event) {
-      // ignore: avoid_print
-      print('[router] stream event: $event');
+    _sub = stream.listen((_) {
+      // intentionally left blank; refresh listener only
       notifyListeners();
     });
   }
@@ -47,9 +46,7 @@ GoRouter createRouter({required AuthBloc authBloc}) {
       final loggedIn = authBloc.state is Authenticated;
       final loc = state.uri.path;
       final loggingIn = loc == '/auth';
-  // Debug: print redirect decision
-  // ignore: avoid_print
-  print('[router] redirect check - path: $loc, loggedIn: $loggedIn');
+  // redirect decision uses current auth state; no debug prints in production
       if (!loggedIn && !loggingIn) return '/auth';
       if (loggedIn && loggingIn) return '/home';
       return null;
@@ -61,7 +58,7 @@ GoRouter createRouter({required AuthBloc authBloc}) {
       ),
       GoRoute(
         path: '/auth',
-        builder: (context, state) => const AuthPage(),
+        builder: (context, state) => const SignUpPage(),
       ),
       GoRoute(
         path: '/home',

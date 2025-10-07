@@ -159,10 +159,17 @@ class _AppTextFieldState extends State<AppTextField> {
       borderSide: const BorderSide(color: AppColors.greyBorder, width: 1.0),
     );
 
+    // Always place the leading widget in prefixIcon but relax the default
+    // icon constraints so arbitrary widgets (SVGs, images, buttons) can
+    // render correctly and remain visible even when the field is not focused.
     final effectiveDecoration = InputDecoration(
       hintText: widget.hintText,
       labelText: widget.labelText,
       prefixIcon: widget.leading,
+      // Allow larger or custom-sized leading widgets; keeps layout stable.
+      prefixIconConstraints: widget.leading != null
+          ? const BoxConstraints(minWidth: 40, maxWidth: 64)
+          : null,
       suffixIcon: widget.trailing,
       fillColor: widget.fillColor,
       filled: widget.filled ?? false,
@@ -171,7 +178,7 @@ class _AppTextFieldState extends State<AppTextField> {
       focusedBorder: widget.focusedBorder ?? defaultBorder.copyWith(
         borderSide: const BorderSide(color: AppColors.greyBorder, width: 1.2),
       ),
-      contentPadding: widget.contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  contentPadding: widget.contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       errorText: widget.errorText,
       hintStyle: widget.hintStyle,
       labelStyle: widget.labelStyle,

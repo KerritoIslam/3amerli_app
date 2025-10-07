@@ -5,6 +5,7 @@ import '../../../auth/app/bloc/auth_bloc.dart';
 import '../../../auth/app/bloc/auth_state.dart';
 import '../../../auth/app/bloc/auth_event.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../utils/helpers/logger.dart';
 import '../../../../widgets/app_text_feild.dart';
 import '../../../../widgets/app_button.dart';
 
@@ -54,9 +55,7 @@ class _AuthPageState extends State<AuthPage> {
                 trailing: IconButton(
                   icon: const Icon(Icons.info_outline),
                   onPressed: () {
-                    // Print current auth state for debugging
-                    // ignore: avoid_print
-                    print('[AuthPage] current auth state: ${authBloc.state}');
+                    logInfo('[AuthPage] current auth state: ${authBloc.state}');
                   },
                 ),
                 textInputAction: TextInputAction.done,
