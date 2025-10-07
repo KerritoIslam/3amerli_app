@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
 import 'package:amerli_app/features/auth/app/pages/credentials_page.dart';
 import 'package:amerli_app/features/auth/app/pages/location_page.dart';
 import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
@@ -63,7 +64,7 @@ GoRouter createRouter({required AuthBloc authBloc}) {
       ),
       GoRoute(
         path: '/auth',
-        builder: (context, state) => LocationPage(),
+        builder: (context, state) => CompleteProfilePage(),
       ),
       GoRoute(
         path: '/home',
