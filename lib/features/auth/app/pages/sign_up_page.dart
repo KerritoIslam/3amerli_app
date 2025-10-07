@@ -31,7 +31,7 @@ class SignUpPage extends StatelessWidget {
 // top edge of the clipped widget. curveHeight controls how deep the arc is.
 class _TopCurveClipper extends CustomClipper<Path> {
   final double curveHeight;
-  _TopCurveClipper({this.curveHeight = AppDimensions.panelCurveHeight});
+  _TopCurveClipper({this.curveHeight = 80});
 
   @override
   Path getClip(Size size) {
@@ -212,7 +212,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                       // subtle top border and shadow to increase separation from the hero
                       border: Border(top: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06))),
                       boxShadow: [
-                        BoxShadow(color: Colors.black26, blurRadius: AppDimensions.panelShadowBlur, offset: Offset(0, -AppDimensions.panelShadowOffsetY)),
+                        BoxShadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, -6)),
                       ],
                     ),
                     child: Builder(builder: (context) {
@@ -229,236 +229,177 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                         padding: EdgeInsets.fromLTRB(AppDimensions.panelHorizontalPadding, topPadding, AppDimensions.panelHorizontalPadding, AppDimensions.panelBottomPadding),
                         child: BlocBuilder<SignUpCubit, SignUpState>(
                           builder: (context, state) {
-                            return SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(),
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(minHeight: constraints.maxHeight - topPadding - AppDimensions.panelBottomPadding),
-                                child: IntrinsicHeight(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: <Widget>[
-                                      // Switch title/subtitle depending on verification status
-                                      Text(
-                                        state.status == VerificationStatus.enteringOtp ? AppLanguage.verifyNumber : AppLanguage.phoneNumberTitle,
-                                        style: AppTextStyles.headline1,
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        state.status == VerificationStatus.enteringOtp ? AppLanguage.codeSent : AppLanguage.phoneNumberSubtitle,
-                                        style: AppTextStyles.body,
-                                      ),
-                                      const SizedBox(height: 12),
-
-                                      // Form around the phone field to support validation
-                                      Form(
-                                        key: _formKey,
-                                        child: state.status == VerificationStatus.enteringOtp
-                                            ? Padding(
-                                                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                                child: Column(
-                                                  children: [
-                                                    // Four separate OTP boxes
-                                                    Row(
-                                                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                                                      children: [
-                                                        for (int i = 0; i < 4; i++)
-                                                          SizedBox(
-                                                            width: AppDimensions.otpBoxWidth,
-                                                            child: Container(
-                                                              decoration: BoxDecoration(
-                                                                border: Border(
-                                                                  bottom: BorderSide(
-                                                                    color: _otpControllers[i].text.isEmpty
-                                                                        ? Theme.of(context).hintColor
-                                                                        : (_otpFocusNodes[i].hasFocus ? Theme.of(context).colorScheme.primary : Colors.black),
-                                                                    width: AppDimensions.otpUnderlineThickness,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                              child: TextFormField(
-                                                                controller: _otpControllers[i],
-                                                                focusNode: _otpFocusNodes[i],
-                                                                keyboardType: TextInputType.number,
-                                                                textAlign: TextAlign.center,
-                                                                style: AppTextStyles.headline1.copyWith(fontSize: AppDimensions.otpFontSize),
-                                                                inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(1)],
-                                                                decoration: InputDecoration(
-                                                                  hintText: '0',
-                                                                  hintStyle: TextStyle(color: Theme.of(context).hintColor),
-                                                                  border: InputBorder.none,
-                                                                  counterText: '',
-                                                                  contentPadding: EdgeInsets.symmetric(vertical: AppDimensions.otpBoxVerticalPadding),
-                                                                ),
-                                                                onChanged: (val) {
-                                                                  if (val.length > 1) {
-                                                                    final chars = val.split('');
-                                                                    for (var k = 0; k < chars.length && (i + k) < 4; k++) {
-                                                                      _otpControllers[i + k].text = chars[k];
-                                                                    }
-                                                                    final next = (i + chars.length) < 4 ? (i + chars.length) : 3;
-                                                                    _otpFocusNodes[next].requestFocus();
-                                                                    setState(() {});
-                                                                    return;
-                                                                  }
-                                                                  if (val.isNotEmpty) {
-                                                                    final next = i + 1;
-                                                                    if (next < 4) {
-                                                                      _otpFocusNodes[next].requestFocus();
-                                                                    } else {
-                                                                      _otpFocusNodes[i].unfocus();
-                                                                    }
-                                                                  } else {
-                                                                    final prev = i - 1;
-                                                                    if (prev >= 0) {
-                                                                      _otpFocusNodes[prev].requestFocus();
-                                                                    }
-                                                                  }
-                                                                  setState(() {});
-                                                                },
-                                                              ),
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // Switch title/subtitle depending on verification status
+                                Text(
+                                  state.status == VerificationStatus.enteringOtp
+                                      ? AppLanguage.verifyNumber
+                                      : AppLanguage.phoneNumberTitle,
+                                  style: AppTextStyles.headline1,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  state.status == VerificationStatus.enteringOtp
+                                      ? AppLanguage.codeSent
+                                      : AppLanguage.phoneNumberSubtitle,
+                                  style: AppTextStyles.body,
+                                ),
+                                const SizedBox(height: 12),
+                                // Form around the phone field to support validation
+                                Form(
+                                  key: _formKey,
+                                  child: state.status == VerificationStatus.enteringOtp
+                                      ? Padding(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                          child: Column(
+                                            children: [
+                                              // Four separate OTP boxes
+                                              Row(
+                                                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                                children: [
+                                                  for (int i = 0; i < 4; i++)
+                                                    SizedBox(
+                                                      width: 64,
+                                                      child: Container(
+                                                        decoration: BoxDecoration(
+                                                          border: Border(
+                                                            bottom: BorderSide(
+                                                              color: _otpControllers[i].text.isEmpty
+                                                                  ? Theme.of(context).hintColor
+                                                                  : (_otpFocusNodes[i].hasFocus ? Theme.of(context).colorScheme.primary : Colors.black),
+                                                              width: AppDimensions.spacingXS,
                                                             ),
                                                           ),
-                                                      ],
-                                                    ),
-                                                    // validator placeholder for combined OTP
-                                                    Builder(builder: (context) => const SizedBox.shrink()),
-                                                  ],
-                                                ),
-                                              )
-                                            : AppTextField(
-                                                controller: _phoneController,
-                                                focusNode: _phoneFocusNode,
-                                                keyboardType: TextInputType.phone,
-                                                hintText: null,
-                                                // validate phone: must be digits and at least 8 chars
-                                                validator: (v) {
-                                                  final value = v?.trim() ?? '';
-                                                  if (value.isEmpty) return AppLanguage.phoneEmptyError;
-
-                                                  // Allow only digits and optional leading +
-                                                  final charsPattern = RegExp(r'^\+?[0-9]+$');
-                                                  if (!charsPattern.hasMatch(value)) return AppLanguage.phoneInvalidCharactersError;
-
-                                                  // Normalize for checking: remove '+'
-                                                  final normalized = value.startsWith('+') ? value.substring(1) : value;
-
-                                                  // Check prefix: Algeria numbers should start with 213 or 0
-                                                  if (!(normalized.startsWith('213') || normalized.startsWith('0'))) {
-                                                    return AppLanguage.phoneInvalidPrefixError;
-                                                  }
-
-                                                  // After prefix, check expected length
-                                                  if (normalized.startsWith('213')) {
-                                                    if (normalized.length != 12) return AppLanguage.phoneInvalidLengthError;
-                                                  } else if (normalized.startsWith('0')) {
-                                                    if (normalized.length != 10) return AppLanguage.phoneInvalidLengthError;
-                                                  }
-
-                                                  // Final strict pattern for Algerian numbers
-                                                  final pattern = RegExp(r'^(?:\+213|0)(5|6|7)[0-9]{8}$');
-                                                  if (!pattern.hasMatch(value)) return AppLanguage.phoneInvalidError;
-                                                  return null;
-                                                },
-                                                autovalidateMode: AutovalidateMode.disabled,
-                                                leading: SizedBox(
-                                                  width: AppDimensions.flagButtonWidth,
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                                                    child: _FlagButton(
-                                                      currentAsset: 'assets/images/flags/algeria.svg',
-                                                      onSelected: (asset) => cubit.setCountryCode(asset),
-                                                      preserveFocus: _phoneFocusNode,
-                                                    ),
-                                                  ),
-                                                ),
-                                                onChanged: (v) => cubit.setPhoneNumber(v),
-                                              ),
-                                      ),
-
-                                      // Flexible spacer pushes the following content to the bottom
-                                      const Spacer(),
-
-                                      // If focused: show consent (or OTP resend message) above the button, then the button.
-                                      // Otherwise: the button is hidden and consent sits at the bottom.
-                                      if (_phoneFocusNode.hasFocus || state.status == VerificationStatus.enteringOtp) ...[
-                                        Align(
-                                          alignment: Alignment.center,
-                                          child: state.status == VerificationStatus.enteringOtp
-                                              ? Padding(
-                                                  padding: const EdgeInsets.only(bottom: AppDimensions.spacingXXL),
-                                                  child: RichText(
-                                                    textAlign: TextAlign.center,
-                                                    text: TextSpan(
-                                                      style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                                      children: [
-                                                        TextSpan(
-                                                          text: AppLanguage.noCodeReceived + ' ',
-                                                          style: AppTextStyles.caption.copyWith(decoration: TextDecoration.underline, color: Theme.of(context).colorScheme.onSurface),
                                                         ),
-                                                      ],
+                                                        child: TextFormField(
+                                                          controller: _otpControllers[i],
+                                                          focusNode: _otpFocusNodes[i],
+                                                          keyboardType: TextInputType.number,
+                                                          textAlign: TextAlign.center,
+                                                          style: AppTextStyles.headline1.copyWith(fontSize: 28),
+                                                          inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(1)],
+                                                          decoration: InputDecoration(
+                                                            hintText: '0',
+                                                            hintStyle: TextStyle(color: Theme.of(context).hintColor),
+                                                            border: InputBorder.none,
+                                                            counterText: '',
+                                                            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                                                          ),
+                                                          onChanged: (val) {
+                                                            if (val.length > 1) {
+                                                              final chars = val.split('');
+                                                              for (var k = 0; k < chars.length && (i + k) < 4; k++) {
+                                                                _otpControllers[i + k].text = chars[k];
+                                                              }
+                                                              final next = (i + chars.length) < 4 ? (i + chars.length) : 3;
+                                                              _otpFocusNodes[next].requestFocus();
+                                                              setState(() {});
+                                                              return;
+                                                            }
+                                                            if (val.isNotEmpty) {
+                                                              final next = i + 1;
+                                                              if (next < 4) {
+                                                                _otpFocusNodes[next].requestFocus();
+                                                              } else {
+                                                                _otpFocusNodes[i].unfocus();
+                                                              }
+                                                            } else {
+                                                              final prev = i - 1;
+                                                              if (prev >= 0) {
+                                                                _otpFocusNodes[prev].requestFocus();
+                                                              }
+                                                            }
+                                                            setState(() {});
+                                                          },
+                                                        ),
+                                                      ),
                                                     ),
-                                                  ),
-                                                )
-                                              : RichText(
-                                                  textAlign: TextAlign.center,
-                                                  text: TextSpan(
-                                                    style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                                    children: [
-                                                      TextSpan(text: AppLanguage.consentPrefix + ' '),
-                                                      TextSpan(
-                                                        text: AppLanguage.termsOfUse,
-                                                        style: const TextStyle(decoration: TextDecoration.underline),
-                                                      ),
-                                                      TextSpan(text: ' ' + AppLanguage.and + ' '),
-                                                      TextSpan(
-                                                        text: AppLanguage.privacyPolicy,
-                                                        style: const TextStyle(decoration: TextDecoration.underline),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                        ),
-                                        const SizedBox(height: 12),
-                                        AnimatedSwitcher(
-                                          duration: const Duration(milliseconds: 200),
-                                          switchInCurve: Curves.easeOut,
-                                          switchOutCurve: Curves.easeIn,
-                                          child: SizedBox(
-                                            key: const ValueKey('send_button'),
-                                            width: double.infinity,
-                                            child: AppButton(
-                                              text: state.status == VerificationStatus.enteringOtp ? AppLanguage.verifyMyNumber : AppLanguage.sendCode,
-                                              onPressed: state.status == VerificationStatus.loading
-                                                  ? null
-                                                  : () async {
-                                                      if (state.status == VerificationStatus.enteringOtp) {
-                                                        final otp = _otpControllers.map((c) => c.text.trim()).join();
-                                                        if (otp.length < 4) return;
-                                                        cubit.verifyOtp(otp);
-                                                        return;
-                                                      }
-                                                      // Validate the form before sending
-                                                      final valid = _formKey.currentState?.validate() ?? false;
-                                                      if (!valid) return;
-                                                      await cubit.sendCode();
-                                                    },
-                                              isLoading: state.status == VerificationStatus.loading,
-                                              height: AppDimensions.buttonHeight,
-                                              padding: const EdgeInsets.symmetric(horizontal: AppDimensions.buttonHorizontalPadding),
+                                                ],
+                                              ),
+                                              // validator for combined OTP
+                                              Builder(builder: (context) {
+                                                return SizedBox.shrink();
+                                              }),
+                                            ],
+                                          ),
+                                        )
+                                      : AppTextField(
+                                          controller: _phoneController,
+                                          focusNode: _phoneFocusNode,
+                                          keyboardType: TextInputType.phone,
+                                          hintText: null,
+                                          // validate phone: must be digits and at least 8 chars
+                                          validator: (v) {
+                                            final value = v?.trim() ?? '';
+                                            if (value.isEmpty) return AppLanguage.phoneEmptyError;
+
+                                            // Allow only digits and optional leading +
+                                            final charsPattern = RegExp(r'^\+?[0-9]+$');
+                                            if (!charsPattern.hasMatch(value)) return AppLanguage.phoneInvalidCharactersError;
+
+                                            // Normalize for checking: remove '+'
+                                            final normalized = value.startsWith('+') ? value.substring(1) : value;
+
+                                            // Check prefix: Algeria numbers should start with 213 or 0
+                                            if (!(normalized.startsWith('213') || normalized.startsWith('0'))) {
+                                              return AppLanguage.phoneInvalidPrefixError;
+                                            }
+
+                                            // After prefix, check expected length
+                                            if (normalized.startsWith('213')) {
+                                              if (normalized.length != 12) return AppLanguage.phoneInvalidLengthError;
+                                            } else if (normalized.startsWith('0')) {
+                                              if (normalized.length != 10) return AppLanguage.phoneInvalidLengthError;
+                                            }
+
+                                            // Final strict pattern for Algerian numbers
+                                            final pattern = RegExp(r'^(?:\+213|0)(5|6|7)[0-9]{8}$');
+                                            if (!pattern.hasMatch(value)) return AppLanguage.phoneInvalidError;
+                                            return null;
+                                          },
+                                          autovalidateMode: AutovalidateMode.disabled,
+                                          leading: SizedBox(
+                                            width: AppDimensions.flagButtonWidth,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                                              child: _FlagButton(
+                                                currentAsset: 'assets/images/flags/algeria.svg',
+                                                onSelected: (asset) => cubit.setCountryCode(asset),
+                                                preserveFocus: _phoneFocusNode,
+                                              ),
                                             ),
                                           ),
+                                          onChanged: (v) => cubit.setPhoneNumber(v),
                                         ),
-                                        const SizedBox(height: AppDimensions.spacingXL),
-                                      ] else ...[
-                                        // Hidden send button
-                                        AnimatedSwitcher(
-                                          duration: const Duration(milliseconds: 200),
-                                          child: const SizedBox.shrink(key: ValueKey('send_button_hidden')),
-                                        ),
-                                        const SizedBox(height: AppDimensions.spacingXL),
-                                        Align(
-                                          alignment: Alignment.center,
-                                          child: RichText(
+                                ),
+
+                                // Flexible spacer pushes the following content to the bottom
+                                const Spacer(),
+
+                                // If focused: show consent (or OTP resend message) above the button, then the button.
+                                // Otherwise: the button is hidden and consent sits at the bottom.
+                                if (_phoneFocusNode.hasFocus || state.status == VerificationStatus.enteringOtp) ...[
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: state.status == VerificationStatus.enteringOtp
+                                        ? Padding(
+                                            padding: const EdgeInsets.only(bottom: AppDimensions.spacingXXL),
+                                            child: RichText(
+                                              textAlign: TextAlign.center,
+                                              text: TextSpan(
+                                                style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                                                children: [
+                                                  TextSpan(
+                                                    text: AppLanguage.noCodeReceived + ' ',
+                                                    style: AppTextStyles.caption.copyWith(decoration: TextDecoration.underline, color: Theme.of(context).colorScheme.onSurface),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          )
+                                        : RichText(
                                             textAlign: TextAlign.center,
                                             text: TextSpan(
                                               style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
@@ -476,12 +417,68 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                               ],
                                             ),
                                           ),
-                                        ),
-                                      ],
-                                    ],
                                   ),
-                                ),
-                              ),
+                                  const SizedBox(height: 12),
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    switchInCurve: Curves.easeOut,
+                                    switchOutCurve: Curves.easeIn,
+                                    child: SizedBox(
+                                      key: const ValueKey('send_button'),
+                                      width: double.infinity,
+                                          child: AppButton(
+                                            text: state.status == VerificationStatus.enteringOtp ? AppLanguage.verifyMyNumber : AppLanguage.sendCode,
+                                            onPressed: state.status == VerificationStatus.loading
+                                                ? null
+                                                : () async {
+                                                    if (state.status == VerificationStatus.enteringOtp) {
+                                                      final otp = _otpControllers.map((c) => c.text.trim()).join();
+                                                      if (otp.length < 4) return;
+                                                      cubit.verifyOtp(otp);
+                                                      return;
+                                                    }
+                                                    // Validate the form before sending
+                                                    final valid = _formKey.currentState?.validate() ?? false;
+                                                    if (!valid) return;
+                                                    await cubit.sendCode();
+                                                  },
+                                            isLoading: state.status == VerificationStatus.loading,
+                                            height: 48,
+                                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                                          ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: AppDimensions.spacingXL),
+                                ] else ...[
+                                  // Hidden send button
+                                  AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: const SizedBox.shrink(key: ValueKey('send_button_hidden')),
+                                  ),
+                                  const SizedBox(height: AppDimensions.spacingXL),
+                                  Align(
+                                    alignment: Alignment.center,
+                                    child: RichText(
+                                      textAlign: TextAlign.center,
+                                      text: TextSpan(
+                                        style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                                        children: [
+                                          TextSpan(text: AppLanguage.consentPrefix + ' '),
+                                          TextSpan(
+                                            text: AppLanguage.termsOfUse,
+                                            style: const TextStyle(decoration: TextDecoration.underline),
+                                          ),
+                                          TextSpan(text: ' ' + AppLanguage.and + ' '),
+                                          TextSpan(
+                                            text: AppLanguage.privacyPolicy,
+                                            style: const TextStyle(decoration: TextDecoration.underline),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             );
                           },
                         ),
@@ -559,12 +556,12 @@ class _FlagButtonState extends State<_FlagButton> {
                   link: _layerLink,
                   showWhenUnlinked: false,
                   offset: Offset(0, buttonHeight),
-                    child: Material(
+                  child: Material(
                     elevation: 8,
                     color: Theme.of(context).cardColor,
                     borderRadius: BorderRadius.circular(8),
                     child: ConstrainedBox(
-                      constraints: BoxConstraints(minWidth: AppDimensions.popupMinWidth, maxWidth: AppDimensions.popupMaxWidth),
+                      constraints: BoxConstraints(minWidth: 150, maxWidth: 280),
                       child: IntrinsicWidth(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -582,7 +579,7 @@ class _FlagButtonState extends State<_FlagButton> {
                                 padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
                                 child: Row(
                                   children: [
-                                    FlagImage.asset('assets/images/flags/algeria.svg', width: AppDimensions.flagImageWidth, height: AppDimensions.flagImageHeight),
+                                    FlagImage.asset('assets/images/flags/algeria.svg', width: 28, height: 20),
                                     const SizedBox(width: 12),
                                     Text('Algeria'),
                                   ],

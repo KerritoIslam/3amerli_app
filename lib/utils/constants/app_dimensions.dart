@@ -38,18 +38,4 @@ class AppDimensions {
   // App specific sizes
   static const double appBarHeight = 56.0;
   static const double cardElevation = 4.0;
-  // OTP input sizes
-  static const double otpBoxWidth = 64.0;
-  static const double otpFontSize = 28.0;
-  static const double otpBoxVerticalPadding = 14.0;
-  static const double otpUnderlineThickness = 4.0;
-  // Panel shadow control
-  static const double panelShadowBlur = 12.0;
-  static const double panelShadowOffsetY = 6.0;
-  // Popup sizes
-  static const double popupMinWidth = 150.0;
-  static const double popupMaxWidth = 280.0;
-  // Button sizes
-  static const double buttonHeight = 48.0;
-  static const double buttonHorizontalPadding = 20.0;
 }
