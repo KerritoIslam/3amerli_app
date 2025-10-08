@@ -70,6 +70,8 @@ class AppColors {
 
   // Additional neutral colors
   static const Color greyBorder = Color(0xFFBDBDBD); // neutral grey for borders
+  // Brand / danger red requested: #C94949
+  static const Color brandRed = Color(0xFFC94949);
   // Neutral light used for hints and subtle borders (#D3D3D3)
   static const Color neutralLight300 = Color(0xFFD3D3D3);
   // A convenient alias for UI hint color usage (match Theme.hintColor)

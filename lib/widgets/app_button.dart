@@ -14,7 +14,8 @@ class AppButton extends StatelessWidget {
   const AppButton({
     super.key,
     required this.onPressed,
-    required this.text,
+    this.text,
+    this.child,
     this.icon,
     this.backgroundColor,
     this.textColor,
@@ -31,11 +32,12 @@ class AppButton extends StatelessWidget {
     this.isFilled = true,
     this.isText = false,
     this.tooltip,
-  });
+  }) : assert(text != null || child != null || icon != null || isLoading == true, 'AppButton requires at least one of text, child, icon or isLoading');
 
   // Core
   final VoidCallback? onPressed;
-  final String text;
+  final String? text;
+  final Widget? child;
   final Widget? icon;
 
   // Styling
@@ -73,7 +75,7 @@ class AppButton extends StatelessWidget {
   final double defaultHeight = height ?? 48.0; // fallback if not provided
   final TextStyle defaultTextStyle = (textStyle ?? AppTextStyles.buttonLargeBold).copyWith(color: onPrimary);
 
-    final child = isLoading
+    final content = isLoading
         ? SizedBox(
             height: (defaultHeight * 0.5),
             width: (defaultHeight * 0.5),
@@ -90,8 +92,8 @@ class AppButton extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               Flexible(
-                child: Text(
-                  text,
+                child: child ?? Text(
+                  text ?? '',
                   overflow: TextOverflow.ellipsis,
                   style: defaultTextStyle,
                 ),
@@ -101,7 +103,7 @@ class AppButton extends StatelessWidget {
 
     final buttonChild = Padding(
       padding: defaultPadding,
-      child: Center(child: child),
+      child: Center(child: content),
     );
 
     final shape = RoundedRectangleBorder(

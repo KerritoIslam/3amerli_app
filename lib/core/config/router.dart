@@ -1,6 +1,8 @@
 import 'dart:async';
 // import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
+import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
 import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
+import 'package:amerli_app/features/profile/app/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 // GetIt is not used here; AuthBloc is injected by the caller
@@ -68,7 +70,7 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
         builder: (context, state) {
           final seen = localStorage.getBool('seen_onboarding') ?? false;
           if (!seen) return const OnboardingFlow();
-          return const SignUpPage();
+          return ProfilePage();
         },
       ),
       GoRoute(
@@ -83,6 +85,7 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       GoRoute(path: '/payments', builder: (context, state) => const PaymentsPage()),
       GoRoute(path: '/delivery', builder: (context, state) => const DeliveryPage()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsPage()),
+      GoRoute(path: '/profile', builder: (context, state) => const ProfilePage()),
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
     ],
   );
