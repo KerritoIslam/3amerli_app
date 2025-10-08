@@ -8,6 +8,7 @@ import 'core/config/settings.dart';
 import 'utils/constants/app_language.dart';
 import 'utils/theme/app_theme.dart';
 import 'core/config/router.dart';
+import 'core/storage/local_storage.dart';
 // routing will provide pages and blocs via DI where needed
 
 
@@ -83,7 +84,8 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
   final authBloc = di.sl<AuthBloc>();
-  final router = createRouter(authBloc: authBloc);
+  final localStorage = di.sl<LocalStorage>();
+  final router = createRouter(authBloc: authBloc, localStorage: localStorage);
     // Provide app-scoped blocs at the root so children can use context.read<T>()
     return MultiBlocProvider(
       providers: [

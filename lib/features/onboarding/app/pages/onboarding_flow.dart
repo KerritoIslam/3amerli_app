@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/config/injection.dart' as di;
+import '../../../../core/storage/local_storage.dart';
 import 'package:amerli_app/utils/constants/app_dimensions.dart';
 import '../../../../widgets/custom_tab_bar.dart';
 import 'first_intro.dart' as first_intro;
@@ -41,6 +43,15 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
     _controller.animateToPage(idx, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
+  Future<void> _markSeenIfFinal(int idx) async {
+    if (idx == 3) {
+      try {
+        final local = di.sl<LocalStorage>();
+        await local.setBool('seen_onboarding', true);
+      } catch (_) {}
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -49,8 +60,12 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
           next: () {
             final nextIndex = (_index + 1).clamp(0, 3);
             _goTo(nextIndex);
+            _markSeenIfFinal(nextIndex);
           },
-          last: () => _goTo(3),
+          last: () {
+            _goTo(3);
+            _markSeenIfFinal(3);
+          },
           child: Column(
             children: [
               CustomTabBar(
@@ -68,7 +83,10 @@ class _OnboardingFlowState extends State<OnboardingFlow> {
               Expanded(
                 child: PageView(
                   controller: _controller,
-                  onPageChanged: (p) => setState(() => _index = p),
+                  onPageChanged: (p) {
+                    setState(() => _index = p);
+                    _markSeenIfFinal(p);
+                  },
                   children: [
                     const first_intro.FirstIntro(),
                     const second_intro.SecondIntro(),

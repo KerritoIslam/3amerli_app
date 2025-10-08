@@ -245,12 +245,13 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                         return SizedBox(
                                           width: 56,
                                           child: TextField(
+                                            
                                             controller: _otpControllers[i],
                                             focusNode: _otpFocusNodes[i],
                                             keyboardType: TextInputType.number,
                                             textAlign: TextAlign.center,
                                             maxLength: 1,
-                                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold , color: Theme.of(context).colorScheme.primary),
                                             decoration: InputDecoration(
                                               counterText: '',
                                               hintText: '0',
