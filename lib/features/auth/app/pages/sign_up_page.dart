@@ -251,7 +251,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                             keyboardType: TextInputType.number,
                                             textAlign: TextAlign.center,
                                             maxLength: 1,
-                                            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold , color: Theme.of(context).colorScheme.primary),
+                                            style: TextStyle(fontSize: 24, color: Theme.of(context).colorScheme.primary),
                                             decoration: InputDecoration(
                                               counterText: '',
                                               hintText: '0',

@@ -76,6 +76,27 @@ flutter:
     - assets/images/flags/
     - assets/images/hero/
 
+  fonts:
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist/Geist-Regular.ttf
+        - asset: assets/fonts/Geist/Geist-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Geist/Geist-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Geist/Geist-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Geist/Geist-ExtraBold.ttf
+          weight: 800
+        - asset: assets/fonts/Geist/Geist-Black.ttf
+          weight: 900
+        - asset: assets/fonts/Geist/Geist-Thin.ttf
+          weight: 100
+        - asset: assets/fonts/Geist/Geist-ExtraLight.ttf
+          weight: 200
+        - asset: assets/fonts/Geist/Geist-Light.ttf
+          weight: 300
+
   # To add assets to your application, add an assets section, like this:
   # assets:
   #   - images/a_dot_burr.jpeg
