@@ -32,10 +32,11 @@ class AnimatedBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 28 , vertical: 13),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceVariant,
+        // Use the requested gray with 80% opacity: alpha CC, rgb 80/80/80
+        color: const Color(0xCC808080),
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -70,47 +71,15 @@ class NavBarItem extends StatefulWidget {
 }
 
 class _NavBarItemState extends State<NavBarItem> {
-  // Controls whether the outer pill shows the selected background.
-  // We intentionally keep this false while the expansion animation runs
-  // so the outer container remains transparent during the transition.
-  late bool _showBackground;
-
-  @override
-  void initState() {
-    super.initState();
-    _showBackground = widget.isSelected;
-  }
-
-  @override
-  void didUpdateWidget(covariant NavBarItem oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // If selection just changed to true, keep background hidden until
-    // the animation finishes. If it was deselected, hide it immediately.
-    if (!oldWidget.isSelected && widget.isSelected) {
-      // start with background hidden while expanding
-      if (_showBackground) setState(() => _showBackground = false);
-    } else if (oldWidget.isSelected && !widget.isSelected) {
-      // hide background immediately when deselected
-      if (_showBackground) setState(() => _showBackground = false);
-    }
-  }
+  // No local background state: we show the selected background instantly
+  // when `widget.isSelected` is true to avoid mid-transition darkening.
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: widget.onTap,
       child: Builder(builder: (context) {
-        final animated = AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          // Trigger onEnd to flip the background on after expansion completes
-          onEnd: () {
-            if (!mounted) return;
-            if (widget.isSelected && !_showBackground) {
-              setState(() => _showBackground = true);
-            }
-            // when deselected we already set _showBackground = false in didUpdateWidget
-          },
+        final animated = Container(
           height: 40,
           padding: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
@@ -122,8 +91,8 @@ class _NavBarItemState extends State<NavBarItem> {
                   offset: const Offset(0, -0.3),
                 )
             ],
-            // Use the local _showBackground flag so the color only appears
-            // after the expansion animation completes.
+            // Show the selected background instantly when selected so
+            // its color doesn't animate/darken during the label expansion.
             color: widget.isSelected ? Theme.of(context).colorScheme.onPrimary : Colors.transparent,
             borderRadius: BorderRadius.circular(25),
           ),
@@ -164,15 +133,14 @@ class _NavBarItemState extends State<NavBarItem> {
           ),
         );
 
-        // Always wrap the animated container to keep the widget tree stable
-        // (this preserves AnimatedContainer/AnimatedSize transitions). We
-        // toggle the visible shadow by adjusting `strength` to 0 when not
-        // selected so the painter becomes a no-op visually.
-        final showShadow = widget.isSelected || _showBackground;
+        // Always wrap the container to keep the widget tree stable so
+        // AnimatedSize on the label animates smoothly. The inner shadow's
+        // visibility is tied directly to `widget.isSelected` so it doesn't
+        // introduce intermediate darker states.
         return InnerShadow(
           radius: 25,
           color: Colors.black,
-          strength: showShadow ? 0.12 : 0.0,
+          strength: widget.isSelected ? 0.12 : 0.0,
           blur: 8,
           child: animated,
         );

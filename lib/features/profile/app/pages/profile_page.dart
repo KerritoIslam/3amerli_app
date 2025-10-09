@@ -25,16 +25,17 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                SizedBox(height: 30),
                 Center(
                   child :Container(
                   width: double.infinity,
                   child:Column(
                     children: [SizedBox(height: 20),
-                Text("Mon Profil", style: Theme.of(context).textTheme.headlineLarge),
-                SizedBox(height: 20),
+                Text("Mon Profil", style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+                SizedBox(height: 15),
                 SizedBox(
-                  width: 96,
-                  height: 96,
+                  width: 50,
+                  height: 50,
                   child: ClipOval(
                     child: Image.network(
                       // Temporary random image until backend provides profile URLs
@@ -126,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   
                 ]),
-                SizedBox(height: 20),
+                SizedBox(height: 30),
                 AppButton(onPressed: () {}, 
                   backgroundColor: AppColors.brandRed,
                   child: Row (

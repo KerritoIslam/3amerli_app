@@ -20,9 +20,9 @@ class _HomePageState extends State<HomePage> {
     super.initState();
     _pages = [
       const CatalogPage(),
-      const ProfilePage(),
       const Center(child: Text('Placeholder 1')),
       const Center(child: Text('Placeholder 2')),
+      const ProfilePage(),
     ];
   }
 
