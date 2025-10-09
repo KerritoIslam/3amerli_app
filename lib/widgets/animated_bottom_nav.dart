@@ -1,10 +1,11 @@
 
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 // inset shadow removed — no external dependency
 
 class NavItem {
-  final IconData icon;
+  final String icon;
   final String label;
 
   NavItem({required this.icon, required this.label});
@@ -52,7 +53,7 @@ class AnimatedBottomNavBar extends StatelessWidget {
   }
 }
 
-class NavBarItem extends StatelessWidget {
+class NavBarItem extends StatefulWidget {
   final NavItem item;
   final bool isSelected;
   final VoidCallback onTap;
@@ -65,26 +66,64 @@ class NavBarItem extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<NavBarItem> createState() => _NavBarItemState();
+}
+
+class _NavBarItemState extends State<NavBarItem> {
+  // Controls whether the outer pill shows the selected background.
+  // We intentionally keep this false while the expansion animation runs
+  // so the outer container remains transparent during the transition.
+  late bool _showBackground;
+
+  @override
+  void initState() {
+    super.initState();
+    _showBackground = widget.isSelected;
+  }
+
+  @override
+  void didUpdateWidget(covariant NavBarItem oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // If selection just changed to true, keep background hidden until
+    // the animation finishes. If it was deselected, hide it immediately.
+    if (!oldWidget.isSelected && widget.isSelected) {
+      // start with background hidden while expanding
+      if (_showBackground) setState(() => _showBackground = false);
+    } else if (oldWidget.isSelected && !widget.isSelected) {
+      // hide background immediately when deselected
+      if (_showBackground) setState(() => _showBackground = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        
+        // Trigger onEnd to flip the background on after expansion completes
+        onEnd: () {
+          if (!mounted) return;
+          if (widget.isSelected && !_showBackground) {
+            setState(() => _showBackground = true);
+          }
+          // when deselected we already set _showBackground = false in didUpdateWidget
+        },
         height: 40,
         padding: const EdgeInsets.only(right: 8),
         decoration: BoxDecoration(
-        
           boxShadow: [
-           if (isSelected) BoxShadow(
+            if (widget.isSelected)
+              BoxShadow(
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                blurRadius: 0.5,
-                
-                offset: Offset(0.5,-0.5),
+                blurRadius: 0.3,
+                offset: const Offset(0, -0.3),
               )
           ],
-          color: isSelected ? Theme.of(context).colorScheme.onPrimary : Colors.transparent,
+          // Use the local _showBackground flag so the color only appears
+          // after the expansion animation completes.
+          color: _showBackground ? Theme.of(context).colorScheme.onPrimary : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
         ),
         child: Row(
@@ -92,23 +131,23 @@ class NavBarItem extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             // Circular red background with white icon (always red per request)
-            _IconCircle(icon: item.icon, isSelected: isSelected),
+            _IconCircle(icon: widget.item.icon, isSelected: widget.isSelected),
 
             // Animated label that appears when selected. The label's
             // container height is fixed to the circle diameter so the
             // item doesn't grow taller; only width changes.
             AnimatedSize(
-              duration:  Duration(milliseconds: 300),
+              duration: const Duration(milliseconds: 300),
               curve: Curves.easeInOut,
               alignment: Alignment.centerLeft,
-              child: isSelected
+              child: widget.isSelected
                   ? Padding(
                       padding: const EdgeInsets.only(left: 10),
                       child: SizedBox(
                         height: 40,
                         child: Center(
                           child: Text(
-                            item.label,
+                            widget.item.label,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w600,
@@ -129,7 +168,7 @@ class NavBarItem extends StatelessWidget {
 
 // Small private widget to keep the circular icon consistent and const-friendly.
 class _IconCircle extends StatefulWidget {
-  final IconData icon;
+  final String icon;
   final bool isSelected;
   const _IconCircle({required this.icon, required this.isSelected});
 
@@ -147,19 +186,19 @@ class _IconCircleState extends State<_IconCircle> {
         boxShadow: [
            BoxShadow(
                 color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                blurRadius: 0.5,
-                
-                offset: Offset(0.5,-0.5),
+                blurRadius: 0.3,
+                offset: const Offset(0, -0.3),
               )
         ],
         color: widget.isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onPrimary,
         shape: BoxShape.circle,
       ),
       child: Center(
-        child: Icon(
+        child: SvgPicture.asset(
           widget.icon,
           color: widget.isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.primary,
-          size: 20,
+          width: 20,
+          height: 20,
         ),
       ),
     );

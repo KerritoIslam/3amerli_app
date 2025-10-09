@@ -33,10 +33,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final navItems = [
-      NavItem(icon: Icons.storefront_outlined, label: 'Catalogue'),
-      NavItem(icon: Icons.person_outline, label: 'Profil'),
-      NavItem(icon: Icons.list_alt_outlined, label: 'Orders'),
-      NavItem(icon: Icons.notifications_none, label: 'Notifications'),
+      NavItem(icon: "assets/icons/home.svg", label: 'Accueil'),
+      NavItem(icon: "assets/icons/panier.svg", label: 'Panier'),
+      NavItem(icon: "assets/icons/favoris.svg", label: 'Favoris'),
+      NavItem(icon: "assets/icons/profil.svg", label: 'Profil'),
     ];
 
     return Scaffold(
