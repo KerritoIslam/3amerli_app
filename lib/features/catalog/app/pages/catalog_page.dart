@@ -1,36 +1,65 @@
+import 'package:amerli_app/widgets/icon_circle.dart';
+import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../bloc/catalog_bloc.dart';
-import '../bloc/catalog_event.dart';
-import '../bloc/catalog_state.dart';
-import '../widgets/product_tile.dart';
-
-class CatalogPage extends StatelessWidget {
+class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
 
   @override
+  State<CatalogPage> createState() => _CatalogPageState();
+}
+
+class _CatalogPageState extends State<CatalogPage> {
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Catalog')),
-      body: SafeArea(
-        child: BlocBuilder<CatalogBloc, CatalogState>(
-          builder: (context, state) {
-            if (state is CatalogLoading) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (state is CatalogLoaded) {
-              final products = state.products;
-              return ListView.separated(
-                padding: const EdgeInsets.all(12),
-                itemCount: products.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 8),
-                itemBuilder: (context, index) => ProductTile(product: products[index]),
-              );
-            } else if (state is CatalogError) {
-              return Center(child: Text('Error: ${state.message}'));
-            }
-            return Center(child: ElevatedButton(onPressed: () => context.read<CatalogBloc>().add(CatalogLoadEvent()), child: const Text('Load')));
-          },
+    return SafeArea(
+      child: Container(
+        padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Bienvenue sur {Logo}", style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+            SizedBox(height: 15),
+            SizedBox(
+              height: 40,
+              child: Row(
+                children: [
+                  Expanded( // <-- constrain the TextField width
+                    child: AppSearchbar(
+                      
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                    // Use an InkWell (or GestureDetector) wrapping IconCircle so
+                    // the circle's `size` controls the visual radius. IconButton
+                    // applies its own constraints/padding which can prevent the
+                    // circle from sizing as expected.
+                    InkWell(
+                      onTap: () {},
+                      borderRadius: BorderRadius.circular(20),
+                      child: IconCircle(
+                        asset: "assets/icons/notifications.svg",
+                        isSelected: false,
+                        size: 40,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            Center(child: Text("Catalogue", style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24))),
+            Expanded(
+              child: ListView.builder(
+                itemCount: 20,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text("Item $index"),
+                  );
+                },
+              ),
+            ),
+          ],
+
         ),
       ),
     );

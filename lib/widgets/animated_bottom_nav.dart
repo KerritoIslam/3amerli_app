@@ -1,14 +1,17 @@
 
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:amerli_app/widgets/icon_circle.dart';
 // inset shadow removed — no external dependency
 
 class NavItem {
-  final String icon;
+  /// SVG asset path to use for the icon. If null, [dataIcon] will be used.
+  final String? asset;
+  /// Fallback IconData when [asset] is null.
+  final IconData? dataIcon;
   final String label;
 
-  NavItem({required this.icon, required this.label});
+  NavItem({this.asset, this.dataIcon, required this.label}) : assert(asset != null || dataIcon != null);
 }
 
 /// A simple animated bottom navigation bar.
@@ -101,7 +104,7 @@ class _NavBarItemState extends State<NavBarItem> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Circular red background with white icon (always red per request)
-              _IconCircle(icon: widget.item.icon, isSelected: widget.isSelected),
+              IconCircle(asset: widget.item.asset, dataIcon: widget.item.dataIcon, isSelected: widget.isSelected),
 
               // Animated label that appears when selected. The label's
               // container height is fixed to the circle diameter so the
@@ -252,41 +255,4 @@ class _InnerShadowPainter extends CustomPainter {
   }
 }
 
-// Small private widget to keep the circular icon consistent and const-friendly.
-class _IconCircle extends StatefulWidget {
-  final String icon;
-  final bool isSelected;
-  const _IconCircle({required this.icon, required this.isSelected});
-
-  @override
-  State<_IconCircle> createState() => _IconCircleState();
-}
-
-class _IconCircleState extends State<_IconCircle> {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 40,
-      height: 40,
-      decoration:  BoxDecoration(
-        boxShadow: [
-           BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
-                blurRadius: 0.3,
-                offset: const Offset(0, -0.3),
-              )
-        ],
-        color: widget.isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onPrimary,
-        shape: BoxShape.circle,
-      ),
-      child: Center(
-        child: SvgPicture.asset(
-          widget.icon,
-          color: widget.isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).colorScheme.primary,
-          width: 20,
-          height: 20,
-        ),
-      ),
-    );
-  }
-}
+// (IconCircle moved to lib/widgets/icon_circle.dart)

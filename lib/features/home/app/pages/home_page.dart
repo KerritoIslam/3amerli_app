@@ -33,18 +33,47 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final navItems = [
-      NavItem(icon: "assets/icons/home.svg", label: 'Accueil'),
-      NavItem(icon: "assets/icons/panier.svg", label: 'Panier'),
-      NavItem(icon: "assets/icons/favoris.svg", label: 'Favoris'),
-      NavItem(icon: "assets/icons/profil.svg", label: 'Profil'),
+      NavItem(asset: "assets/icons/home.svg", label: 'Accueil'),
+      NavItem(asset: "assets/icons/panier.svg", label: 'Panier'),
+      NavItem(asset: "assets/icons/favoris.svg", label: 'Favoris'),
+      NavItem(asset: "assets/icons/profil.svg", label: 'Profil'),
     ];
 
     return Scaffold(
-      body: SafeArea(child: _pages[_selected]),
-      bottomNavigationBar: AnimatedBottomNavBar(
-        items: navItems,
-        selectedIndex: _selected,
-        onItemSelected: _onItemSelected,
+      // Use a Stack so the navigation bar can be positioned on top of
+      // page content. Pages will render beneath the nav, avoiding the
+      // overflow that occurs when content touches the bar.
+      body: Stack(
+        children: [
+          // Page content - allow it to extend to the full screen so it
+          // can appear under the nav bar.
+          Positioned.fill(
+            child: SafeArea(
+              top: true,
+              bottom: false, // let content go under the bottom nav
+              child: _pages[_selected],
+            ),
+          ),
+
+          // Positioned nav bar at the bottom, inside a SafeArea so it
+          // won't overlap system gesture area.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              bottom: true,
+              child: Center(
+                child: AnimatedBottomNavBar(
+                  items: navItems,
+                  selectedIndex: _selected,
+                  onItemSelected: _onItemSelected,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

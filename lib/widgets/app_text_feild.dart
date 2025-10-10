@@ -25,6 +25,8 @@ class AppTextField extends StatefulWidget {
     this.hintText,
     this.labelText,
     this.leading,
+    this.prefix,
+    this.prefixIcon,
     this.trailing,
     this.fillColor,
     this.filled,
@@ -72,6 +74,11 @@ class AppTextField extends StatefulWidget {
   final String? hintText;
   final String? labelText;
   final Widget? leading;
+  /// A widget placed before the input (inside the decoration's `prefix`).
+  final Widget? prefix;
+  /// An icon widget placed in the `prefixIcon` slot. If provided it takes
+  /// precedence over [leading] which previously filled this slot.
+  final Widget? prefixIcon;
   final Widget? trailing;
   final Color? fillColor;
   final bool? filled;
@@ -165,12 +172,31 @@ class _AppTextFieldState extends State<AppTextField> {
     final effectiveDecoration = InputDecoration(
       hintText: widget.hintText,
       labelText: widget.labelText,
-      prefixIcon: widget.leading,
+      // `prefixIcon` takes precedence (new API). If not provided we
+      // fall back to the older `leading` property for compatibility.
+      prefixIcon: widget.prefixIcon ?? widget.leading,
       // Allow larger or custom-sized leading widgets; keeps layout stable.
-      prefixIconConstraints: widget.leading != null
+      prefixIconConstraints: (widget.prefixIcon ?? widget.leading) != null
           ? const BoxConstraints(minWidth: 40, maxWidth: 64)
           : null,
-      suffixIcon: widget.trailing,
+      // `prefix` allows arbitrary widgets before the text (outside the
+      // icon constraints) and is rendered if provided. We wrap it with a
+      // small right padding so it's visually closer to the input text
+      // than the leading/prefixIcon which sits in the icon slot.
+      prefix: widget.prefix != null
+          ? Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: widget.prefix,
+            )
+          : null,
+  // Place trailing in the `suffixIcon` slot (wrapped) so it appears at the
+  // far right of the field and reserves proper space via constraints.
+  suffixIcon: widget.trailing != null
+      ? Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: widget.trailing,
+        )
+      : null,
       fillColor: widget.fillColor,
       filled: widget.filled ?? false,
       border: widget.border ?? defaultBorder,
@@ -178,7 +204,15 @@ class _AppTextFieldState extends State<AppTextField> {
       focusedBorder: widget.focusedBorder ?? defaultBorder.copyWith(
         borderSide: const BorderSide(color: AppColors.greyBorder, width: 1.2),
       ),
-  contentPadding: widget.contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+  // Add a bit more right padding when a trailing widget (suffixIcon)
+  // is present so it doesn't collide with the prefix or the input text.
+  // Ensure left padding is present as well.
+  contentPadding: widget.contentPadding ??
+      EdgeInsets.fromLTRB(16, 12, widget.trailing != null ? 48 : 16, 12),
+  // Ensure trailing reserves space when present.
+  suffixIconConstraints: widget.trailing != null
+      ? const BoxConstraints(minWidth: 40, maxWidth: 64)
+      : null,
       errorText: widget.errorText,
       hintStyle: widget.hintStyle,
       labelStyle: widget.labelStyle,
