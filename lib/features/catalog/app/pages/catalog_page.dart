@@ -1,7 +1,25 @@
+import 'package:amerli_app/core/ui/toast/toast_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:amerli_app/features/catalog/app/widgets/categories_row.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/widgets/icon_circle.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
-import 'package:flutter/material.dart';
+
+import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
+import 'package:amerli_app/features/catalog/app/bloc/catalog_state.dart';
+
+import 'package:amerli_app/features/catalog/app/bloc/categories_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/categories_event.dart';
+import 'package:amerli_app/features/catalog/app/bloc/categories_state.dart';
+
+import 'package:amerli_app/features/catalog/app/bloc/offers_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/offers_event.dart';
+import 'package:amerli_app/features/catalog/app/bloc/offers_state.dart';
+import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -11,80 +29,196 @@ class CatalogPage extends StatefulWidget {
 }
 
 class _CatalogPageState extends State<CatalogPage> {
+  late final OffersBloc _offersBloc;
+  late final CategoriesBloc _categoriesBloc;
+  late final CatalogBloc _catalogBloc;
+  final PageController _offersPageController = PageController(viewportFraction: 1.0);
+  @override
+  void initState() {
+    super.initState();
+    // initialize & reuse the same bloc instances before build so providers have them
+    _offersBloc = sl<OffersBloc>();
+    _categoriesBloc = sl<CategoriesBloc>();
+    _catalogBloc = sl<CatalogBloc>();
+
+    // Dispatch load events after first frame so UI is ready to show loading state
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _offersBloc.add(OffersLoadEvent());
+      _categoriesBloc.add(CategoriesLoadEvent());
+      _catalogBloc.add(CatalogLoadEvent());
+    });
+  }
+
+  @override
+  void dispose() {
+    _offersPageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Container(
-        padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
-        child: Column(
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _offersBloc),
+        BlocProvider.value(value: _categoriesBloc),
+        BlocProvider.value(value: _catalogBloc),
+      ],
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Bienvenue sur {Logo}", style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
-            SizedBox(height: 15),
+            Text('Bienvenue sur {Logo}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+            const SizedBox(height: 15),
+
+            // Search + notifications
             SizedBox(
               height: 40,
               child: Row(
                 children: [
-                  Expanded( // <-- constrain the TextField width
+                  Expanded(
                     child: AppSearchbar(
-                      
+                      onChanged: (_) => context.read<CatalogBloc>().add(CatalogLoadEvent()),
                     ),
                   ),
                   const SizedBox(width: 10),
-                    // Use an InkWell (or GestureDetector) wrapping IconCircle so
-                    // the circle's `size` controls the visual radius. IconButton
-                    // applies its own constraints/padding which can prevent the
-                    // circle from sizing as expected.
-                    InkWell(
-                      onTap: () {},
-                      borderRadius: BorderRadius.circular(20),
-                      child: IconCircle(
-                        asset: "assets/icons/notifications.svg",
-                        isSelected: false,
-                        size: 40,
-                      ),
+                  InkWell(
+                    onTap: () {},
+                    borderRadius: BorderRadius.circular(20),
+                    child: IconCircle(
+                      asset: 'assets/icons/notifications.svg',
+                      isSelected: false,
+                      size: 40,
                     ),
+                  ),
                 ],
               ),
             ),
-            SizedBox(height: 25),
-            Container(
-              width: double.infinity,
+
+            const SizedBox(height: 25),
+
+            // Offers (single page view with skeleton while loading)
+            SizedBox(
               height: 160,
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(32),
-              ),
+              child: BlocBuilder<OffersBloc, OffersState>(builder: (context, state) {
+                if (state is OffersLoading) {
+                  // show 3 skeleton pages
+                  return PageView.builder(
+                    controller: _offersPageController,
+                    itemCount: 3,
+                    itemBuilder: (context, index) => Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06)),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          SkeletonBox(height: 18),
+                          const SizedBox(height: 8),
+                          SkeletonBox(height: 12),
+                          const SizedBox(height: 6),
+                          SkeletonBox(height: 12),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+
+                if (state is OffersError) {
+                  ToastService.instance.showToast(context, 'Network error', type: ToastType.error);
+                  return Center(child: IconButton(onPressed: () => sl<OffersBloc>().add(OffersLoadEvent()), icon: const Icon(Icons.refresh)));
+                }
+
+                if (state is OffersLoaded) {
+                  final items = state.items;
+                  return PageView.builder(
+                    controller: _offersPageController,
+                    itemCount: items.length,
+                    itemBuilder: (context, i) {
+                      final offer = items[i];
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(offer.title, style: Theme.of(context).textTheme.titleMedium),
+                            const SizedBox(height: 8),
+                            Text(offer.description, maxLines: 3, overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                }
+
+                return const SizedBox.shrink();
+              }),
             ),
-            SizedBox(height: 20),
+
+            const SizedBox(height: 20),
+
+            // Categories header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                Text("Catégories", style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
-                Text(
-                  "Voir tout",
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.hint,
-                  decoration: TextDecoration.underline,
-                  decorationColor: AppColors.hint,
-                  ),
-                ),
+              children: [
+                Text('Catégories', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                Text('Voir tout', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint, decoration: TextDecoration.underline ,decorationColor: AppColors.hint)),
               ],
             ),
+
+            const SizedBox(height: 12),
+
+            // Categories row
+            SizedBox(
+              height: 40,
+              child: BlocBuilder<CategoriesBloc, CategoriesState>(builder: (context, state) {
+                if (state is CategoriesLoading) return const Center(child: CircularProgressIndicator());
+                if (state is CategoriesError) return Center(child: Text('Categories error: ${state.message}'));
+                if (state is CategoriesLoaded) return CategoriesRow(categories: state.items);
+                return CategoriesRow(categories: []);
+              }),
+            ),
+
+            const SizedBox(height: 12),
+            // Product list
             Expanded(
-              child: ListView.builder(
-                itemCount: 20,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text("Item $index"),
+              child: BlocBuilder<CatalogBloc, CatalogState>(builder: (context, state) {
+                if (state is CatalogLoading) return const Center(child: CircularProgressIndicator());
+                if (state is CatalogError) return Center(child: Text('Catalog error: ${state.message}'));
+                if (state is CatalogLoaded) {
+                  final products = state.products;
+                  return ListView.separated(
+                    itemCount: products.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, i) {
+                      final p = products[i];
+                      return ListTile(
+                        leading: p.pic != null
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.network(p.pic!, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported)),
+                              )
+                            : null,
+                        title: Text(p.name),
+                        subtitle: Text(p.description),
+                      );
+                    },
                   );
-                },
-              ),
+                }
+                return const SizedBox.shrink();
+              }),
             ),
           ],
-
         ),
       ),
-    );
+    ),
+  );
   }
 }

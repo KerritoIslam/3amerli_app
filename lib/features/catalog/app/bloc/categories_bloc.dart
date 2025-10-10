@@ -25,7 +25,7 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
 
   Future<void> _onCreate(CategoriesCreateEvent event, Emitter<CategoriesState> emit) async {
     try {
-      await repository.createCategory(name: event.name, description: event.description);
+      await repository.createCategory(name: event.name, description: event.description, image: event.image);
       add(CategoriesLoadEvent());
     } catch (e) {
       emit(CategoriesError(e.toString()));
@@ -34,7 +34,7 @@ class CategoriesBloc extends Bloc<CategoriesEvent, CategoriesState> {
 
   Future<void> _onUpdate(CategoriesUpdateEvent event, Emitter<CategoriesState> emit) async {
     try {
-      await repository.updateCategory(event.id, name: event.name, description: event.description);
+      await repository.updateCategory(event.id, name: event.name, description: event.description, image: event.image);
       add(CategoriesLoadEvent());
     } catch (e) {
       emit(CategoriesError(e.toString()));

@@ -77,16 +77,18 @@ class AppColors {
   // A convenient alias for UI hint color usage (match Theme.hintColor)
   static const Color hint = neutralLight300;
 
+  // Disabled color (use neutral light grey)
+  static const Color disabled = neutralLight300;
+
   // Convenience ColorSchemes
   static const ColorScheme lightScheme = ColorScheme(
     brightness: Brightness.light,
-    
     primary: lightPrimary,
     onPrimary: lightOnPrimary,
     primaryContainer: lightPrimaryContainer,
     onPrimaryContainer: lightOnPrimaryContainer,
-    secondary: lightSecondary,
-    onSecondary: lightOnSecondary,
+  secondary: neutralLight300,
+  onSecondary: lightOnSecondary,
     secondaryContainer: lightSecondaryContainer,
     onSecondaryContainer: lightOnSecondaryContainer,
     tertiary: lightTertiary,
@@ -117,8 +119,8 @@ class AppColors {
     onPrimary: darkOnPrimary,
     primaryContainer: darkPrimaryContainer,
     onPrimaryContainer: darkOnPrimaryContainer,
-    secondary: darkSecondary,
-    onSecondary: darkOnSecondary,
+  secondary: neutralLight300,
+  onSecondary: darkOnSecondary,
     secondaryContainer: darkSecondaryContainer,
     onSecondaryContainer: darkOnSecondaryContainer,
     tertiary: darkTertiary,

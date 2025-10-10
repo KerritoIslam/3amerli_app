@@ -9,14 +9,16 @@ class CategoriesLoadEvent extends CategoriesEvent {
 class CategoriesCreateEvent extends CategoriesEvent {
   final String name;
   final String? description;
-  CategoriesCreateEvent({required this.name, this.description});
+  final String? image;
+  CategoriesCreateEvent({required this.name, this.description, this.image});
 }
 
 class CategoriesUpdateEvent extends CategoriesEvent {
   final int id;
   final String? name;
   final String? description;
-  CategoriesUpdateEvent({required this.id, this.name, this.description});
+  final String? image;
+  CategoriesUpdateEvent({required this.id, this.name, this.description, this.image});
 }
 
 class CategoriesDeleteEvent extends CategoriesEvent {

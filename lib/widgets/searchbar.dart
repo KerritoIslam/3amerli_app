@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 
 class AppSearchbar extends StatefulWidget {
-  const AppSearchbar({super.key});
+  final ValueChanged<String>? onChanged;
+  const AppSearchbar({super.key, this.onChanged});
 
   @override
   State<AppSearchbar> createState() => _AppSearchbarState();
@@ -34,9 +35,7 @@ class _AppSearchbarState extends State<AppSearchbar>
         child: SvgPicture.asset("assets/icons/filter_icon.svg"),
       ),
       prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg"),
-      onChanged: (value) {
-        // Handle search input change
-      },
+      onChanged: widget.onChanged,
     );
   }
 }

@@ -27,6 +27,7 @@ import '../../features/catalog/repository/categories_repository_impl.dart';
 import '../../features/catalog/domain/repositories/categories_repository.dart';
 import '../../features/catalog/app/bloc/favorites_bloc.dart';
 import '../../features/catalog/app/bloc/categories_bloc.dart';
+import '../../features/cart/app/bloc/cart_bloc.dart';
 import '../../features/orders/data/datasources/orders_remote_datasource.dart';
 import '../../features/orders/repository/orders_repository_impl.dart';
 import '../../features/orders/domain/repositories/orders_repository.dart';
@@ -77,6 +78,7 @@ Future<void> init() async {
   // Data sources
   sl.registerLazySingleton(() => CatalogRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => FavoritesRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(() => OffersRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => CategoriesRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => OrdersRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => NotificationsRemoteDataSource(apiService: sl<ApiService>()));
@@ -101,11 +103,13 @@ Future<void> init() async {
   sl.registerFactory(() => CategoriesBloc(repository: sl<CategoriesRepository>()));
   // Feature Blocs (make some app-scoped singletons)
   sl.registerLazySingleton<AuthBloc>(() => AuthBloc());
+  // Cart should be app-scoped to preserve user selections across routes
+  sl.registerLazySingleton<CartBloc>(() => CartBloc());
   sl.registerFactory(() => ProfileBloc(repository: sl<ProfileRepository>()));
   sl.registerFactory(() => OrdersBloc(repository: sl<OrdersRepository>()));
   sl.registerFactory(() => PaymentsBloc(repository: sl<PaymentsRepository>()));
   sl.registerFactory(() => DeliveryBloc());
   sl.registerLazySingleton<NotificationsBloc>(() => NotificationsBloc());
-  sl.registerFactory(() => OffersBloc(repository: sl<OffersRepository>()));
+  sl.registerLazySingleton<OffersBloc>(() => OffersBloc(repository: sl<OffersRepository>()));
   sl.registerFactory(() => AdminBloc());
 }

@@ -14,14 +14,14 @@ class CategoriesRepositoryImpl implements CategoriesRepository {
   }
 
   @override
-  Future<Category> createCategory({required String name, String? description}) async {
-    final model = await remoteDataSource.createCategory(name: name, description: description);
+  Future<Category> createCategory({required String name, String? description, String? image}) async {
+    final model = await remoteDataSource.createCategory(name: name, description: description, image: image);
     return model.toEntity();
   }
 
   @override
-  Future<Category> updateCategory(int id, {String? name, String? description}) async {
-    final model = await remoteDataSource.updateCategory(id, name: name, description: description);
+  Future<Category> updateCategory(int id, {String? name, String? description, String? image}) async {
+    final model = await remoteDataSource.updateCategory(id, name: name, description: description, image: image);
     return model.toEntity();
   }
 
