@@ -1,3 +1,4 @@
+import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/widgets/icon_circle.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:flutter/material.dart';
@@ -46,8 +47,30 @@ class _CatalogPageState extends State<CatalogPage> {
                 ],
               ),
             ),
+            SizedBox(height: 25),
+            Container(
+              width: double.infinity,
+              height: 160,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(32),
+              ),
+            ),
             SizedBox(height: 20),
-            Center(child: Text("Catalogue", style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24))),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                Text("Catégories", style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text(
+                  "Voir tout",
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.hint,
+                  decoration: TextDecoration.underline,
+                  decorationColor: AppColors.hint,
+                  ),
+                ),
+              ],
+            ),
             Expanded(
               child: ListView.builder(
                 itemCount: 20,
