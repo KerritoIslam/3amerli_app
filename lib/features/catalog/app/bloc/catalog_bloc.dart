@@ -1,12 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
-import '../../repository/catalog_repository_impl.dart';
+import 'package:amerli_app/features/catalog/domain/repositories/catalog_repository.dart';
 import 'catalog_event.dart';
 import 'catalog_state.dart';
 
 class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
-  final CatalogRepositoryImpl repository;
+  final CatalogRepository repository;
 
   CatalogBloc({required this.repository}) : super(CatalogInitial()) {
     on<CatalogLoadEvent>(_onLoad);

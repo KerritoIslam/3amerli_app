@@ -8,7 +8,7 @@ class CatalogRemoteDataSource {
 
   CatalogRemoteDataSource({required this.apiService});
 
-  Future<List<ProductModel>> fetchProducts() async {
+  Future<List<ProductModel>> fetchProducts({int page = 1, int pageSize = 50, String? query}) async {
     try {
       // In a real app, you'd call: final response = await apiService.get('/products');
       // For the example, return mocked data

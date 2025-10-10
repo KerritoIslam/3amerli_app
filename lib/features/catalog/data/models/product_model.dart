@@ -1,25 +1,35 @@
-import 'package:amerli_app/features/catalog/domain/entities/product.dart';
+import '../../domain/entities/product.dart';
 
-class ProductModel extends Product {
-  const ProductModel({required super.id, required super.name, required super.description, required super.price, required super.stock});
+class ProductModel {
+  final int id;
+  final String name;
+  final String description;
+  final double price;
+  final int stock;
+
+  ProductModel({required this.id, required this.name, required this.description, required this.price, required this.stock});
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    // Be defensive: ids may be strings in some APIs
+    final rawId = json['id'];
+    final id = rawId is String ? int.tryParse(rawId) ?? 0 : (rawId as num).toInt();
+
     return ProductModel(
-      id: json['id'].toString(),
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      price: (json['price'] is num) ? (json['price'] as num).toDouble() : double.tryParse(json['price'].toString()) ?? 0.0,
-      stock: (json['stock'] is int) ? json['stock'] as int : int.tryParse(json['stock'].toString()) ?? 0,
+      id: id,
+      name: json['name']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      price: (json['price'] is num) ? (json['price'] as num).toDouble() : double.tryParse(json['price']?.toString() ?? '') ?? 0.0,
+      stock: (json['stock'] is num) ? (json['stock'] as num).toInt() : int.tryParse(json['stock']?.toString() ?? '') ?? 0,
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'description': description,
-      'price': price,
-      'stock': stock,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'description': description,
+        'price': price,
+        'stock': stock,
+      };
+
+  Product toEntity() => Product(id: id, name: name, description: description, price: price, stock: stock);
 }
