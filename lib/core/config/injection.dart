@@ -35,6 +35,10 @@ import '../../features/payments/data/datasources/payments_remote_datasource.dart
 import '../../features/payments/repository/payments_repository_impl.dart';
 import '../../features/payments/domain/repositories/payments_repository.dart';
 import '../../features/payments/app/bloc/payments_bloc.dart';
+import 'package:amerli_app/features/auth/data/datasources/profile_remote_datasource.dart';
+import 'package:amerli_app/features/auth/repository/profile_repository_impl.dart';
+import 'package:amerli_app/features/auth/domain/repositories/profile_repository.dart';
+import 'package:amerli_app/features/auth/app/bloc/profile_bloc.dart';
 import '../../features/catalog/data/datasources/catalog_remote_datasource.dart';
 import '../../core/dio/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -78,6 +82,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => NotificationsRemoteDataSource(apiService: sl<ApiService>()));
 
   sl.registerLazySingleton(() => PaymentsRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(() => ProfileRemoteDataSourceImpl(apiService: sl<ApiService>()));
 
   // Repositories
   sl.registerLazySingleton<CatalogRepository>(() => CatalogRepositoryImpl(remoteDataSource: sl<CatalogRemoteDataSource>()));
@@ -87,6 +92,7 @@ Future<void> init() async {
   sl.registerLazySingleton<NotificationsRepository>(() => NotificationsRepositoryImpl(remoteDataSource: sl<NotificationsRemoteDataSource>()));
   sl.registerLazySingleton<OffersRepository>(() => OffersRepositoryImpl(remoteDataSource: sl<OffersRemoteDataSource>()));
   sl.registerLazySingleton<PaymentsRepository>(() => PaymentsRepositoryImpl(remoteDataSource: sl<PaymentsRemoteDataSource>()));
+  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(remoteDataSource: sl<ProfileRemoteDataSourceImpl>()));
 
   // Blocs
   // Make CatalogBloc app-scoped (singleton) so its state is preserved across routes
@@ -95,6 +101,7 @@ Future<void> init() async {
   sl.registerFactory(() => CategoriesBloc(repository: sl<CategoriesRepository>()));
   // Feature Blocs (make some app-scoped singletons)
   sl.registerLazySingleton<AuthBloc>(() => AuthBloc());
+  sl.registerFactory(() => ProfileBloc(repository: sl<ProfileRepository>()));
   sl.registerFactory(() => OrdersBloc(repository: sl<OrdersRepository>()));
   sl.registerFactory(() => PaymentsBloc(repository: sl<PaymentsRepository>()));
   sl.registerFactory(() => DeliveryBloc());
