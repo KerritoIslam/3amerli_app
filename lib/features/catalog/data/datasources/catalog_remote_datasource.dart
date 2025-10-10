@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:amerli_app/core/dio/api_service.dart';
 import 'package:amerli_app/features/catalog/data/models/product_model.dart';
 
@@ -9,14 +7,26 @@ class CatalogRemoteDataSource {
   CatalogRemoteDataSource({required this.apiService});
 
   Future<List<ProductModel>> fetchProducts({int page = 1, int pageSize = 50, String? query}) async {
-    // Mocked response for now — return static products after 2 seconds
-    await Future.delayed(const Duration(seconds: 2));
-    final sample = '''[
-      {"id":"1","name":"Rice 50kg","description":"Bulk rice","price":750.0,"stock":20},
-      {"id":"2","name":"Cooking Oil 20L","description":"Pure vegetable oil","price":450.0,"stock":10},
-      {"id":"3","name":"Sugar 50kg","description":"Refined sugar","price":600.0,"stock":15}
-    ]''';
-    final List<dynamic> list = json.decode(sample) as List<dynamic>;
-    return list.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+    // Mocked paginated response — generate synthetic products so we can test pagination
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Simulate finite total items so pagination ends naturally
+    const totalItems = 95;
+    final start = (page - 1) * pageSize + 1;
+    var end = start + pageSize - 1;
+    if (end > totalItems) end = totalItems;
+    final List<Map<String, dynamic>> list = [];
+    for (var i = start; i <= end; i++) {
+      list.add({
+        'id': i,
+        'name': 'Product #$i',
+        'description': 'This is description for product #$i',
+        'price': (20 + (i % 50)) * 1.0,
+        'stock': (i % 10) + 1,
+        'sellerId': (i % 5) + 1,
+      });
+    }
+
+    return list.map((e) => ProductModel.fromJson(e)).toList();
   }
 }

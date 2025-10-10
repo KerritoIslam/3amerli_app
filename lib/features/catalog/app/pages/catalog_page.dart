@@ -1,4 +1,6 @@
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
+import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -53,6 +55,37 @@ class _CatalogPageState extends State<CatalogPage> {
   void dispose() {
     _offersPageController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadMoreAsync() {
+    final completer = Completer<void>();
+    final bloc = _catalogBloc;
+
+    // Subscribe to the bloc stream and complete when we see CatalogLoaded or CatalogError
+    late final StreamSubscription sub;
+    sub = bloc.stream.listen((state) {
+      if (state is CatalogLoaded) {
+        if (!completer.isCompleted) completer.complete();
+        sub.cancel();
+      }
+      if (state is CatalogError) {
+        if (!completer.isCompleted) completer.complete();
+        sub.cancel();
+      }
+    });
+
+    // dispatch loadMore
+    bloc.add(CatalogLoadEvent(loadMore: true, pageSize: 20));
+
+    // safety timeout
+    Future.delayed(const Duration(seconds: 6)).whenComplete(() {
+      if (!completer.isCompleted) {
+        completer.complete();
+        sub.cancel();
+      }
+    });
+
+    return completer.future;
   }
 
   @override
@@ -190,28 +223,49 @@ class _CatalogPageState extends State<CatalogPage> {
             // Product list
             Expanded(
               child: BlocBuilder<CatalogBloc, CatalogState>(builder: (context, state) {
-                if (state is CatalogLoading) return const Center(child: CircularProgressIndicator());
+                final isLoading = state is CatalogLoading;
+                final isLoadingMore = state is CatalogLoadingMore;
                 if (state is CatalogError) return Center(child: Text('Catalog error: ${state.message}'));
-                if (state is CatalogLoaded) {
+                if (state is CatalogLoadingMore) {
+                  // Keep showing the existing items while loading more; the ProductsList will show skeleton tiles for the end
                   final products = state.products;
-                  return ListView.separated(
-                    itemCount: products.length,
-                    separatorBuilder: (_, __) => const Divider(height: 1),
-                    itemBuilder: (context, i) {
-                      final p = products[i];
-                      return ListTile(
-                        leading: p.pic != null
-                            ? ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.network(p.pic!, width: 48, height: 48, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported)),
-                              )
-                            : null,
-                        title: Text(p.name),
-                        subtitle: Text(p.description),
-                      );
-                    },
+                  if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ProductsList(
+                          products: products,
+                          isLoading: true,
+                          onLoadMore: () => _loadMoreAsync(),
+                        ),
+                      ),
+                      const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()),
+                    ],
                   );
                 }
+
+                if (state is CatalogLoaded) {
+                  final products = state.products;
+                  if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ProductsList(
+                          products: state.products,
+                          isLoading: isLoadingMore,
+                          onLoadMore: () => _loadMoreAsync(),
+                        ),
+                      ),
+                      if (isLoadingMore) const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()),
+                    ],
+                  );
+                }
+
+                if (isLoading) {
+                  // show skeleton grid while initial loading
+                  return ProductsList(products: [], isLoading: true);
+                }
+
                 return const SizedBox.shrink();
               }),
             ),

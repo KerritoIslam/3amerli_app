@@ -14,10 +14,24 @@ class CatalogLoading extends CatalogState {}
 
 class CatalogLoaded extends CatalogState {
   final List<Product> products;
-  const CatalogLoaded(this.products);
+  final int page;
+  final bool hasMore;
+
+  const CatalogLoaded(this.products, {this.page = 1, this.hasMore = true});
 
   @override
-  List<Object?> get props => [products];
+  List<Object?> get props => [products, page, hasMore];
+}
+
+class CatalogLoadingMore extends CatalogState {
+  final List<Product> products;
+  final int page;
+  final bool hasMore;
+
+  const CatalogLoadingMore(this.products, {this.page = 1, this.hasMore = true});
+
+  @override
+  List<Object?> get props => [products, page, hasMore];
 }
 
 class CatalogError extends CatalogState {

@@ -7,16 +7,40 @@ import 'catalog_state.dart';
 
 class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   final CatalogRepository repository;
+  int _currentPage = 0;
+  final List<Product> _items = [];
 
   CatalogBloc({required this.repository}) : super(CatalogInitial()) {
     on<CatalogLoadEvent>(_onLoad);
   }
 
   Future<void> _onLoad(CatalogLoadEvent event, Emitter<CatalogState> emit) async {
-    emit(CatalogLoading());
     try {
-      final List<Product> products = await repository.getProducts();
-      emit(CatalogLoaded(products));
+      if (event.loadMore) {
+        // If there is already loaded content, emit loading-more state with current items so UI can extend
+        if (_items.isNotEmpty) emit(CatalogLoadingMore(List<Product>.from(_items), page: _currentPage, hasMore: true));
+        final nextPage = _currentPage + 1;
+        final List<Product> newItems = await repository.getProducts(page: nextPage, pageSize: event.pageSize, query: event.query);
+        if (newItems.isNotEmpty) {
+          _currentPage = nextPage;
+          _items.addAll(newItems);
+          // hasMore when newItems length == pageSize and we haven't hit the end
+          final hasMore = newItems.length >= event.pageSize;
+          emit(CatalogLoaded(List<Product>.from(_items), page: _currentPage, hasMore: hasMore));
+        } else {
+          // no more items
+          emit(CatalogLoaded(List<Product>.from(_items), page: _currentPage, hasMore: false));
+        }
+      } else {
+        // fresh load
+        emit(CatalogLoading());
+        _currentPage = 1;
+        final List<Product> products = await repository.getProducts(page: _currentPage, pageSize: event.pageSize, query: event.query);
+        _items.clear();
+        _items.addAll(products);
+        final hasMore = products.length >= event.pageSize;
+        emit(CatalogLoaded(List<Product>.from(_items), page: _currentPage, hasMore: hasMore));
+      }
     } catch (e) {
       emit(CatalogError(e.toString()));
     }
