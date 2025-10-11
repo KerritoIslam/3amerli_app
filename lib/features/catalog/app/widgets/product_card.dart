@@ -1,3 +1,4 @@
+import 'package:amerli_app/widgets/icon_circle.dart';
 import 'package:flutter/material.dart';
 
 class ProductCard extends StatefulWidget {
@@ -27,20 +28,22 @@ class _ProductCardState extends State<ProductCard> {
     return Material(
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.16),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(24),
       color: Theme.of(context).colorScheme.surface,
       child: Container(
         height: 260,
         width: 163,
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(2),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(24),
           boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 4, offset: const Offset(0, 1)),
+            BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(4, 4)),
+            BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(-4, -4)),
           ],
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(
               height: 124,
@@ -49,7 +52,7 @@ class _ProductCardState extends State<ProductCard> {
                 children: [
                   Positioned.fill(
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(22),
                       child: Image.network(
                         widget.imageUrl ?? 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80',
                         fit: BoxFit.cover,
@@ -60,37 +63,36 @@ class _ProductCardState extends State<ProductCard> {
                   Positioned(
                     top: 8,
                     right: 8,
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _localFavorite = !_localFavorite;
-                        });
-                        widget.onFavoriteToggle?.call();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.7),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          _localFavorite ? Icons.favorite : Icons.favorite_border,
-                          size: 20,
-                          color: Colors.red,
-                        ),
-                      ),
-                    ),
+                    child: SizedBox(
+                      height: 20 ,
+                      width: 20,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _localFavorite = !_localFavorite;
+                          });
+                          widget.onFavoriteToggle?.call();
+                        },
+                        child : IconCircle(isSelected: _localFavorite , asset: "assets/icons/favoris.svg",size: 20,)
+
+                      )
+                    )
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            // Title
+            Padding(
+              padding: EdgeInsetsGeometry.symmetric(horizontal: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
             Text(
               widget.title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
             ),
             const SizedBox(height: 4),
             // Subtitle underlined
@@ -99,23 +101,26 @@ class _ProductCardState extends State<ProductCard> {
                 widget.subtitle!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(decoration: TextDecoration.underline),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(decoration: TextDecoration.underline , fontSize: 14 ,color: Theme.of(context).colorScheme.secondary , decorationColor: Theme.of(context).colorScheme.secondary , fontWeight: FontWeight.w500),
               ),
             const SizedBox(height: 6),
             // Price
             if (widget.price != null)
               Text(
-                '\$${widget.price!.toStringAsFixed(2)}',
+                '${widget.price!.toStringAsFixed(2)} DZD',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
               ),
             // soldBy
             if (widget.soldBy != null) ...[
               const SizedBox(height: 6),
               Text(
-                'Sold by: #${widget.soldBy}',
-                style: Theme.of(context).textTheme.bodySmall,
+                'Vondu par: ${widget.soldBy}',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12 , color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w400),
               ),
             ],
+
+              ],),
+            )
           ],
         ),
       ),

@@ -230,34 +230,24 @@ class _CatalogPageState extends State<CatalogPage> {
                   // Keep showing the existing items while loading more; the ProductsList will show skeleton tiles for the end
                   final products = state.products;
                   if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ProductsList(
-                          products: products,
-                          isLoading: true,
-                          onLoadMore: () => _loadMoreAsync(),
-                        ),
-                      ),
-                      const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()),
-                    ],
+                  return Expanded(
+                    child: ProductsList(
+                      products: products,
+                      isLoading: true,
+                      onLoadMore: () => _loadMoreAsync(),
+                    ),
                   );
                 }
 
                 if (state is CatalogLoaded) {
                   final products = state.products;
                   if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: ProductsList(
-                          products: state.products,
-                          isLoading: isLoadingMore,
-                          onLoadMore: () => _loadMoreAsync(),
-                        ),
-                      ),
-                      if (isLoadingMore) const Padding(padding: EdgeInsets.all(8.0), child: CircularProgressIndicator()),
-                    ],
+                  return Expanded(
+                    child: ProductsList(
+                      products: state.products,
+                      isLoading: isLoadingMore,
+                      onLoadMore: () => _loadMoreAsync(),
+                    ),
                   );
                 }
 

@@ -108,7 +108,42 @@ class _ProductsListState extends State<ProductsList> {
   Widget build(BuildContext context) {
     final products = widget.products;
 
+    // If there are no products and we're in a loading state, show a 2x2 skeleton grid (4 placeholders)
     if (products.isEmpty) {
+      if (widget.isLoading) {
+        // Build a small grid with 4 skeleton cards
+        return GridView.builder(
+          controller: _scrollController,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: widget.columns,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 0.6,
+          ),
+          itemCount: widget.columns * 2, // 2 rows * columns (default 2 columns -> 4 items)
+          itemBuilder: (context, index) => Container(
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.all(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: const [
+                SkeletonBox(height: 120, borderRadius: BorderRadius.all(Radius.circular(10))),
+                SizedBox(height: 8),
+                SkeletonBox(height: 14),
+                SizedBox(height: 4),
+                SkeletonBox(height: 12),
+                SizedBox(height: 6),
+                SkeletonBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      }
+
       return const Center(child: Text('No products'));
     }
 
@@ -123,11 +158,12 @@ class _ProductsListState extends State<ProductsList> {
         // Use a reasonable aspect ratio; tweak if your ProductCard has different dimensions
         childAspectRatio: 0.6,
       ),
-      itemCount: products.length + (widget.isLoading ? 1 : 0),
+      // When products exist, and we're loading more, show two skeleton placeholders (one row)
+      itemCount: products.length + ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
       itemBuilder: (context, index) {
         // If showing loading tile at the end
         if (index >= products.length) {
-          // show a skeleton-style card
+          // show a skeleton-style card (for loading more) - there will be `columns` placeholders representing one row
           return Container(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
