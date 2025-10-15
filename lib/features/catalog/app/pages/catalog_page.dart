@@ -132,67 +132,70 @@ class _CatalogPageState extends State<CatalogPage> {
             const SizedBox(height: 25),
 
             // Offers (single page view with skeleton while loading)
-            SizedBox(
-              height: 160,
-              child: BlocBuilder<OffersBloc, OffersState>(builder: (context, state) {
-                if (state is OffersLoading) {
-                  // show 3 skeleton pages
-                  return PageView.builder(
-                    controller: _offersPageController,
-                    itemCount: 3,
-                    itemBuilder: (context, index) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06)),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 8),
-                          SkeletonBox(height: 18),
-                          const SizedBox(height: 8),
-                          SkeletonBox(height: 12),
-                          const SizedBox(height: 6),
-                          SkeletonBox(height: 12),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (state is OffersError) {
-                  ToastService.instance.showToast(context, 'Network error', type: ToastType.error);
-                  return Center(child: IconButton(onPressed: () => sl<OffersBloc>().add(OffersLoadEvent()), icon: const Icon(Icons.refresh)));
-                }
-
-                if (state is OffersLoaded) {
-                  final items = state.items;
-                  return PageView.builder(
-                    controller: _offersPageController,
-                    itemCount: items.length,
-                    itemBuilder: (context, i) {
-                      final offer = items[i];
-                      return Container(
+            Visibility(
+              visible: false,
+              child: SizedBox(
+                height: 160,
+                child: BlocBuilder<OffersBloc, OffersState>(builder: (context, state) {
+                  if (state is OffersLoading) {
+                    // show 3 skeleton pages
+                    return PageView.builder(
+                      controller: _offersPageController,
+                      itemCount: 3,
+                      itemBuilder: (context, index) => Container(
                         margin: const EdgeInsets.symmetric(horizontal: 4.0),
                         padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-                        ),
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(offer.title, style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: 8),
-                            Text(offer.description, maxLines: 3, overflow: TextOverflow.ellipsis),
+                            SkeletonBox(height: 18),
+                            const SizedBox(height: 8),
+                            SkeletonBox(height: 12),
+                            const SizedBox(height: 6),
+                            SkeletonBox(height: 12),
                           ],
                         ),
-                      );
-                    },
-                  );
-                }
-
-                return const SizedBox.shrink();
-              }),
+                      ),
+                    );
+                  }
+              
+                  if (state is OffersError) {
+                    ToastService.instance.showToast(context, 'Network error', type: ToastType.error);
+                    return Center(child: IconButton(onPressed: () => sl<OffersBloc>().add(OffersLoadEvent()), icon: const Icon(Icons.refresh)));
+                  }
+              
+                  if (state is OffersLoaded) {
+                    final items = state.items;
+                    return PageView.builder(
+                      controller: _offersPageController,
+                      itemCount: items.length,
+                      itemBuilder: (context, i) {
+                        final offer = items[i];
+                        return Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 4.0),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(offer.title, style: Theme.of(context).textTheme.titleMedium),
+                              const SizedBox(height: 8),
+                              Text(offer.description, maxLines: 3, overflow: TextOverflow.ellipsis),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  }
+              
+                  return const SizedBox.shrink();
+                }),
+              ),
             ),
 
             const SizedBox(height: 20),
@@ -212,7 +215,19 @@ class _CatalogPageState extends State<CatalogPage> {
             SizedBox(
               height: 40,
               child: BlocBuilder<CategoriesBloc, CategoriesState>(builder: (context, state) {
-                if (state is CategoriesLoading) return const Center(child: CircularProgressIndicator());
+                if (state is CategoriesLoading) {
+                  // Show a horizontal row of skeleton chips while categories load
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List.generate(6, (i) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6.0),
+                        child: SkeletonBox(width: 88, height: 34, borderRadius: BorderRadius.all(Radius.circular(20))),
+                      )),
+                    ),
+                  );
+                }
+
                 if (state is CategoriesError) return Center(child: Text('Categories error: ${state.message}'));
                 if (state is CategoriesLoaded) return CategoriesRow(categories: state.items);
                 return CategoriesRow(categories: []);
@@ -230,24 +245,20 @@ class _CatalogPageState extends State<CatalogPage> {
                   // Keep showing the existing items while loading more; the ProductsList will show skeleton tiles for the end
                   final products = state.products;
                   if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
-                  return Expanded(
-                    child: ProductsList(
-                      products: products,
-                      isLoading: true,
-                      onLoadMore: () => _loadMoreAsync(),
-                    ),
+                  return ProductsList(
+                    products: products,
+                    isLoading: true,
+                    onLoadMore: () => _loadMoreAsync(),
                   );
                 }
 
                 if (state is CatalogLoaded) {
                   final products = state.products;
                   if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
-                  return Expanded(
-                    child: ProductsList(
-                      products: state.products,
-                      isLoading: isLoadingMore,
-                      onLoadMore: () => _loadMoreAsync(),
-                    ),
+                  return ProductsList(
+                    products: state.products,
+                    isLoading: isLoadingMore,
+                    onLoadMore: () => _loadMoreAsync(),
                   );
                 }
 

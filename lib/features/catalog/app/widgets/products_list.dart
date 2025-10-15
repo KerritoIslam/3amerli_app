@@ -6,23 +6,11 @@ import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
 typedef ProductItemBuilder = Widget Function(BuildContext context, Product product, int index);
 
 class ProductsList extends StatefulWidget {
-  /// The list of products to display
   final List<Product> products;
-
-  /// Called when the user scrolls to the [rowsToTrigger] row (default 7)
-  /// Use this to load the next page. The callback should complete when loading finishes.
   final Future<void> Function()? onLoadMore;
-
-  /// Number of columns in the grid (default 2)
   final int columns;
-
-  /// The row index (1-based) at which to trigger load more. Default is 7.
   final int rowsToTrigger;
-
-  /// Optional custom item builder. If omitted, the default ProductCard will be used.
   final ProductItemBuilder? itemBuilder;
-
-  /// Optional flag to show a loading indicator at the end while next page is loading.
   final bool isLoading;
 
   const ProductsList({
@@ -41,11 +29,7 @@ class ProductsList extends StatefulWidget {
 
 class _ProductsListState extends State<ProductsList> {
   final ScrollController _scrollController = ScrollController();
-
-  /// Prevent duplicate load calls while waiting for the parent to append results
   bool _isRequestingMore = false;
-
-  /// Track last products length so we can reset the requesting flag when new items arrive
   int _lastProductsLength = 0;
 
   @override
@@ -58,7 +42,6 @@ class _ProductsListState extends State<ProductsList> {
   @override
   void didUpdateWidget(covariant ProductsList oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If parent appended products, allow requesting more again
     if (widget.products.length > _lastProductsLength) {
       _isRequestingMore = false;
       _lastProductsLength = widget.products.length;
@@ -67,22 +50,16 @@ class _ProductsListState extends State<ProductsList> {
 
   void _onScroll() {
     if (widget.onLoadMore == null) return;
+    if (_isRequestingMore) return;
 
-  // if already requesting, skip
-  if (_isRequestingMore) return;
-
-    // When grid scroll reaches near the threshold item (7th row), trigger onLoadMore.
     final totalItems = widget.products.length;
-    final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns; // 0-based index of first item in the target row
+    final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
 
-    // If we have fewer items than threshold, don't request yet
     if (totalItems <= thresholdIndex) return;
 
-    // Decide based on scroll position: if reachable extent shows the threshold index
     final maxScroll = _scrollController.position.maxScrollExtent;
     final current = _scrollController.position.pixels;
 
-    // Trigger either when we've scrolled past 60% of the max scroll or when within 300 px to the end
     if (current >= maxScroll * 0.6 || (maxScroll - current) <= 300) {
       _isRequestingMore = true;
       final future = widget.onLoadMore?.call();
@@ -108,10 +85,8 @@ class _ProductsListState extends State<ProductsList> {
   Widget build(BuildContext context) {
     final products = widget.products;
 
-    // If there are no products and we're in a loading state, show a 2x2 skeleton grid (4 placeholders)
     if (products.isEmpty) {
       if (widget.isLoading) {
-        // Build a small grid with 4 skeleton cards
         return GridView.builder(
           controller: _scrollController,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -119,9 +94,9 @@ class _ProductsListState extends State<ProductsList> {
             crossAxisCount: widget.columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.6,
+            childAspectRatio: 0.52, // Changed from 0.6 to 0.52 for taller cards
           ),
-          itemCount: widget.columns * 2, // 2 rows * columns (default 2 columns -> 4 items)
+          itemCount: widget.columns * 2,
           itemBuilder: (context, index) => Container(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
@@ -147,7 +122,6 @@ class _ProductsListState extends State<ProductsList> {
       return const Center(child: Text('No products'));
     }
 
-    // Grid with 2 items per row by default
     return GridView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -155,15 +129,11 @@ class _ProductsListState extends State<ProductsList> {
         crossAxisCount: widget.columns,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        // Use a reasonable aspect ratio; tweak if your ProductCard has different dimensions
-        childAspectRatio: 0.6,
+        childAspectRatio: 0.58, // Changed from 0.6 to 0.5  - this gives cards more height
       ),
-      // When products exist, and we're loading more, show two skeleton placeholders (one row)
       itemCount: products.length + ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
       itemBuilder: (context, index) {
-        // If showing loading tile at the end
         if (index >= products.length) {
-          // show a skeleton-style card (for loading more) - there will be `columns` placeholders representing one row
           return Container(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
@@ -187,7 +157,6 @@ class _ProductsListState extends State<ProductsList> {
 
         final product = products[index];
 
-        // Trigger page-based load when the builder reaches the first item of the rowsToTrigger row
         final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
         if (!_isRequestingMore && widget.onLoadMore != null && index == thresholdIndex) {
           _isRequestingMore = true;
@@ -202,7 +171,6 @@ class _ProductsListState extends State<ProductsList> {
           return widget.itemBuilder!(context, product, index);
         }
 
-        // Default product card rendering using the shared ProductCard widget
         return ProductCard(
           imageUrl: product.pic,
           isFavorite: false,
@@ -211,6 +179,7 @@ class _ProductsListState extends State<ProductsList> {
           subtitle: product.description,
           price: product.price,
           soldBy: product.sellerId,
+          productId: product.id,
         );
       },
     );
