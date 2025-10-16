@@ -8,8 +8,9 @@ class ProductModel {
   final int stock;
   final int? sellerId;
   final bool isFavorit;
+  final String? pic;
 
-  ProductModel({required this.id, required this.name, required this.description, required this.price, required this.stock, this.sellerId, this.isFavorit = false});
+  ProductModel({required this.id, required this.name, required this.description, required this.price, required this.stock, this.sellerId, this.isFavorit = false, this.pic});
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     // Be defensive: ids may be strings in some APIs
@@ -24,6 +25,7 @@ class ProductModel {
       stock: (json['stock'] is num) ? (json['stock'] as num).toInt() : int.tryParse(json['stock']?.toString() ?? '') ?? 0,
       sellerId: (json['sellerId'] is num) ? (json['sellerId'] as num).toInt() : (json['soldBy'] is num) ? (json['soldBy'] as num).toInt() : (json['sellerId'] != null ? int.tryParse(json['sellerId'].toString()) : null),
       isFavorit: json['is_favorit'] == true || json['isFavorit'] == true,
+      pic: json['pic']?.toString(),
     );
   }
 
@@ -35,7 +37,8 @@ class ProductModel {
         'stock': stock,
         'sellerId': sellerId,
       'is_favorit': isFavorit,
+      'pic': pic,
       };
 
-  Product toEntity() => Product(id: id, name: name, description: description, price: price, stock: stock, sellerId: sellerId, isFavorit: isFavorit);
+  Product toEntity() => Product(id: id, name: name, description: description, price: price, stock: stock, sellerId: sellerId, isFavorit: isFavorit, pic: pic);
 }

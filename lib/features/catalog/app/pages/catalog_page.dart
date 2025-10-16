@@ -22,6 +22,7 @@ import 'package:amerli_app/features/catalog/app/bloc/offers_event.dart';
 import 'package:amerli_app/features/catalog/app/bloc/offers_state.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -95,6 +96,8 @@ class _CatalogPageState extends State<CatalogPage> {
         BlocProvider.value(value: _offersBloc),
         BlocProvider.value(value: _categoriesBloc),
         BlocProvider.value(value: _catalogBloc),
+        // Provide CartBloc app-scoped so ProductCard can access it
+        BlocProvider.value(value: sl<CartBloc>()),
       ],
       child: SafeArea(
         child: Padding(

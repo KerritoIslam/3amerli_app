@@ -72,6 +72,8 @@ class AppColors {
   static const Color greyBorder = Color(0xFFBDBDBD); // neutral grey for borders
   // Brand / danger red requested: #C94949
   static const Color brandRed = Color(0xFFC94949);
+  // Brand teal requested: #48A9A6
+  static const Color brandTeal = Color(0xFF48A9A6);
   // Neutral light used for hints and subtle borders (#D3D3D3)
   static const Color neutralLight300 = Color(0xFFD3D3D3);
   // A convenient alias for UI hint color usage (match Theme.hintColor)
@@ -144,4 +146,28 @@ class AppColors {
     inversePrimary: darkInversePrimary,
     surfaceTint: darkSurfaceTint,
   );
+
+  // Theme extension to expose extra brand colors through Theme.of(context).extension<BrandColors>()
+}
+
+class BrandColors extends ThemeExtension<BrandColors> {
+  final Color brandTeal;
+
+  const BrandColors({required this.brandTeal});
+
+  static const BrandColors light = BrandColors(brandTeal: AppColors.brandTeal);
+  static const BrandColors dark = BrandColors(brandTeal: AppColors.brandTeal);
+
+  @override
+  BrandColors copyWith({Color? brandTeal}) {
+    return BrandColors(brandTeal: brandTeal ?? this.brandTeal);
+  }
+
+  @override
+  ThemeExtension<BrandColors> lerp(ThemeExtension<BrandColors>? other, double t) {
+    if (other is! BrandColors) return this;
+    return BrandColors(
+      brandTeal: Color.lerp(brandTeal, other.brandTeal, t) ?? brandTeal,
+    );
+  }
 }

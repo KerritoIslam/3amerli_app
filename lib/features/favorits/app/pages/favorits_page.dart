@@ -5,6 +5,7 @@ import 'package:amerli_app/features/favorits/app/bloc/favorits_event.dart';
 import 'package:amerli_app/features/favorits/app/bloc/favorits_state.dart';
 import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
 import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 
 class FavoritsPage extends StatelessWidget {
   const FavoritsPage({super.key});
@@ -13,7 +14,10 @@ class FavoritsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<fav_feature.FavoritsBloc>(
       create: (_) => sl<fav_feature.FavoritsBloc>()..add(FavoritsLoadEvent()),
-      child: const _FavoritsView(),
+      child: BlocProvider<CartBloc>.value(
+        value: sl<CartBloc>(),
+        child: const _FavoritsView(),
+      ),
     );
   }
 }

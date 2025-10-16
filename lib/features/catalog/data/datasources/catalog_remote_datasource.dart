@@ -26,6 +26,8 @@ class CatalogRemoteDataSource {
         'sellerId': (i % 5) + 1,
         // mark every 3rd item as favorite in mock
         'is_favorit': i % 3 == 0,
+        // Random placeholder images
+        'pic': 'https://picsum.photos/seed/prod_$i/300/300',
       });
     }
 

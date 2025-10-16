@@ -30,6 +30,7 @@ class AppTheme {
       labelSmall: AppTextStyles.small,
     ),
     iconTheme: IconThemeData(color: AppColors.lightScheme.onSurface),
+    extensions: const [BrandColors.light],
   );
 
   static final ThemeData dark = ThemeData(
@@ -56,5 +57,6 @@ class AppTheme {
       labelSmall: AppTextStyles.small,
     ),
     iconTheme: IconThemeData(color: AppColors.darkScheme.onSurface),
+    extensions: const [BrandColors.dark],
   );
 }
