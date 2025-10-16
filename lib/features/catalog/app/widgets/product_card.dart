@@ -1,5 +1,6 @@
-import 'dart:math';
-
+import 'dart:async';
+import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
+import 'package:collection/collection.dart';
 import 'package:amerli_app/widgets/icon_circle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,8 +17,8 @@ class ProductCard extends StatefulWidget {
   final double? price;
   final int? soldBy;
   final int? productId;
-
-  const ProductCard({super.key, this.imageUrl, this.isFavorite = false, this.onFavoriteToggle, required this.title, this.subtitle, this.price, this.soldBy, this.productId});
+  
+  const ProductCard({super.key, this.imageUrl, this.isFavorite = false, this.onFavoriteToggle, required this.title, this.subtitle, this.price, this.soldBy, this.productId , });
 
   @override
   State<ProductCard> createState() => _ProductCardState();
@@ -25,25 +26,64 @@ class ProductCard extends StatefulWidget {
 
 class _ProductCardState extends State<ProductCard> {
   late bool _localFavorite;
-
+  late int _quantity;
+  CartBloc? _cartBloc;
+  StreamSubscription? _cartSub;
   @override
   void initState() {
     super.initState();
+    _quantity = 1;
     _localFavorite = widget.isFavorite;
+
   }
+  @override
   
+  @override
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Try to find CartBloc; if present, subscribe to state changes to print cart items
+    try {
+      final cb = BlocProvider.of<CartBloc>(context);
+      if (cb != _cartBloc) {
+        _cartSub?.cancel();
+        _cartBloc = cb;
+        _cartSub = cb.stream.listen((state) {
+          if (state is CartLoaded) {
+            print('Cart items (subscription):');
+            for (var item in state.items) {
+              print('Product: ${item.productId}, Qty: ${item.quantity}');
+            }
+          } else {
+            print('Cart state changed: $state');
+          }
+        });
+      }
+    } catch (e) {
+      // No CartBloc available in this context; ignore
+      _cartSub?.cancel();
+      _cartBloc = null;
+      _cartSub = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _cartSub?.cancel();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 300, // Increased card height to prevent overflow
-      width: 120,
-      child: Material(
-        
-        elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(24),
-        color: Theme.of(context).colorScheme.surface,
-        child: Container(
+          height: 300, // Increased card height to prevent overflow
+          width: 120,
+          child: Material(
+            elevation: 4,
+            shadowColor: Colors.black.withOpacity(0.16),
+            borderRadius: BorderRadius.circular(24),
+            color: Theme.of(context).colorScheme.surface,
+            child: Container(
           padding: const EdgeInsets.all(2),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
@@ -142,8 +182,12 @@ class _ProductCardState extends State<ProductCard> {
                                 children: [
                                   InkWell(
                                     onTap: () {
-                                      if (widget.productId == null) return;
-                                      context.read<CartBloc>().add(CartUpdateQuantityEvent(productId: widget.productId.toString(), quantity: 0));
+                                       if (_quantity > 0) _quantity -= 1;
+                                      setState(() {
+                                        
+                                      });
+                                      /* if (widget.productId == null) return;
+                                      context.read<CartBloc>().add(CartUpdateQuantityEvent(productId: widget.productId.toString(), quantity: 0)); */
                                     },
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
@@ -155,13 +199,17 @@ class _ProductCardState extends State<ProductCard> {
                                     ),
                                   ),
                                   const SizedBox(width: 8),
-                                  Text('1', style: Theme.of(context).textTheme.bodyMedium),
+                                  Text('$_quantity', style: Theme.of(context).textTheme.bodyMedium),
                                   const SizedBox(width: 8),
                                   InkWell(
                                     onTap: () {
-                                      if (widget.productId == null || widget.price == null) return;
+                                      _quantity += 1;
+                                      setState(() {
+                                        
+                                      });
+/*                                       if (widget.productId == null || widget.price == null) return;
                                       context.read<CartBloc>().add(CartAddItemEvent(CartItem(productId: widget.productId.toString(), name: widget.title, price: widget.price ?? 0.0, quantity: 1, imageUrl: widget.imageUrl)));
-                                    },
+ */                                    },
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
                                       decoration: BoxDecoration(
@@ -180,7 +228,51 @@ class _ProductCardState extends State<ProductCard> {
                           InkWell(
                             onTap: () {
                               if (widget.productId == null || widget.price == null) return;
-                              context.read<CartBloc>().add(CartAddItemEvent(CartItem(productId: widget.productId.toString(), name: widget.title, price: widget.price ?? 0.0, quantity: 1, imageUrl: widget.imageUrl)));
+                              CartBloc? cartBloc;
+                              try {
+                                cartBloc = context.read<CartBloc>();
+                              } catch (e) {
+                                print('CartBloc provider not found: $e');
+                                return;
+                              }
+                              final productIdStr = widget.productId.toString();
+                              final state = cartBloc.state;
+                              // Check if item is already in cart
+                              if (state is CartLoaded) {
+                                final existingItem = state.items.firstWhereOrNull(
+                                  (item) => item.productId == productIdStr,
+                                );
+                                if (existingItem == null) {
+                                  // Add new item with current quantity
+                                  cartBloc.add(CartAddItemEvent(CartItem(
+                                    productId: productIdStr,
+                                    name: widget.title,
+                                    price: widget.price ?? 0.0,
+                                    quantity: _quantity,
+                                    imageUrl: widget.imageUrl,
+                                  )));
+                                } else {
+                                  // Update quantity
+                                  cartBloc.add(CartUpdateQuantityEvent(
+                                    productId: productIdStr,
+                                    quantity: _quantity,
+                                  ));
+                                }
+                                // Print cart list after change
+                                print('Cart items:');
+                                for (var item in state.items) {
+                                  print('Product: ${item.productId}, Qty: ${item.quantity}');
+                                }
+                              } else {
+                                // If cart not loaded, just add
+                                cartBloc.add(CartAddItemEvent(CartItem(
+                                  productId: productIdStr,
+                                  name: widget.title,
+                                  price: widget.price ?? 0.0,
+                                  quantity: _quantity,
+                                  imageUrl: widget.imageUrl,
+                                )));
+                              }
                             },
                             child: IconCircle(isSelected: true , asset: "assets/icons/panier.svg",size: 26,)
                           ),

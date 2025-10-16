@@ -21,84 +21,122 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void initState() {
     super.initState();
-    // Request profile when page is shown
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ProfileBloc>().add(LoadProfileEvent());
-    });
   }
+
+  bool _profileRequested = false;
+
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: BlocListener<ProfileBloc, ProfileState>(
-        listener: (context, state) {
-          if (state is ProfileError) {
-            ToastService.instance.showToast(context, state.message, type: ToastType.error);
-          }
-        },
-        child: Scaffold(
-          body: Center(
-            child: SizedBox(
-              width: double.infinity,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 30),
-                    Center(
-                      child: BlocBuilder<ProfileBloc, ProfileState>(builder: (context, state) {
-                        if (state is ProfileLoading) return const CircularProgressIndicator();
-                        if (state is ProfileLoaded) {
-                          final user = state.user;
-                          return Column(
-                            children: [
-                              const SizedBox(height: 20),
-                              Text('Mon Profil', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
-                              const SizedBox(height: 15),
-                              SizedBox(
-                                width: 80,
-                                height: 80,
-                                child: ClipOval(
-                                  child: Image.network(
-                                    user.profilePic.isNotEmpty ? user.profilePic : 'https://picsum.photos/seed/profile/200/200',
-                                    fit: BoxFit.cover,
-                                    loadingBuilder: (context, child, loadingProgress) {
-                                      if (loadingProgress == null) return child;
-                                      return Container(
-                                        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
-                                        alignment: Alignment.center,
-                                        child: SizedBox(
-                                          width: 24,
-                                          height: 24,
-                                          child: CircularProgressIndicator(strokeWidth: 2.0, value: loadingProgress.expectedTotalBytes != null ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1) : null),
+    // Check if ProfileBloc is available; if so, request profile once
+    ProfileBloc? bloc;
+    try {
+      bloc = BlocProvider.of<ProfileBloc>(context);
+    } catch (_) {
+      bloc = null;
+    }
+
+    if (bloc != null && !_profileRequested) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        bloc!.add(LoadProfileEvent());
+      });
+      _profileRequested = true;
+    }
+
+    // Build the main scaffold content
+    final content = Scaffold(
+      body: Center(
+        child: SizedBox(
+          width: double.infinity,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 30),
+                Center(
+                  child: bloc != null
+                      ? StreamBuilder<ProfileState>(
+                          stream: bloc.stream,
+                          initialData: bloc.state,
+                          builder: (context, snapshot) {
+                            final state = snapshot.data;
+                            if (state is ProfileLoading) return const CircularProgressIndicator();
+                            if (state is ProfileLoaded) {
+                              final user = state.user;
+                              return Column(
+                                children: [
+                                  
+                                  const SizedBox(height: 15),
+                                  SizedBox(
+                                    width: 80,
+                                    height: 80,
+                                    child: ClipOval(
+                                      child: Image.network(
+                                        user.profilePic.isNotEmpty ? user.profilePic : 'https://picsum.photos/seed/profile/200/200',
+                                        fit: BoxFit.cover,
+                                        loadingBuilder: (context, child, loadingProgress) {
+                                          if (loadingProgress == null) return child;
+                                          return Container(
+                                            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                                            alignment: Alignment.center,
+                                            child: SizedBox(
+                                              width: 24,
+                                              height: 24,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2.0,
+                                                value: loadingProgress.expectedTotalBytes != null
+                                                    ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+                                                    : null,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                        errorBuilder: (context, error, stackTrace) => Container(
+                                          color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                                          alignment: Alignment.center,
+                                          child: Icon(
+                                            Icons.person_outline,
+                                            size: 48,
+                                            color: Theme.of(context).colorScheme.onSurface,
+                                          ),
                                         ),
-                                      );
-                                    },
-                                    errorBuilder: (context, error, stackTrace) => Container(
-                                      color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
-                                      alignment: Alignment.center,
-                                      child: Icon(
-                                        Icons.person_outline,
-                                        size: 48,
-                                        color: Theme.of(context).colorScheme.onSurface,
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              Text(user.name, style: Theme.of(context).textTheme.titleLarge),
-                              const SizedBox(height: 8),
-                              Text(user.phoneNumber, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
-                            ],
-                          );
-                        }
+                                  const SizedBox(height: 16),
+                                  Text(user.name, style: Theme.of(context).textTheme.titleLarge),
+                                  const SizedBox(height: 8),
+                                  Text(user.phoneNumber, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                                ],
+                              );
+                            }
 
-                        // initial or error state -> show static placeholders
-                        return Column(
+                            // initial or error state -> show placeholder while bloc exists
+                            return Column(
+                              children: [
+                                
+                                const SizedBox(height: 15),
+                                SizedBox(
+                                  width: 80,
+                                  height: 80,
+                                  child: ClipOval(
+                                    child: Image.network(
+                                      'https://picsum.photos/seed/profile/200/200',
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Text('Nom d\'utilisateur', style: Theme.of(context).textTheme.titleLarge),
+                                const SizedBox(height: 8),
+                                Text('Numero de téléphone', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                              ],
+                            );
+                          },
+                        )
+                      : Column(
                           children: [
-                            const SizedBox(height: 20),
-                            Text('Mon Profil', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+                            
                             const SizedBox(height: 15),
                             SizedBox(
                               width: 80,
@@ -115,66 +153,77 @@ class _ProfilePageState extends State<ProfilePage> {
                             const SizedBox(height: 8),
                             Text('Numero de téléphone', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
                           ],
-                        );
-                      }),
-                    ),
+                        ),
+                ),
 
-                    const SizedBox(height: 20),
-                    Text('Mon Compte', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    CardsList(
-                      items: [
-                        CardsListItem(
-                          leading: SvgPicture.asset('assets/icons/Informations_personnelles.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                          title: Text('Informations Personnelles', style: Theme.of(context).textTheme.titleSmall),
-                          onTap: () {},
-                        ),
-                        CardsListItem(
-                          leading: SvgPicture.asset('assets/icons/moyens_de_paiement.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                          title: Text('Moyens de Paiement', style: Theme.of(context).textTheme.titleSmall),
-                          onTap: () {},
-                        ),
-                        CardsListItem(
-                          leading: SvgPicture.asset('assets/icons/mes_commandes.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                          title: Text('Mes Commandes', style: Theme.of(context).textTheme.titleSmall),
-                          onTap: () {},
-                        ),
-                      ],
+                const SizedBox(height: 20),
+                Text('Mon Compte', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                CardsList(
+                  items: [
+                    CardsListItem(
+                      leading: SvgPicture.asset('assets/icons/Informations_personnelles.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
+                      title: Text('Informations Personnelles', style: Theme.of(context).textTheme.titleSmall),
+                      onTap: () {},
                     ),
-                    const SizedBox(height: 20),
-                    Text('Additionnel', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 10),
-                    CardsList(
-                      items: [
-                        CardsListItem(
-                          leading: SvgPicture.asset('assets/icons/support.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                          title: Text('Support & Aide', style: Theme.of(context).textTheme.titleSmall),
-                          onTap: () {},
-                        ),
-                        CardsListItem(
-                          leading: SvgPicture.asset('assets/icons/language.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                          title: Text('Language', style: Theme.of(context).textTheme.titleSmall),
-                          onTap: () {},
-                        ),
-                      ],
+                    CardsListItem(
+                      leading: SvgPicture.asset('assets/icons/moyens_de_paiement.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
+                      title: Text('Moyens de Paiement', style: Theme.of(context).textTheme.titleSmall),
+                      onTap: () {},
                     ),
-                    const SizedBox(height: 30),
-                    AppButton(
-                      onPressed: () {},
-                      backgroundColor: AppColors.brandRed,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [SvgPicture.asset('assets/icons/logout.svg', width: 24, height: 24, color: AppColors.lightOnPrimary), const SizedBox(width: 18), Text('Se déconnecter', style: AppTextStyles.buttonLargeBold)],
-                      ),
-                    )
+                    CardsListItem(
+                      leading: SvgPicture.asset('assets/icons/mes_commandes.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
+                      title: Text('Mes Commandes', style: Theme.of(context).textTheme.titleSmall),
+                      onTap: () {},
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 20),
+                Text('Additionnel', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+                const SizedBox(height: 10),
+                CardsList(
+                  items: [
+                    CardsListItem(
+                      leading: SvgPicture.asset('assets/icons/support.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
+                      title: Text('Support & Aide', style: Theme.of(context).textTheme.titleSmall),
+                      onTap: () {},
+                    ),
+                    CardsListItem(
+                      leading: SvgPicture.asset('assets/icons/language.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
+                      title: Text('Language', style: Theme.of(context).textTheme.titleSmall),
+                      onTap: () {},
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+                AppButton(
+                  onPressed: () {},
+                  backgroundColor: AppColors.brandRed,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [SvgPicture.asset('assets/icons/logout.svg', width: 24, height: 24, color: AppColors.lightOnPrimary), const SizedBox(width: 18), Text('Se déconnecter', style: AppTextStyles.buttonLargeBold)],
+                  ),
+                )
+              ],
             ),
           ),
         ),
       ),
     );
-    
+
+    if (bloc != null) {
+      return SafeArea(
+        child: BlocListener<ProfileBloc, ProfileState>(
+          listener: (context, state) {
+            if (state is ProfileError) {
+              ToastService.instance.showToast(context, state.message, type: ToastType.error);
+            }
+          },
+          child: content,
+        ),
+      );
+    }
+
+    return SafeArea(child: content);
   }
 }

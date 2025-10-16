@@ -52,6 +52,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   void _onUpdate(CartUpdateQuantityEvent event, Emitter<CartState> emit) {
     final current = state;
     if (current is CartLoaded) {
+      
+        
+      
       final items = current.items.map((i) {
         if (i.productId == event.productId) {
           return i.copyWith(quantity: event.quantity);
@@ -59,7 +62,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         return i;
       }).where((i) => i.quantity > 0).toList();
       emit(CartLoaded(items));
+    
     }
+    
   }
 
   void _onClear(CartClearEvent event, Emitter<CartState> emit) {

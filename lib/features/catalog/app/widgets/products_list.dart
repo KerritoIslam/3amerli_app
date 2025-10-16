@@ -1,4 +1,6 @@
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/features/catalog/app/widgets/product_card.dart';
 import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
@@ -171,7 +173,8 @@ class _ProductsListState extends State<ProductsList> {
           return widget.itemBuilder!(context, product, index);
         }
 
-        return ProductCard(
+        // Provide CartBloc to ProductCard only if it's available above this widget.
+        Widget card = ProductCard(
           imageUrl: product.pic,
           isFavorite: false,
           onFavoriteToggle: null,
@@ -181,6 +184,13 @@ class _ProductsListState extends State<ProductsList> {
           soldBy: product.sellerId,
           productId: product.id,
         );
+        try {
+          final cartBloc = BlocProvider.of(context, listen: false) as CartBloc;
+          card = BlocProvider.value(value: cartBloc, child: card);
+        } catch (e) {
+          // No CartBloc found above — return card without provider wrapper.
+        }
+        return card;
       },
     );
   }
