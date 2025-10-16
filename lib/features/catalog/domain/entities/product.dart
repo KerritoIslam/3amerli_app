@@ -13,6 +13,8 @@ class Product extends Equatable {
   final String? markId;
   // Favorite flag for UI and domain logic
   final bool isFavorit;
+  // Quantity of this product currently in the cart
+  final int quantity;
 
   const Product({
     required this.id,
@@ -24,8 +26,9 @@ class Product extends Equatable {
     this.pic,
     this.markId,
     this.isFavorit = false,
+    this.quantity = 0,
   });
 
   @override
-  List<Object?> get props => [id, name, description, price, stock, sellerId, pic, markId, isFavorit];
+  List<Object?> get props => [id, name, description, price, stock, sellerId, pic, markId, isFavorit, quantity];
 }

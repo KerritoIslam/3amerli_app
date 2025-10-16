@@ -252,10 +252,10 @@ class _ProductCardState extends State<ProductCard> {
                                     imageUrl: widget.imageUrl,
                                   )));
                                 } else {
-                                  // Update quantity
+                                  // Increase existing quantity by selected local amount
                                   cartBloc.add(CartUpdateQuantityEvent(
                                     productId: productIdStr,
-                                    quantity: _quantity,
+                                    quantity: existingItem.quantity + _quantity,
                                   ));
                                 }
                                 // Print cart list after change
