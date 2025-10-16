@@ -163,7 +163,7 @@ class _AppTextFieldState extends State<AppTextField> {
     final borderRadius = BorderRadius.circular(AppDimensions.radiusFull);
     final defaultBorder = OutlineInputBorder(
       borderRadius: borderRadius,
-      borderSide: const BorderSide(color: AppColors.greyBorder, width: 1.0),
+      borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1.0),
     );
 
     // Always place the leading widget in prefixIcon but relax the default

@@ -39,7 +39,7 @@ class AnimatedBottomNavBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
         // Use the requested gray with 80% opacity: alpha CC, rgb 80/80/80
-        color: const Color(0xCC808080),
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
         borderRadius: BorderRadius.circular(30),
       ),
       child: Row(
@@ -122,7 +122,7 @@ class _NavBarItemState extends State<NavBarItem> {
                             child: Text(
                               widget.item.label,
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.primary,
+                                color: Theme.of(context).colorScheme.tertiaryContainer,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),

@@ -19,6 +19,8 @@ class IconCircle extends StatelessWidget {
   /// Size of the inner icon. If null it's derived from [size].
   /// Defaults to half of [size] clamped between 16 and 24.
   final double? iconSize;
+  /// If true, keep the icon's original color (do not override with theme colors).
+  final bool keepIconColor;
 
   const IconCircle({
     Key? key,
@@ -29,6 +31,7 @@ class IconCircle extends StatelessWidget {
     this.unselectedColor,
     this.size = 40.0,
     this.iconSize,
+    this.keepIconColor = false,
   })  : assert(asset != null || dataIcon != null, 'Either asset or dataIcon must be provided'),
         super(key: key);
 
@@ -37,11 +40,13 @@ class IconCircle extends StatelessWidget {
   final effectiveIconSize = (iconSize ?? (size * 0.5)).clamp(16.0, 24.0);
     // Determine colors, falling back to the theme when overrides are null.
     final bgColor = isSelected
-        ? (selectedColor ?? Theme.of(context).colorScheme.primary)
+        ? (selectedColor ?? Theme.of(context).colorScheme.tertiaryContainer)
         : (unselectedColor ?? Theme.of(context).colorScheme.onPrimary);
-    final iconColor = isSelected
-        ? Theme.of(context).colorScheme.onPrimary
-        : Theme.of(context).colorScheme.primary;
+    final Color? iconColor = keepIconColor
+        ? null
+        : (isSelected
+            ? Theme.of(context).colorScheme.onPrimary
+            : Theme.of(context).colorScheme.tertiaryContainer);
 
     return Container(
       width: size,
@@ -61,12 +66,14 @@ class IconCircle extends StatelessWidget {
         child: asset != null
             ? SvgPicture.asset(
                 asset!,
+                // pass color only when not preserving original colors
                 color: iconColor,
                 width: effectiveIconSize,
                 height: effectiveIconSize,
               )
             : Icon(
                 dataIcon,
+                // pass color only when not preserving original colors
                 color: iconColor,
                 size: effectiveIconSize,
               ),

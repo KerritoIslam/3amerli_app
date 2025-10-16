@@ -26,6 +26,11 @@ import '../../features/catalog/data/datasources/categories_remote_datasource.dar
 import '../../features/catalog/repository/categories_repository_impl.dart';
 import '../../features/catalog/domain/repositories/categories_repository.dart';
 import '../../features/catalog/app/bloc/favorites_bloc.dart';
+// Favorits feature (mocked favorites products list)
+import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart' as fav_feature;
+import 'package:amerli_app/features/favorits/data/datasources/favorits_remote_datasource.dart' as fav_feature;
+import 'package:amerli_app/features/favorits/data/repositories/favorits_repository_impl.dart' as fav_feature;
+import 'package:amerli_app/features/favorits/domain/repositories/favorits_repository.dart' as fav_feature;
 import '../../features/catalog/app/bloc/categories_bloc.dart';
 import '../../features/cart/app/bloc/cart_bloc.dart';
 import '../../features/orders/data/datasources/orders_remote_datasource.dart';
@@ -79,6 +84,8 @@ Future<void> init() async {
   sl.registerLazySingleton(() => CatalogRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => FavoritesRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => OffersRemoteDataSource(apiService: sl<ApiService>()));
+  // Favorits
+  sl.registerLazySingleton<fav_feature.FavoritsRemoteDataSource>(() => fav_feature.FavoritsRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => CategoriesRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => OrdersRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => NotificationsRemoteDataSource(apiService: sl<ApiService>()));
@@ -94,6 +101,8 @@ Future<void> init() async {
   sl.registerLazySingleton<NotificationsRepository>(() => NotificationsRepositoryImpl(remoteDataSource: sl<NotificationsRemoteDataSource>()));
   sl.registerLazySingleton<OffersRepository>(() => OffersRepositoryImpl(remoteDataSource: sl<OffersRemoteDataSource>()));
   sl.registerLazySingleton<PaymentsRepository>(() => PaymentsRepositoryImpl(remoteDataSource: sl<PaymentsRemoteDataSource>()));
+  // Favorits
+  sl.registerLazySingleton<fav_feature.FavoritsRepository>(() => fav_feature.FavoritsRepositoryImpl(remote: sl<fav_feature.FavoritsRemoteDataSource>()));
   sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(remoteDataSource: sl<ProfileRemoteDataSourceImpl>()));
 
   // Blocs
@@ -105,6 +114,8 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthBloc>(() => AuthBloc());
   // Cart should be app-scoped to preserve user selections across routes
   sl.registerLazySingleton<CartBloc>(() => CartBloc());
+  // Favorits Bloc
+  sl.registerFactory<fav_feature.FavoritsBloc>(() => fav_feature.FavoritsBloc(repository: sl<fav_feature.FavoritsRepository>()));
   sl.registerFactory(() => ProfileBloc(repository: sl<ProfileRepository>()));
   sl.registerFactory(() => OrdersBloc(repository: sl<OrdersRepository>()));
   sl.registerFactory(() => PaymentsBloc(repository: sl<PaymentsRepository>()));

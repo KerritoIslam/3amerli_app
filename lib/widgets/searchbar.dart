@@ -32,10 +32,11 @@ class _AppSearchbarState extends State<AppSearchbar>
       
       trailing: InkWell( 
         onTap: () {},
-        child: SvgPicture.asset("assets/icons/filter_icon.svg"),
+        child: SvgPicture.asset("assets/icons/filter_icon.svg",color: Theme.of(context).colorScheme.primary),
       ),
-      prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg"),
+      prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg",color: Theme.of(context).colorScheme.primary),
       onChanged: widget.onChanged,
+      
     );
   }
 }

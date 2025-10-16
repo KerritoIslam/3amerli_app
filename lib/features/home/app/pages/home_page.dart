@@ -1,3 +1,4 @@
+import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/widgets/animated_bottom_nav.dart';
 import 'package:amerli_app/features/catalog/app/pages/catalog_page.dart';
@@ -21,7 +22,7 @@ class _HomePageState extends State<HomePage> {
     _pages = [
       const CatalogPage(),
       const Center(child: Text('Placeholder 1')),
-      const Center(child: Text('Placeholder 2')),
+      const FavoritsPage(),
       const ProfilePage(),
     ];
   }

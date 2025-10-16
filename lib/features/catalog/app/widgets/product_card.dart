@@ -274,7 +274,7 @@ class _ProductCardState extends State<ProductCard> {
                                 )));
                               }
                             },
-                            child: IconCircle(isSelected: true , asset: "assets/icons/panier.svg",size: 26,)
+                            child: IconCircle(isSelected: true , asset: "assets/icons/panier.svg",size: 26, selectedColor: Theme.of(context).colorScheme.primary,)
                           ),
                         ],
                       ),

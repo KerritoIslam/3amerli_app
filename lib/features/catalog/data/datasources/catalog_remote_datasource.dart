@@ -24,6 +24,8 @@ class CatalogRemoteDataSource {
         'price': (20 + (i % 50)) * 1.0,
         'stock': (i % 10) + 1,
         'sellerId': (i % 5) + 1,
+        // mark every 3rd item as favorite in mock
+        'is_favorit': i % 3 == 0,
       });
     }
 

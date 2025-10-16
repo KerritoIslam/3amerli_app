@@ -1,7 +1,5 @@
 import 'dart:async';
 // import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
-import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
-import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
 import 'package:amerli_app/features/home/app/pages/home_page.dart';
 import 'package:amerli_app/features/profile/app/pages/profile_page.dart';
 import 'package:flutter/material.dart';
@@ -20,6 +18,10 @@ import '../../features/payments/app/pages/payments_page.dart';
 import '../../features/delivery/app/pages/delivery_page.dart';
 import '../../features/notifications/app/pages/notifications_page.dart';
 import '../../features/admin/app/pages/admin_page.dart';
+import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
+import '../config/injection.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart' as fav_feature;
 
 // Use GoRouter's built-in GoRouterRefreshStream helper which converts a Stream
 // into a ChangeNotifier that GoRouter can listen to.
@@ -81,6 +83,16 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       GoRoute(
         path: '/catalog',
         builder: (context, state) => const CatalogPage(),
+      ),
+      GoRoute(
+        path: '/favorits',
+        builder: (context, state) {
+          // Provide FavoritsBloc locally for this route
+          return BlocProvider<fav_feature.FavoritsBloc>(
+            create: (_) => sl<fav_feature.FavoritsBloc>(),
+            child: const FavoritsPage(),
+          );
+        },
       ),
       GoRoute(path: '/orders', builder: (context, state) => const OrdersPage()),
       GoRoute(path: '/payments', builder: (context, state) => const PaymentsPage()),

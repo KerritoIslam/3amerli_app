@@ -176,7 +176,7 @@ class _ProductsListState extends State<ProductsList> {
         // Provide CartBloc to ProductCard only if it's available above this widget.
         Widget card = ProductCard(
           imageUrl: product.pic,
-          isFavorite: false,
+          isFavorite: product.isFavorit,
           onFavoriteToggle: null,
           title: product.name,
           subtitle: product.description,

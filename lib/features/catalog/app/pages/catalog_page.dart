@@ -123,6 +123,7 @@ class _CatalogPageState extends State<CatalogPage> {
                       asset: 'assets/icons/notifications.svg',
                       isSelected: false,
                       size: 40,
+                      keepIconColor: true,
                     ),
                   ),
                 ],

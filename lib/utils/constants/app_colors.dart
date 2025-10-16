@@ -7,7 +7,7 @@ class AppColors {
   AppColors._();
 
   // Light theme colors (black on white)
-  static const Color lightPrimary = Colors.black;
+  static const Color lightPrimary = Color(0xFFA3C335); // brand green
   static const Color lightOnPrimary = Colors.white;
   static const Color lightBackground = Colors.white;
   static const Color lightSurface = Colors.white;
@@ -18,14 +18,14 @@ class AppColors {
   // Light theme additional tokens
   static const Color lightPrimaryContainer = Color(0xFFE0E0E0);
   static const Color lightOnPrimaryContainer = Colors.black;
-  static const Color lightSecondary = Colors.black;
-  static const Color lightOnSecondary = Colors.white;
+  static const Color lightSecondary = Color(0xFFF8F9EB);
+  static const Color lightOnSecondary = Colors.black; // maintain readable text on light secondary
   static const Color lightSecondaryContainer = Color(0xFFF5F5F5);
   static const Color lightOnSecondaryContainer = Colors.black;
   static const Color lightTertiary = Color(0xFFB00020);
   static const Color lightOnTertiary = Colors.white;
-  static const Color lightTertiaryContainer = Color(0xFFEF9A9A);
-  static const Color lightOnTertiaryContainer = Colors.black;
+ static const Color lightTertiaryContainer = Color(0xFF04272D);
+  static const Color lightOnTertiaryContainer = Colors.white;
   static const Color lightErrorContainer = Color(0xFFFFDAD6);
   static const Color lightOnErrorContainer = Color(0xFF410001);
   static const Color lightSurfaceVariant = Color(0xFFF2F2F4);
@@ -38,7 +38,7 @@ class AppColors {
   static const Color lightSurfaceTint = lightPrimary;
 
   // Dark theme colors (white on black)
-  static const Color darkPrimary = Colors.white;
+  static const Color darkPrimary = Color(0xFFA3C335);
   static const Color darkOnPrimary = Colors.black;
   static const Color darkBackground = Colors.black;
   static const Color darkSurface = Color(0xFF121212);
@@ -49,13 +49,13 @@ class AppColors {
   // Dark theme additional tokens
   static const Color darkPrimaryContainer = Color(0xFF2A2A2A);
   static const Color darkOnPrimaryContainer = Colors.white;
-  static const Color darkSecondary = Colors.white;
-  static const Color darkOnSecondary = Colors.black;
+  static const Color darkSecondary = Color(0xFFF8F9EB);
+  static const Color darkOnSecondary = Colors.black; // readable on light secondary in dark mode
   static const Color darkSecondaryContainer = Color(0xFF1E1E1E);
   static const Color darkOnSecondaryContainer = Colors.white;
   static const Color darkTertiary = Color(0xFFCF6679);
   static const Color darkOnTertiary = Colors.black;
-  static const Color darkTertiaryContainer = Color(0xFF5A2830);
+  static const Color darkTertiaryContainer = Color(0xFF04272D);
   static const Color darkOnTertiaryContainer = Colors.white;
   static const Color darkErrorContainer = Color(0xFF8B1D1D);
   static const Color darkOnErrorContainer = Colors.white;
@@ -87,8 +87,8 @@ class AppColors {
     onPrimary: lightOnPrimary,
     primaryContainer: lightPrimaryContainer,
     onPrimaryContainer: lightOnPrimaryContainer,
-  secondary: neutralLight300,
-  onSecondary: lightOnSecondary,
+    secondary: lightSecondary,
+    onSecondary: lightOnSecondary,
     secondaryContainer: lightSecondaryContainer,
     onSecondaryContainer: lightOnSecondaryContainer,
     tertiary: lightTertiary,
@@ -119,8 +119,8 @@ class AppColors {
     onPrimary: darkOnPrimary,
     primaryContainer: darkPrimaryContainer,
     onPrimaryContainer: darkOnPrimaryContainer,
-  secondary: neutralLight300,
-  onSecondary: darkOnSecondary,
+    secondary: darkSecondary,
+    onSecondary: darkOnSecondary,
     secondaryContainer: darkSecondaryContainer,
     onSecondaryContainer: darkOnSecondaryContainer,
     tertiary: darkTertiary,
