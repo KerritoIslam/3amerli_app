@@ -1,4 +1,5 @@
 import 'package:amerli_app/features/cart/app/widgets/products_tiles_list.dart';
+import 'package:amerli_app/widgets/bottom_cart_summary.dart';
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -74,17 +75,45 @@ class _CartView extends StatelessWidget {
               return const Center(child: Text('Votre panier est vide'));
             }
 
-            return ProductsTilesList(
-              products: productsInCart,
-              onQuantityChange: (index, quantity) {
-                final product = productsInCart[index];
-                final productIdStr = product.id.toString();
-                if (quantity <= 0) {
-                  context.read<CartBloc>().add(CartUpdateQuantityEvent(productId: productIdStr, quantity: 0));
-                } else {
-                  context.read<CartBloc>().add(CartUpdateQuantityEvent(productId: productIdStr, quantity: quantity));
-                }
-              },
+            // compute total
+            final total = productsInCart.fold<double>(0.0, (sum, p) => sum + (p.price * p.quantity));
+
+            return Stack(
+              children: [
+                // Product list - give bottom padding so last items aren't hidden under the summary
+                Positioned.fill(
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: kBottomNavigationBarHeight + 120),
+                    child: ProductsTilesList(
+                      products: productsInCart,
+                      onQuantityChange: (index, quantity) {
+                        final product = productsInCart[index];
+                        final productIdStr = product.id.toString();
+                        if (quantity <= 0) {
+                          context.read<CartBloc>().add(CartUpdateQuantityEvent(productId: productIdStr, quantity: 0));
+                        } else {
+                          context.read<CartBloc>().add(CartUpdateQuantityEvent(productId: productIdStr, quantity: quantity));
+                        }
+                      },
+                    ),
+                  ),
+                ),
+
+                // Bottom summary positioned above bottom nav bar so it doesn't block nav
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: kBottomNavigationBarHeight + 64,
+                  child: Center(
+                    child: BottomCartSummary(
+                      total: total,
+                      onPay: () {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Paiement non implémenté — total: ${total.toStringAsFixed(0)} DZD')));
+                      },
+                    ),
+                  ),
+                ),
+              ],
             );
           });
         }),
