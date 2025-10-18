@@ -14,7 +14,8 @@ class ProductsTilesList extends StatefulWidget {
 class _ProductsTilesListState extends State<ProductsTilesList> {
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
+    return ListView.separated(
+      separatorBuilder: (context, index) => const SizedBox(height: 8),
       itemCount: widget.products.length,
       itemBuilder: (context, index) => ProductTile(product: widget.products[index], quantity: widget.products[index].quantity, onQuantityChange: (quantity) {
         widget.onQuantityChange(index, quantity);

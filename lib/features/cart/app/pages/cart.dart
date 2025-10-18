@@ -31,7 +31,10 @@ class _CartView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Panier')),
+      appBar: AppBar(title: Center(child:  Text('Mon Panier',style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: Theme.of(context).colorScheme.tertiaryContainer,
+      )),)),
       body: Padding(
         padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
         child: BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
@@ -77,7 +80,7 @@ class _CartView extends StatelessWidget {
 
             // compute total
             final total = productsInCart.fold<double>(0.0, (sum, p) => sum + (p.price * p.quantity));
-
+            
             return Stack(
               children: [
                 // Product list - give bottom padding so last items aren't hidden under the summary

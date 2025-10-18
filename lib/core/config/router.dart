@@ -1,5 +1,6 @@
 import 'dart:async';
 // import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
+import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
 import 'package:amerli_app/features/home/app/pages/home_page.dart';
 import 'package:amerli_app/features/profile/app/pages/profile_page.dart';
 import 'package:flutter/material.dart';
@@ -73,12 +74,12 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
         builder: (context, state) {
           final seen = localStorage.getBool('seen_onboarding') ?? false;
           if (!seen) return const OnboardingFlow();
-          return const HomePage();
+          return const SignUpPage();
         },
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const CatalogPage(),
+        builder: (context, state) => const HomePage(),
       ),
       GoRoute(
         path: '/catalog',

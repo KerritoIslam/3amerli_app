@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/features/auth/sign_up/sign_up_cubit.dart';
+import 'package:amerli_app/features/home/app/pages/home_page.dart';
 import 'package:amerli_app/widgets/app_button.dart';
 import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:amerli_app/widgets/custom_tab_bar.dart';
@@ -52,10 +55,26 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
   void _onLocationValidate() {
     final valid = _locationKey.currentState?.validate() ?? false;
     if (!valid) return;
+    // build profile payload and call cubit to register
+    final profile = {
+      'name': _repNameController.text.trim(),
+      'locationUrl': null,
+      'supermarketName': _storeNameController.text.trim(),
+      'role': 'SUPERMARKET',
+      'address': {
+        'street': _streetController.text.trim(),
+        'city': _cityController.text.trim(),
+        'district': _quarterController.text.trim(),
+      }
+    };
 
-    // For now, show a confirmation and pop
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Profil complété')));
-    // Optionally navigate away or pop
+    final cubit = BlocProvider.of<SignUpCubit>(context);
+    cubit.registerProfile(profile).then((_) {
+      // Navigate to Home and remove previous routes
+      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const HomePage()), (r) => false);
+    }).catchError((e) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Échec de l\'enregistrement')));
+    });
   }
 
   @override

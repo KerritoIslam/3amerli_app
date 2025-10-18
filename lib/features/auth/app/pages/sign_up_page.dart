@@ -13,14 +13,21 @@ import '../../../../widgets/flag_image.dart';
 // svg import removed; use material Icon for arrow to ensure visibility
 import '../../sign_up/sign_up_cubit.dart';
 import '../../sign_up/sign_up_state.dart';
+import 'package:amerli_app/features/auth/repository/auth_repository_impl.dart';
+import 'package:amerli_app/core/config/injection.dart' show sl;
+import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
+import 'package:amerli_app/features/home/app/pages/home_page.dart';
 
 class SignUpPage extends StatelessWidget {
   const SignUpPage({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    // Obtain repository from DI so the ApiService uses the configured baseUrl
+    final repo = sl<AuthRepositoryImpl>();
+
     return BlocProvider(
-      create: (_) => SignUpCubit(),
+      create: (_) => SignUpCubit(repository: repo),
       child: const _SignUpView(),
     );
   }
@@ -220,7 +227,16 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                       return Padding(
                         padding: EdgeInsets.fromLTRB(AppDimensions.panelHorizontalPadding, topPadding, AppDimensions.panelHorizontalPadding, AppDimensions.panelBottomPadding),
                         child: BlocBuilder<SignUpCubit, SignUpState>(
-                          builder: (context, state) {
+                            builder: (context, state) {
+                            // navigate based on result (use microtask to avoid navigating during build)
+                            if (state.result == AuthResult.existingUser) {
+                              Future.microtask(() => Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(builder: (_) => const HomePage()),
+                                    (r) => false,
+                                  ));
+                            } else if (state.result == AuthResult.newUser) {
+                              Future.microtask(() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CompleteProfilePage())));
+                            }
                             // If entering OTP stage, show verification UI; otherwise show phone form
                             if (state.status == VerificationStatus.enteringOtp) {
                               return Column(
@@ -314,6 +330,8 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                           print('valid');
                                         } else {
                                           cubit.verifyOtp(code);
+                                          
+                                          
                                         }
                                       },
                                       height: 48,
@@ -415,7 +433,9 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                                 : () async {
                                                     // Validate the form before sending
                                                     final valid = _formKey.currentState?.validate() ?? false;
+                                                   
                                                     if (!valid) return;
+                                                    
                                                     await cubit.sendCode();
                                                   },
                                             isLoading: state.status == VerificationStatus.loading,

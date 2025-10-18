@@ -5,7 +5,7 @@ class User {
   final String? locationUrl;
   final int? addressId;
   final String? supermarketName;
-  final String profilePic;
+  final String? profilePic;
   final String role;
 
   User({

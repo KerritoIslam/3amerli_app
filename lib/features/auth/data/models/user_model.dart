@@ -7,7 +7,7 @@ class UserModel {
   final String? locationUrl;
   final int? addressId;
   final String? supermarketName;
-  final String profilePic;
+  final String? profilePic;
   final String role;
 
   UserModel({
@@ -28,7 +28,7 @@ class UserModel {
         locationUrl: json['locationUrl'] as String?,
         addressId: json['addressId'] as int?,
         supermarketName: json['supermarketName'] as String?,
-        profilePic: json['profilePic'] as String,
+        profilePic: json['profilePic'] as String?,
         role: json['role'] as String,
       );
 

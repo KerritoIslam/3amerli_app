@@ -45,8 +45,12 @@ import 'package:amerli_app/features/auth/data/datasources/profile_remote_datasou
 import 'package:amerli_app/features/auth/repository/profile_repository_impl.dart';
 import 'package:amerli_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_bloc.dart';
+import 'package:amerli_app/features/auth/data/datasources/auth_remote_datasource.dart';
+import 'package:amerli_app/features/auth/data/datasources/profile_local_datasource.dart';
+import 'package:amerli_app/features/auth/repository/auth_repository_impl.dart';
 import '../../features/catalog/data/datasources/catalog_remote_datasource.dart';
 import '../../core/dio/api_service.dart';
+import '../../core/auth/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'settings.dart';
 import '../storage/local_storage.dart';
@@ -56,11 +60,14 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   // External
-  // Create Dio and ApiService with placeholder values; replace baseUrl/jwtToken later
+  // Create Dio and ApiService with placeholder values; replace baseUrl later
   sl.registerLazySingleton(() => Dio());
-  const placeholderBaseUrl = 'https://api.example.com';
-  const placeholderJwt = 'eyJhbGciOiJI...REPLACE_ME'; // TODO: replace with real token / secure storage
-  sl.registerLazySingleton(() => ApiService(dio: sl<Dio>(), baseUrl: placeholderBaseUrl, jwtToken: placeholderJwt));
+  // Use host IP so physical devices can reach the backend. Traefik publishes port 80.
+  // Updated to the host machine IPv4 returned by `ipconfig` (Ethernet 2): 10.223.60.91
+  const placeholderBaseUrl = 'http://10.223.60.91/';
+  // Register AuthService (uses flutter_secure_storage internally)
+  sl.registerLazySingleton(() => AuthService());
+  sl.registerLazySingleton(() => ApiService(dio: sl<Dio>(), baseUrl: placeholderBaseUrl, authService: sl<AuthService>()));
 
   // Storage - SharedPreferences and SecureStorage
   // Initialize SharedPreferences once and register it
@@ -92,6 +99,10 @@ Future<void> init() async {
 
   sl.registerLazySingleton(() => PaymentsRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => ProfileRemoteDataSourceImpl(apiService: sl<ApiService>()));
+  // Auth feature datasources & repository
+  sl.registerLazySingleton(() => AuthRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(() => ProfileLocalDataSource());
+  sl.registerLazySingleton(() => AuthRepositoryImpl(remote: sl<AuthRemoteDataSource>(), authService: sl<AuthService>(), local: sl<ProfileLocalDataSource>()));
 
   // Repositories
   sl.registerLazySingleton<CatalogRepository>(() => CatalogRepositoryImpl(remoteDataSource: sl<CatalogRemoteDataSource>()));

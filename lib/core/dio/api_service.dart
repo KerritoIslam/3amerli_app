@@ -1,27 +1,32 @@
 import 'package:dio/dio.dart';
+import 'package:amerli_app/core/auth/auth_service.dart';
+import 'package:amerli_app/core/dio/auth_interceptor.dart';
 
 class ApiService {
   final Dio _dio;
 
-  ApiService({Dio? dio, String? baseUrl, String? jwtToken})
+  ApiService({Dio? dio, String? baseUrl, AuthService? authService})
       : _dio = dio ?? Dio(BaseOptions(connectTimeout: const Duration(seconds: 10))) {
     if (baseUrl != null) {
       _dio.options.baseUrl = baseUrl;
     }
 
-    // Setup basic interceptors: add Authorization header when jwtToken provided
-    _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-      if (jwtToken != null && jwtToken.isNotEmpty) {
-        options.headers['Authorization'] = 'Bearer $jwtToken';
-      }
-      // Example: add common headers
-      options.headers['Accept'] = 'application/json';
-      return handler.next(options);
-    }, onError: (err, handler) {
-      // Here you can handle global errors (refresh token etc.)
-      return handler.next(err);
-    }));
+    // Add logging interceptor to help debug network issues (only basic logging)
+    _dio.interceptors.add(LogInterceptor(request: true, requestBody: true, responseBody: true, responseHeader: false));
+
+    // Register auth interceptor if provided
+    if (authService != null) {
+      _dio.interceptors.add(AuthInterceptor(authService: authService, dio: _dio));
+    } else {
+      // default headers
+      _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+        options.headers['Accept'] = 'application/json';
+        return handler.next(options);
+      }));
+    }
   }
+
+  Dio get client => _dio;
 
   Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
     return _dio.get(path, queryParameters: queryParameters);

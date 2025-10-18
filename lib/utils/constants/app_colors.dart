@@ -17,6 +17,7 @@ class AppColors {
 
   // Light theme additional tokens
   static const Color lightPrimaryContainer = Color(0xFFE0E0E0);
+  
   static const Color lightOnPrimaryContainer = Colors.black;
   static const Color lightSecondary = Color(0xFFF8F9EB);
   static const Color lightOnSecondary = Colors.black; // maintain readable text on light secondary

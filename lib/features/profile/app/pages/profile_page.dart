@@ -72,7 +72,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                     height: 80,
                                     child: ClipOval(
                                       child: Image.network(
-                                        user.profilePic.isNotEmpty ? user.profilePic : 'https://picsum.photos/seed/profile/200/200',
+                                        user.profilePic?.trim().isNotEmpty == true ? user.profilePic! : 'https://picsum.photos/seed/profile/200/200',
                                         fit: BoxFit.cover,
                                         loadingBuilder: (context, child, loadingProgress) {
                                           if (loadingProgress == null) return child;
