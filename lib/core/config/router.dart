@@ -2,6 +2,7 @@ import 'dart:async';
 // import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
 import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
 import 'package:amerli_app/features/home/app/pages/home_page.dart';
+import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
 import 'package:amerli_app/features/profile/app/pages/profile_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +24,7 @@ import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
 import '../config/injection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart' as fav_feature;
+import 'package:amerli_app/features/auth/sign_up/sign_up_cubit.dart';
 
 // Use GoRouter's built-in GoRouterRefreshStream helper which converts a Stream
 // into a ChangeNotifier that GoRouter can listen to.
@@ -42,26 +44,31 @@ class _StreamChangeNotifier extends ChangeNotifier {
   }
 }
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
-
 GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localStorage}) {
   // Convert the authBloc stream into a ChangeNotifier GoRouter can listen to
   final refresh = _StreamChangeNotifier(authBloc.stream);
 
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
-    initialLocation: '/',
+    // Start the app at the authentication entrypoint. The previous root
+    // (`/`) returned a `SizedBox.shrink()` which produced a black/empty
+    // screen until a redirect happened; using '/auth' makes the initial
+    // visible page explicit and avoids a blank frame on startup.
+    initialLocation: '/auth',
     refreshListenable: refresh,
     redirect: (context, state) {
-      // Keep routing decisions solely based on authentication state to avoid
-      // redirect loops. The /auth route itself will render onboarding or
-      // sign-up depending on whether onboarding was seen.
+      // Define which paths are non-protected (allowed when unauthenticated).
+      final nonProtected = <String>{'/', '/auth', '/complete-profile'};
       final loggedIn = authBloc.state is Authenticated;
       final loc = state.uri.path;
-      final loggingIn = loc == '/auth';
 
-      if (!loggedIn && !loggingIn) return '/auth';
-      if (loggedIn && loggingIn) return '/home';
+      final isNonProtected = nonProtected.contains(loc) || nonProtected.any((p) => loc.startsWith(p));
+
+      // If not logged in and trying to access a protected route, send to /auth
+      if (!loggedIn && !isNonProtected) return '/auth';
+
+      // If logged in but at auth path, send to home
+      if (loggedIn && (loc == '/auth' || loc == '/')) return '/home';
+
       return null;
     },
     routes: [
@@ -80,6 +87,16 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       GoRoute(
         path: '/home',
         builder: (context, state) => const HomePage(),
+      ),
+      GoRoute(
+        path: '/complete-profile',
+        builder: (context, state) {
+          final extra = state.extra;
+          if (extra is SignUpCubit) {
+            return BlocProvider.value(value: extra, child: const CompleteProfilePage());
+          }
+          return const CompleteProfilePage();
+        },
       ),
       GoRoute(
         path: '/catalog',

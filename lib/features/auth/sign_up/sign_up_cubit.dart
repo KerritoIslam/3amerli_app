@@ -68,6 +68,7 @@ class SignUpCubit extends Cubit<SignUpState> {
         }
         emit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
       } else {
+        print("New User Detected");
         emit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.newUser));
       }
       print("Verification result: ${state.result}");
@@ -99,5 +100,11 @@ class SignUpCubit extends Cubit<SignUpState> {
 
   void reset() {
     emit(const SignUpState());
+  }
+
+  /// Mark that we've started navigating to the profile completion page so
+  /// the UI doesn't repeat the navigation on subsequent builds.
+  void markCompletingProfile() {
+    emit(state.copyWith(result: AuthResult.completingProfileForSignUp));
   }
 }

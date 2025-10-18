@@ -12,8 +12,7 @@ class AuthRepositoryImpl {
 
   Future<void> sendOtp(String phone) => remote.sendOtp(phone);
 
-  /// Validate OTP and return whether user is registered.
-  /// Backend response contains: accessToken, refreshToken, user, isRegistered
+  
   Future<bool> validateOtp(String phone, String otp) async {
     final Map<String, dynamic> data = await remote.validateOtp(phone, otp);
 
@@ -22,8 +21,7 @@ class AuthRepositoryImpl {
     final userJson = data['user'] as Map<String, dynamic>?;
     final isRegistered = data['isRegistered'] as bool? ?? false;
 
-    // Always save tokens (even if not registered) — backend requires them for registration
-    if (access != null && refresh != null) {
+    if (access != null && refresh != null ) {
       await authService.saveTokens(accessToken: access, refreshToken: refresh);
     }
 
@@ -34,10 +32,9 @@ class AuthRepositoryImpl {
     return isRegistered; // true -> existing user (go to Home), false -> new user (go to CompleteProfile)
   }
 
-  /// Submit complete profile to the backend (PUT /authentication/register).
-  /// Expects the backend to return the created user JSON which we cache.
   Future<void> register(Map<String, dynamic> profile) async {
     final resp = await remote.register(profile);
+    print("Register Response: $resp");
     // resp is the user JSON
     if (resp.isNotEmpty) {
       await local.saveUserJson(resp);

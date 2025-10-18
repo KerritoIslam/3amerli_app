@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/auth/sign_up/sign_up_cubit.dart';
-import 'package:amerli_app/features/home/app/pages/home_page.dart';
+import 'package:go_router/go_router.dart';
 import 'package:amerli_app/widgets/app_button.dart';
 import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:amerli_app/widgets/custom_tab_bar.dart';
@@ -67,11 +67,15 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
         'district': _quarterController.text.trim(),
       }
     };
-
+    
     final cubit = BlocProvider.of<SignUpCubit>(context);
     cubit.registerProfile(profile).then((_) {
-      // Navigate to Home and remove previous routes
-      Navigator.of(context).pushAndRemoveUntil(MaterialPageRoute(builder: (_) => const HomePage()), (r) => false);
+      // Navigate to Home via GoRouter to keep a single routing API and
+      // avoid creating a second Navigator that could conflict with the
+      // app-level GoRouter (which manages '/home'). This also clears
+      // previous history similar to pushAndRemoveUntil.
+      
+      GoRouter.of(context).go('/home');
     }).catchError((e) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Échec de l\'enregistrement')));
     });

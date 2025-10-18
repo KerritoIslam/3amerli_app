@@ -8,8 +8,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/auth_bloc.dart';
+import 'package:amerli_app/features/auth/app/bloc/auth_state.dart';
 import 'package:amerli_app/features/auth/repository/auth_repository_impl.dart';
 import 'package:amerli_app/core/config/injection.dart' as di;
+import 'package:go_router/go_router.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_event.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
@@ -208,7 +210,28 @@ class _ProfilePageState extends State<ProfilePage> {
                       final authRepo = di.sl<AuthRepositoryImpl>();
                       await authRepo.signOut(); // clear tokens and cached user
                       final authBloc = di.sl<AuthBloc>();
+                      // Dispatch logout and wait until the bloc reports Unauthenticated
+                      // before navigating. This avoids racing with router redirects
+                      // or other listeners that may also update navigation.
                       authBloc.add(LogOutEvent());
+
+                      // Wait for the bloc to emit Unauthenticated (timeout after 2s)
+                      try {
+                        authBloc.stream.firstWhere((s) => s is Unauthenticated).timeout(const Duration(seconds: 2)).then((_) {
+                          try {
+                            GoRouter.of(context).go('/auth');
+                          } catch (_) {}
+                        }).catchError((e) {
+                          // If waiting failed/timeout, still attempt navigation as a fallback
+                          try {
+                            GoRouter.of(context).go('/auth');
+                          } catch (_) {}
+                        });
+                      } catch (_) {
+                        try {
+                          GoRouter.of(context).go('/auth');
+                        } catch (_) {}
+                      }
                     } catch (e) {
                       print('Logout failed: $e');
                     }

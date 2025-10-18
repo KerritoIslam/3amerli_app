@@ -22,7 +22,7 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> validateOtp(String phone, String otp) async {
     final resp = await apiService.post('/authentication/otp/validate', data: {'phoneNumber': phone, 'otp': otp});
     print("Data : response ${resp.data}");
-    if (resp.statusCode == 201 && resp.data != null) {
+    if (((resp.statusCode == 201) || (resp.statusCode == 200)) && resp.data != null) {
       return Map<String, dynamic>.from(resp.data as Map);
     }
     throw DioError(requestOptions: resp.requestOptions, response: resp);
@@ -33,7 +33,8 @@ class AuthRemoteDataSource {
     // ApiService with AuthInterceptor will attach access token automatically;
     // but accept accessToken override for direct calls if needed.
     final resp = await apiService.client.put('/authentication/register', data: profile);
-    if (resp.statusCode == 200 && resp.data != null) {
+    print("Register Data Response: ${resp.data}");
+    if (((resp.statusCode == 201) || (resp.statusCode == 200)) && resp.data != null) {
       return Map<String, dynamic>.from(resp.data as Map);
     }
     throw DioError(requestOptions: resp.requestOptions, response: resp);
@@ -46,7 +47,7 @@ class AuthRemoteDataSource {
     final baseUrl = apiService.client.options.baseUrl;
     final d = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 10)));
     final resp = await d.post('/authentication/refresh', options: Options(headers: {'Authorization': 'Bearer $refreshToken'}));
-    if (resp.statusCode == 200 && resp.data != null) {
+    if (((resp.statusCode == 201) || (resp.statusCode == 200))&& resp.data != null) {
       return Map<String, dynamic>.from(resp.data as Map);
     }
     throw Exception('refresh_failed');

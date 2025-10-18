@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 enum VerificationStatus { noNumberEntered, pending, loading, enteringOtp, verified }
 
-enum AuthResult { none, existingUser, newUser }
+enum AuthResult { none, existingUser, newUser, completingProfileForSignUp }
 
 class SignUpState extends Equatable {
   final VerificationStatus status;

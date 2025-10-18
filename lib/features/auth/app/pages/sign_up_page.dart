@@ -2,6 +2,7 @@
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../widgets/app_text_feild.dart';
@@ -15,8 +16,6 @@ import '../../sign_up/sign_up_cubit.dart';
 import '../../sign_up/sign_up_state.dart';
 import 'package:amerli_app/features/auth/repository/auth_repository_impl.dart';
 import 'package:amerli_app/core/config/injection.dart' show sl;
-import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
-import 'package:amerli_app/features/home/app/pages/home_page.dart';
 
 class SignUpPage extends StatelessWidget {
   const SignUpPage({Key? key}) : super(key: key);
@@ -226,257 +225,265 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
 
                       return Padding(
                         padding: EdgeInsets.fromLTRB(AppDimensions.panelHorizontalPadding, topPadding, AppDimensions.panelHorizontalPadding, AppDimensions.panelBottomPadding),
-                        child: BlocBuilder<SignUpCubit, SignUpState>(
-                            builder: (context, state) {
-                            // navigate based on result (use microtask to avoid navigating during build)
-                            if (state.result == AuthResult.existingUser) {
-                              Future.microtask(() => Navigator.of(context).pushAndRemoveUntil(
-                                    MaterialPageRoute(builder: (_) => const HomePage()),
-                                    (r) => false,
-                                  ));
-                            } else if (state.result == AuthResult.newUser) {
-                              Future.microtask(() => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const CompleteProfilePage())));
+                          child: BlocListener<SignUpCubit, SignUpState>(
+                          // Only react when the result becomes `newUser` — navigation to
+                          // home for existing users is handled centrally by the AuthBloc
+                          // -> router redirect to avoid concurrent navigator updates.
+                          listenWhen: (previous, current) => previous.result != current.result &&
+                              current.result == AuthResult.newUser,
+                          listener: (context, state) {
+                            // Use post-frame callback to avoid navigator locked / hero scope issues
+                            if (state.result == AuthResult.newUser) {
+                              print("New User Detected : Navigating to Complete Profile");
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                // Navigate using GoRouter to the dedicated route. The
+                                // CompleteProfilePage will be built by the router so we
+                                // avoid pushing a second Navigator with the same GlobalKey.
+                                GoRouter.of(context).push('/complete-profile', extra: context.read<SignUpCubit>());
+                              });
                             }
-                            // If entering OTP stage, show verification UI; otherwise show phone form
-                            if (state.status == VerificationStatus.enteringOtp) {
+                          },
+                          child: BlocBuilder<SignUpCubit, SignUpState>(
+                            builder: (context, state) {
+                              // If entering OTP stage, show verification UI; otherwise show phone form
+                              if (state.status == VerificationStatus.enteringOtp) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      AppLanguage.verifyNumber,
+                                      style: AppTextStyles.headline1,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      AppLanguage.codeSent,
+                                      style: AppTextStyles.body,
+                                    ),
+                                    const SizedBox(height: 18),
+                                    // OTP boxes
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 50.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: List.generate(4, (i) {
+                                          return SizedBox(
+                                            width: 56,
+                                            child: TextField(
+                                              controller: _otpControllers[i],
+                                              focusNode: _otpFocusNodes[i],
+                                              keyboardType: TextInputType.number,
+                                              textAlign: TextAlign.center,
+                                              maxLength: 1,
+                                              style: TextStyle(fontSize: 24, color: Theme.of(context).colorScheme.primary),
+                                              decoration: InputDecoration(
+                                                counterText: '',
+                                                hintText: '0',
+                                                hintStyle: TextStyle(color: AppColors.hint),
+                                                enabledBorder: UnderlineInputBorder(
+                                                  borderSide: BorderSide(color: AppColors.hint),
+                                                ),
+                                                focusedBorder: UnderlineInputBorder(
+                                                  borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+                                                ),
+                                              ),
+                                              onChanged: (v) {
+                                                if (v.length > 1) {
+                                                  // handle paste: distribute characters
+                                                  final chars = v.split('');
+                                                  for (var j = 0; j < chars.length && (i + j) < 4; j++) {
+                                                    _otpControllers[i + j].text = chars[j];
+                                                  }
+                                                  final next = (i + chars.length).clamp(0, 4);
+                                                  if (next < 4) _otpFocusNodes[next].requestFocus();
+                                                } else {
+                                                  if (v.isNotEmpty) {
+                                                    if (i < 3) _otpFocusNodes[i + 1].requestFocus();
+                                                  } else {
+                                                    if (i > 0) _otpFocusNodes[i - 1].requestFocus();
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Center(
+                                      child: GestureDetector(
+                                        onTap: () async {
+                                          // resend code
+                                          await cubit.sendCode();
+                                        },
+                                        child: Text(
+                                          AppLanguage.noCodeReceived,
+                                          textAlign: TextAlign.center,
+                                          style: AppTextStyles.caption.copyWith(
+                                            color: Theme.of(context).colorScheme.primary,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    SizedBox(
+                                      width: double.infinity,
+                                      child: AppButton(
+                                        text: AppLanguage.verifyMyNumber,
+                                        onPressed: () {
+                                          final code = _otpControllers.map((c) => c.text).join();
+                                          if (code == '0000') {
+                                            // Special-case debug code
+                                            print('valid');
+                                          } else {
+                                            cubit.verifyOtp(code);
+                                          }
+                                        },
+                                        height: 48,
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              }
+
+                              // Phone entry form (existing)
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    AppLanguage.verifyNumber,
+                                    AppLanguage.phoneNumberTitle,
                                     style: AppTextStyles.headline1,
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    AppLanguage.codeSent,
+                                    AppLanguage.phoneNumberSubtitle,
                                     style: AppTextStyles.body,
                                   ),
-                                  const SizedBox(height: 18),
-                                  // OTP boxes
-                                  Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 50.0),
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: List.generate(4, (i) {
-                                        return SizedBox(
-                                          width: 56,
-                                          child: TextField(
-                                            
-                                            controller: _otpControllers[i],
-                                            focusNode: _otpFocusNodes[i],
-                                            keyboardType: TextInputType.number,
-                                            textAlign: TextAlign.center,
-                                            maxLength: 1,
-                                            style: TextStyle(fontSize: 24, color: Theme.of(context).colorScheme.primary),
-                                            decoration: InputDecoration(
-                                              counterText: '',
-                                              hintText: '0',
-                                              hintStyle: TextStyle(color: AppColors.hint),
-                                              enabledBorder: UnderlineInputBorder(
-                                                borderSide: BorderSide(color: AppColors.hint),
-                                              ),
-                                              focusedBorder: UnderlineInputBorder(
-                                                borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
-                                              ),
-                                            ),
-                                            onChanged: (v) {
-                                              if (v.length > 1) {
-                                                // handle paste: distribute characters
-                                                final chars = v.split('');
-                                                for (var j = 0; j < chars.length && (i + j) < 4; j++) {
-                                                  _otpControllers[i + j].text = chars[j];
-                                                }
-                                                final next = (i + chars.length).clamp(0, 4);
-                                                if (next < 4) _otpFocusNodes[next].requestFocus();
-                                              } else {
-                                                if (v.isNotEmpty) {
-                                                  if (i < 3) _otpFocusNodes[i + 1].requestFocus();
-                                                } else {
-                                                  if (i > 0) _otpFocusNodes[i - 1].requestFocus();
-                                                }
-                                              }
-                                            },
+                                  const SizedBox(height: 12),
+                                  // Form around the phone field to support validation
+                                  Form(
+                                    key: _formKey,
+                                    child: AppTextField(
+                                      controller: _phoneController,
+                                      focusNode: _phoneFocusNode,
+                                      keyboardType: TextInputType.phone,
+                                      hintText: null,
+                                      // validate phone: must be digits and at least 8 chars
+                                      validator: (v) {
+                                        final value = v?.trim() ?? '';
+                                        if (value.isEmpty) return AppLanguage.phoneEmptyError;
+                                        // Strict Algerian number pattern: ^(?:\+213|0)(5|6|7)[0-9]{8}$
+                                        final pattern = r'^(?:\+213|0)(5|6|7)[0-9]{8}$';
+                                        final reg = RegExp(pattern);
+                                        if (!reg.hasMatch(value)) return AppLanguage.phoneInvalidError;
+                                        return null;
+                                      },
+                                      // Disable live validation; validation will be
+                                      // triggered explicitly when the Send button is pressed.
+                                      autovalidateMode: AutovalidateMode.disabled,
+                                      // leading is a button containing the flag and an up-arrow.
+                                      leading: SizedBox(
+                                        width: AppDimensions.flagButtonWidth,
+                                        child: Padding(
+                                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                                          child: _FlagButton(
+                                            currentAsset: 'assets/images/flags/algeria.svg',
+                                            onSelected: (asset) => cubit.setCountryCode(asset),
+                                            preserveFocus: _phoneFocusNode,
                                           ),
-                                        );
-                                      }),
+                                        ),
+                                      ),
+                                      onChanged: (v) => cubit.setPhoneNumber(v),
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  Center(
-                                    child: GestureDetector(
-                                      onTap: () async {
-                                        // resend code
-                                        await cubit.sendCode();
-                                      },
-                                      child: Text(
-                                        AppLanguage.noCodeReceived,
+
+                                  // Flexible spacer pushes the following content to the bottom
+                                  const Spacer(),
+
+                                  // If focused: show consent above the button, then the button.
+                                  // Otherwise: the button is hidden and consent sits at the bottom.
+                                  if (_phoneFocusNode.hasFocus) ...[
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: RichText(
                                         textAlign: TextAlign.center,
-                                        style: AppTextStyles.caption.copyWith(
-                                          color: Theme.of(context).colorScheme.primary,
-                                          decoration: TextDecoration.underline,
+                                        text: TextSpan(
+                                          style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                                          children: [
+                                            TextSpan(text: AppLanguage.consentPrefix + ' '),
+                                            TextSpan(
+                                              text: AppLanguage.termsOfUse,
+                                              style: const TextStyle(decoration: TextDecoration.underline),
+                                            ),
+                                            TextSpan(text: ' ' + AppLanguage.and + ' '),
+                                            TextSpan(
+                                              text: AppLanguage.privacyPolicy,
+                                              style: const TextStyle(decoration: TextDecoration.underline),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  const Spacer(),
-                                  SizedBox(
-                                    width: double.infinity,
-                                    child: AppButton(
-                                      text: AppLanguage.verifyMyNumber,
-                                      onPressed: () {
-                                        final code = _otpControllers.map((c) => c.text).join();
-                                        if (code == '0000') {
-                                          // Special-case debug code
-                                          print('valid');
-                                        } else {
-                                          cubit.verifyOtp(code);
-                                          
-                                          
-                                        }
-                                      },
-                                      height: 48,
+                                    const SizedBox(height: 12),
+                                    AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 200),
+                                      switchInCurve: Curves.easeOut,
+                                      switchOutCurve: Curves.easeIn,
+                                      child: SizedBox(
+                                        key: const ValueKey('send_button'),
+                                        width: double.infinity,
+                                        child: AppButton(
+                                          text: AppLanguage.sendCode,
+                                          onPressed: state.status == VerificationStatus.loading
+                                              ? null
+                                              : () async {
+                                                  // Validate the form before sending
+                                                  final valid = _formKey.currentState?.validate() ?? false;
+
+                                                  if (!valid) return;
+
+                                                  await cubit.sendCode();
+                                                },
+                                          isLoading: state.status == VerificationStatus.loading,
+                                          height: 48,
+                                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                                        ),
+                                      ),
                                     ),
-                                  ),
+                                    const SizedBox(height: AppDimensions.spacingXL),
+                                  ] else ...[
+                                    // Hidden send button
+                                    AnimatedSwitcher(
+                                      duration: const Duration(milliseconds: 200),
+                                      child: const SizedBox.shrink(key: ValueKey('send_button_hidden')),
+                                    ),
+                                    const SizedBox(height: AppDimensions.spacingXL),
+                                    Align(
+                                      alignment: Alignment.center,
+                                      child: RichText(
+                                        textAlign: TextAlign.center,
+                                        text: TextSpan(
+                                          style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                                          children: [
+                                            TextSpan(text: AppLanguage.consentPrefix + ' '),
+                                            TextSpan(
+                                              text: AppLanguage.termsOfUse,
+                                              style: const TextStyle(decoration: TextDecoration.underline),
+                                            ),
+                                            TextSpan(text: ' ' + AppLanguage.and + ' '),
+                                            TextSpan(
+                                              text: AppLanguage.privacyPolicy,
+                                              style: const TextStyle(decoration: TextDecoration.underline),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               );
-                            }
-
-                            // Phone entry form (existing)
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  AppLanguage.phoneNumberTitle,
-                                  style: AppTextStyles.headline1,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  AppLanguage.phoneNumberSubtitle,
-                                  style: AppTextStyles.body,
-                                ),
-                                const SizedBox(height: 12),
-                                // Form around the phone field to support validation
-                                Form(
-                                  key: _formKey,
-                                  child: AppTextField(
-                                  controller: _phoneController,
-                                  focusNode: _phoneFocusNode,
-                                  keyboardType: TextInputType.phone,
-                                  hintText: null,
-                                  // validate phone: must be digits and at least 8 chars
-                                  validator: (v) {
-                                    final value = v?.trim() ?? '';
-                                    if (value.isEmpty) return AppLanguage.phoneEmptyError;
-                                    // Strict Algerian number pattern: ^(?:\+213|0)(5|6|7)[0-9]{8}$
-                                    final pattern = r'^(?:\+213|0)(5|6|7)[0-9]{8}$';
-                                    final reg = RegExp(pattern);
-                                    if (!reg.hasMatch(value)) return AppLanguage.phoneInvalidError;
-                                    return null;
-                                  },
-                                  // Disable live validation; validation will be
-                                  // triggered explicitly when the Send button is pressed.
-                                  autovalidateMode: AutovalidateMode.disabled,
-                                  // leading is a button containing the flag and an up-arrow.
-                                  leading: SizedBox(
-                                    width: AppDimensions.flagButtonWidth,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                                      child: _FlagButton(
-                                        currentAsset: 'assets/images/flags/algeria.svg',
-                                        onSelected: (asset) => cubit.setCountryCode(asset),
-                                        preserveFocus: _phoneFocusNode,
-                                      ),
-                                    ),
-                                  ),
-                                  onChanged: (v) => cubit.setPhoneNumber(v),
-                                )),
-
-                                // Flexible spacer pushes the following content to the bottom
-                                const Spacer(),
-
-                                // If focused: show consent above the button, then the button.
-                                // Otherwise: the button is hidden and consent sits at the bottom.
-                                if (_phoneFocusNode.hasFocus) ...[
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: RichText(
-                                      textAlign: TextAlign.center,
-                                      text: TextSpan(
-                                        style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                        children: [
-                                          TextSpan(text: AppLanguage.consentPrefix + ' '),
-                                          TextSpan(
-                                            text: AppLanguage.termsOfUse,
-                                            style: const TextStyle(decoration: TextDecoration.underline),
-                                          ),
-                                          TextSpan(text: ' ' + AppLanguage.and + ' '),
-                                          TextSpan(
-                                            text: AppLanguage.privacyPolicy,
-                                            style: const TextStyle(decoration: TextDecoration.underline),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 200),
-                                    switchInCurve: Curves.easeOut,
-                                    switchOutCurve: Curves.easeIn,
-                                    child: SizedBox(
-                                      key: const ValueKey('send_button'),
-                                      width: double.infinity,
-                                          child: AppButton(
-                                            text: AppLanguage.sendCode,
-                                            onPressed: state.status == VerificationStatus.loading
-                                                ? null
-                                                : () async {
-                                                    // Validate the form before sending
-                                                    final valid = _formKey.currentState?.validate() ?? false;
-                                                   
-                                                    if (!valid) return;
-                                                    
-                                                    await cubit.sendCode();
-                                                  },
-                                            isLoading: state.status == VerificationStatus.loading,
-                                            height: 48,
-                                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                                          ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: AppDimensions.spacingXL),
-                                ] else ...[
-                                  // Hidden send button
-                                  AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 200),
-                                    child: const SizedBox.shrink(key: ValueKey('send_button_hidden')),
-                                  ),
-                                  const SizedBox(height: AppDimensions.spacingXL),
-                                  Align(
-                                    alignment: Alignment.center,
-                                    child: RichText(
-                                      textAlign: TextAlign.center,
-                                      text: TextSpan(
-                                        style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                        children: [
-                                          TextSpan(text: AppLanguage.consentPrefix + ' '),
-                                          TextSpan(
-                                            text: AppLanguage.termsOfUse,
-                                            style: const TextStyle(decoration: TextDecoration.underline),
-                                          ),
-                                          TextSpan(text: ' ' + AppLanguage.and + ' '),
-                                          TextSpan(
-                                            text: AppLanguage.privacyPolicy,
-                                            style: const TextStyle(decoration: TextDecoration.underline),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            );
-                          },
+                            },
+                          ),
                         ),
                       );
                     }),
