@@ -22,6 +22,20 @@ class AuthInterceptor extends Interceptor {
       if (token != null && token.isNotEmpty) {
         options.headers['Authorization'] = 'Bearer $token';
       }
+
+      // If the request is the registration endpoint, attach the week token
+      // returned after OTP validation. This header is intentionally separate
+      // from the regular Authorization header and will only be sent to the
+      // register endpoint.
+  final path = options.path;
+      // Match exact register path (server uses /authentication/register)
+      if (path.endsWith('/authentication/register') || path == '/authentication/register') {
+        final week = await authService.readWeekToken();
+        if (week != null && week.isNotEmpty) {
+          print("Register Data Response Register week token: $week");
+          options.headers['Authorization'] = 'Bearer $week';
+        }
+      }
       options.headers['Accept'] = 'application/json';
     } catch (_) {}
     return handler.next(options);

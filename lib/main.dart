@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'core/config/injection.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/catalog/app/bloc/catalog_bloc.dart';
@@ -18,7 +19,13 @@ import 'core/storage/local_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Lock orientation to portrait (vertical) only
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  
+  ]);
   await di.init();
+
   // Ensure selected app language is set from persisted settings before runApp
   final settings = di.sl<Settings>();
   // Map stored language code to AppLocale

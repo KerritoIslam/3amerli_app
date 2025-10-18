@@ -15,6 +15,7 @@ import 'package:go_router/go_router.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_event.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
+import 'package:amerli_app/features/auth/domain/entities/user.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -60,106 +61,137 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 const SizedBox(height: 30),
                 Center(
-                  child: bloc != null
-                      ? StreamBuilder<ProfileState>(
-                          stream: bloc.stream,
-                          initialData: bloc.state,
-                          builder: (context, snapshot) {
-                            final state = snapshot.data;
-                            if (state is ProfileLoading) return const CircularProgressIndicator();
-                            if (state is ProfileLoaded) {
-                              final user = state.user;
-                              return Column(
-                                children: [
-                                  
-                                  const SizedBox(height: 15),
-                                  SizedBox(
-                                    width: 80,
-                                    height: 80,
-                                    child: ClipOval(
-                                      child: Image.network(
-                                        user.profilePic?.trim().isNotEmpty == true ? user.profilePic! : 'https://picsum.photos/seed/profile/200/200',
-                                        fit: BoxFit.cover,
-                                        loadingBuilder: (context, child, loadingProgress) {
-                                          if (loadingProgress == null) return child;
-                                          return Container(
-                                            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
-                                            alignment: Alignment.center,
-                                            child: SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2.0,
-                                                value: loadingProgress.expectedTotalBytes != null
-                                                    ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
-                                                    : null,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                        errorBuilder: (context, error, stackTrace) => Container(
-                                          color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
-                                          alignment: Alignment.center,
-                                          child: Icon(
-                                            Icons.person_outline,
-                                            size: 48,
-                                            color: Theme.of(context).colorScheme.onSurface,
-                                          ),
-                                        ),
+                  child: Builder(builder: (context) {
+                    // Try to obtain AuthBloc as a fallback source of user info
+                    AuthBloc? authBloc;
+                    try {
+                      authBloc = BlocProvider.of<AuthBloc>(context);
+                    } catch (_) {
+                      authBloc = null;
+                    }
+
+                    // Helper to build the user column
+                    Widget userColumn(User user) {
+                      final pic = (user.profilePic ?? '').trim();
+                      final imageUrl = pic.isNotEmpty ? pic : 'https://picsum.photos/seed/profile/200/200';
+                      return Column(
+                        children: [
+                          const SizedBox(height: 15),
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: ClipOval(
+                              child: Image.network(
+                                imageUrl,
+                                fit: BoxFit.cover,
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                                    alignment: Alignment.center,
+                                    child: SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.0,
+                                        value: loadingProgress.expectedTotalBytes != null
+                                            ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+                                            : null,
                                       ),
                                     ),
+                                  );
+                                },
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                                  alignment: Alignment.center,
+                                  child: Icon(
+                                    Icons.person_outline,
+                                    size: 48,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
-                                  const SizedBox(height: 16),
-                                  Text(user.name, style: Theme.of(context).textTheme.titleLarge),
-                                  const SizedBox(height: 8),
-                                  Text(user.phoneNumber, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
-                                ],
-                              );
-                            }
-
-                            // initial or error state -> show placeholder while bloc exists
-                            return Column(
-                              children: [
-                                
-                                const SizedBox(height: 15),
-                                SizedBox(
-                                  width: 80,
-                                  height: 80,
-                                  child: ClipOval(
-                                    child: Image.network(
-                                      'https://picsum.photos/seed/profile/200/200',
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Text('Nom d\'utilisateur', style: Theme.of(context).textTheme.titleLarge),
-                                const SizedBox(height: 8),
-                                Text('Numero de téléphone', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
-                              ],
-                            );
-                          },
-                        )
-                      : Column(
-                          children: [
-                            
-                            const SizedBox(height: 15),
-                            SizedBox(
-                              width: 80,
-                              height: 80,
-                              child: ClipOval(
-                                child: Image.network(
-                                  'https://picsum.photos/seed/profile/200/200',
-                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            Text('Nom d\'utilisateur', style: Theme.of(context).textTheme.titleLarge),
-                            const SizedBox(height: 8),
-                            Text('Numero de téléphone', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(user.name, style: Theme.of(context).textTheme.titleLarge),
+                          const SizedBox(height: 8),
+                          Text(user.phoneNumber, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                        ],
+                      );
+                    }
+
+                    // Placeholder UI when no user is available
+                    Widget placeholderColumn() {
+                      return Column(
+                        children: [
+                          const SizedBox(height: 15),
+                          SizedBox(
+                            width: 80,
+                            height: 80,
+                            child: ClipOval(
+                              child: Image.network(
+                                'https://picsum.photos/seed/profile/200/200',
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text('Nom d\'utilisateur', style: Theme.of(context).textTheme.titleLarge),
+                          const SizedBox(height: 8),
+                          Text('Numero de téléphone', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                        ],
+                      );
+                    }
+
+                    if (bloc != null) {
+                      return StreamBuilder<ProfileState>(
+                        stream: bloc.stream,
+                        initialData: bloc.state,
+                        builder: (context, snapshot) {
+                          final state = snapshot.data;
+                          if (state is ProfileLoading) return const CircularProgressIndicator();
+                          if (state is ProfileLoaded) {
+                            return userColumn(state.user);
+                          }
+
+                          // If profile not loaded yet, try to show AuthBloc's user
+                          if (authBloc != null) {
+                            return StreamBuilder<AuthState>(
+                              stream: authBloc.stream,
+                              initialData: authBloc.state,
+                              builder: (c, s2) {
+                                final aState = s2.data;
+                                if (aState is Authenticated) {
+                                  return userColumn(aState.user);
+                                }
+                                return placeholderColumn();
+                              },
+                            );
+                          }
+
+                          return placeholderColumn();
+                        },
+                      );
+                    }
+
+                    // No ProfileBloc: try AuthBloc directly
+                    if (authBloc != null) {
+                      return StreamBuilder<AuthState>(
+                        stream: authBloc.stream,
+                        initialData: authBloc.state,
+                        builder: (c, s2) {
+                          final aState = s2.data;
+                          if (aState is Authenticated) {
+                            return userColumn(aState.user);
+                          }
+                          return placeholderColumn();
+                        },
+                      );
+                    }
+
+                    return placeholderColumn();
+                  }),
                 ),
 
                 const SizedBox(height: 20),

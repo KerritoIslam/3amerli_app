@@ -58,7 +58,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     // build profile payload and call cubit to register
     final profile = {
       'name': _repNameController.text.trim(),
-      'locationUrl': null,
+      'locationUrl':"https://maps.google.com/?q=36.7528,3.0422",
       'supermarketName': _storeNameController.text.trim(),
       'role': 'SUPERMARKET',
       'address': {

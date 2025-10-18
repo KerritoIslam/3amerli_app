@@ -105,7 +105,7 @@ class _CatalogPageState extends State<CatalogPage> {
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Bienvenue sur {Logo}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+            // Text('Bienvenue sur {Logo}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
             const SizedBox(height: 15),
 
             // Search + notifications

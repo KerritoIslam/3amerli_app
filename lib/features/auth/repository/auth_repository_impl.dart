@@ -21,8 +21,19 @@ class AuthRepositoryImpl {
     final userJson = data['user'] as Map<String, dynamic>?;
     final isRegistered = data['isRegistered'] as bool? ?? false;
 
-    if (access != null && refresh != null ) {
-      await authService.saveTokens(accessToken: access, refreshToken: refresh);
+    // Backend may return a temporary 'week' token on OTP validation which
+    // should be used only for registration. If the user is not registered,
+    // treat the returned access token as a week token and store it separately.
+    if (!isRegistered) {
+      if (access != null) {
+        await authService.saveWeekToken(access);
+      }
+      // do not persist refresh token for unregistered users
+    } else {
+      // existing user: persist real access/refresh tokens
+      if (access != null && refresh != null) {
+        await authService.saveTokens(accessToken: access, refreshToken: refresh);
+      }
     }
 
     if (userJson != null) {
