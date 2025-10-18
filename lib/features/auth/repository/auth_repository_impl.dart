@@ -49,6 +49,27 @@ class AuthRepositoryImpl {
     await local.clear();
   }
 
+  /// Try to refresh tokens using stored refresh token. Returns true on success.
+  Future<bool> refreshTokens() async {
+    try {
+      final refresh = await authService.readRefreshToken();
+      if (refresh == null) return false;
+      final data = await remote.refresh(refresh);
+      final access = data['accessToken'] as String?;
+      final refreshToken = data['refreshToken'] as String?;
+      final userJson = data['user'] as Map<String, dynamic>?;
+      if (access != null && refreshToken != null) {
+        await authService.saveTokens(accessToken: access, refreshToken: refreshToken);
+      }
+      if (userJson != null) {
+        await local.saveUserJson(userJson);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<UserModel?> readCachedUser() async {
     final j = await local.readUserJson();
     if (j == null) return null;

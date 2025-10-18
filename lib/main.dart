@@ -3,6 +3,10 @@ import 'core/config/injection.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/catalog/app/bloc/catalog_bloc.dart';
 import 'features/auth/app/bloc/auth_bloc.dart';
+import 'features/auth/app/bloc/auth_event.dart';
+import 'features/auth/repository/auth_repository_impl.dart';
+import 'core/auth/auth_service.dart';
+import 'features/auth/domain/entities/supermarket.dart';
 import 'features/notifications/app/bloc/notifications_bloc.dart';
 import 'core/config/settings.dart';
 import 'utils/constants/app_language.dart';
@@ -85,6 +89,47 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
   final authBloc = di.sl<AuthBloc>();
   final localStorage = di.sl<LocalStorage>();
+  // Attempt auto-auth on startup: if tokens exist, try refresh and dispatch login
+  Future.microtask(() async {
+    try {
+      final authRepo = di.sl<AuthRepositoryImpl>();
+      print('[startup] Checking tokens for auto-auth');
+      final access = await di.sl<AuthService>().readAccessToken();
+      final refresh = await di.sl<AuthService>().readRefreshToken();
+      print('[startup] access: ${access != null ? 'present' : 'absent'}, refresh: ${refresh != null ? 'present' : 'absent'}');
+      var ok = false;
+      if (access != null) {
+        // we have access token, try to read cached user
+        final userModel = await authRepo.readCachedUser();
+        if (userModel != null) {
+          final userEntity = userModel.toEntity();
+          final user = userEntity.role == 'SUPERMARKET' ? Supermarket.fromUser(userEntity) : userEntity;
+          print('[startup] Found cached user, marking authenticated: ${user.phoneNumber}');
+          authBloc.add(LogInEvent(user));
+          ok = true;
+        }
+      }
+      if (!ok && refresh != null) {
+        print('[startup] Trying refresh tokens');
+        final refreshed = await authRepo.refreshTokens();
+        if (refreshed) {
+          final userModel = await authRepo.readCachedUser();
+          if (userModel != null) {
+            final userEntity = userModel.toEntity();
+            final user = userEntity.role == 'SUPERMARKET' ? Supermarket.fromUser(userEntity) : userEntity;
+            print('[startup] Refresh succeeded, logging in user: ${user.phoneNumber}');
+            authBloc.add(LogInEvent(user));
+            ok = true;
+          }
+        } else {
+          print('[startup] Refresh failed');
+        }
+      }
+      if (!ok) print('[startup] No valid session found');
+    } catch (e) {
+      print('[startup] Auto-auth error: $e');
+    }
+  });
   final router = createRouter(authBloc: authBloc, localStorage: localStorage);
     // Provide app-scoped blocs at the root so children can use context.read<T>()
     return MultiBlocProvider(

@@ -1,3 +1,4 @@
+import 'package:amerli_app/features/auth/app/bloc/auth_event.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/utils/constants/app_text_styles.dart';
 import 'package:amerli_app/widgets/app_button.dart';
@@ -6,6 +7,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_bloc.dart';
+import 'package:amerli_app/features/auth/app/bloc/auth_bloc.dart';
+import 'package:amerli_app/features/auth/repository/auth_repository_impl.dart';
+import 'package:amerli_app/core/config/injection.dart' as di;
 import 'package:amerli_app/features/auth/app/bloc/profile_event.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
@@ -197,7 +201,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 ),
                 const SizedBox(height: 30),
                 AppButton(
-                  onPressed: () {},
+                  onPressed: () async {
+                    // Use the service locator to access AuthBloc and repository.
+                    // This avoids errors when the widget context doesn't contain a BlocProvider.
+                    try {
+                      final authRepo = di.sl<AuthRepositoryImpl>();
+                      await authRepo.signOut(); // clear tokens and cached user
+                      final authBloc = di.sl<AuthBloc>();
+                      authBloc.add(LogOutEvent());
+                    } catch (e) {
+                      print('Logout failed: $e');
+                    }
+                  },
                   backgroundColor: AppColors.brandRed,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,

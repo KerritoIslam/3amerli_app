@@ -38,5 +38,18 @@ class AuthRemoteDataSource {
     }
     throw DioError(requestOptions: resp.requestOptions, response: resp);
   }
+
+  /// Refresh tokens using a refresh token. Calls POST /authentication/refresh with
+  /// Authorization: Bearer <refreshToken>. Uses a bare Dio instance to avoid
+  /// interceptor loops.
+  Future<Map<String, dynamic>> refresh(String refreshToken) async {
+    final baseUrl = apiService.client.options.baseUrl;
+    final d = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 10)));
+    final resp = await d.post('/authentication/refresh', options: Options(headers: {'Authorization': 'Bearer $refreshToken'}));
+    if (resp.statusCode == 200 && resp.data != null) {
+      return Map<String, dynamic>.from(resp.data as Map);
+    }
+    throw Exception('refresh_failed');
+  }
 }
 
