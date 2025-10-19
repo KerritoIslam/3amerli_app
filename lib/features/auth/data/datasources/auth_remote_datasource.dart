@@ -32,6 +32,7 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> register(Map<String, dynamic> profile) async {
     // ApiService with AuthInterceptor will attach access token automatically;
     // but accept accessToken override for direct calls if needed.
+    print("Register Data Sent: $profile");
     final resp = await apiService.client.put('/authentication/register', data: profile);
     print("Register status code: ${resp.statusCode}");
     print("Register Data Response: ${resp.data}");

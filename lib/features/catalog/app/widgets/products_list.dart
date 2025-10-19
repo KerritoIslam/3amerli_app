@@ -182,6 +182,8 @@ class _ProductsListState extends State<ProductsList> {
           price: product.price,
           soldBy: product.soldBy,
           productId: product.id,
+          
+          
           onTap: () {
             Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => ProductDetailsPage(product: product)));
           },

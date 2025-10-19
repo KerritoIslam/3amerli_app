@@ -77,6 +77,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       
       GoRouter.of(context).go('/home');
     }).catchError((e) {
+      print("Registration Error: $e");
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Échec de l\'enregistrement')));
     });
   }

@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
+import 'package:flutter_svg/svg.dart';
 
 class ProductCard extends StatefulWidget {
   final String? imageUrl;
@@ -124,20 +125,36 @@ class _ProductCardState extends State<ProductCard> {
                           ),
                         ),
                       ),
-                      Positioned(
+                        Positioned(
                         top: 8,
                         right: 8,
                         child: SizedBox(
-                          height: 20,
-                          width: 20,
+                          height: 25,
+                          width: 25,
                           child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
                             onTap: () {
                               setState(() {
                                 _localFavorite = !_localFavorite;
                               });
                               widget.onFavoriteToggle?.call();
                             },
-                            child: IconCircle(isSelected: _localFavorite, asset: 'assets/icons/favoris.svg', size: 20),
+                            child: Container(
+                              padding: const EdgeInsets.all(2),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2)),
+                                ],
+                              ),
+                              child: SvgPicture.asset(
+                                _localFavorite ? 'assets/icons/favoris.svg' : 'assets/icons/favoris_reversed.svg',
+                                width: 16,
+                                height: 16,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
                           ),
                         ),
                       ),

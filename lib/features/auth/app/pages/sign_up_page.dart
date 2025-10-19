@@ -149,7 +149,10 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
       // Use the theme's secondary color for the panel background so it aligns
       // with the app's color scheme.
       final panelColor = Theme.of(context).colorScheme.secondary;
-          final fullHeight = MediaQuery.of(context).size.height;
+          // Use the height provided by the LayoutBuilder constraints so the
+          // panel adapts correctly when this page is embedded in other
+          // widgets (like a tabbed onboarding flow) and avoid overflow.
+          final fullHeight = constraints.maxHeight;
           // content top padding inside the panel (previously spacingXXL)
           final contentTopPadding = AppDimensions.spacingXXL;
 
@@ -261,9 +264,12 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                             builder: (context, state) {
                               // If entering OTP stage, show verification UI; otherwise show phone form
                               if (state.status == VerificationStatus.enteringOtp) {
-                                return Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
+                                return SingleChildScrollView(
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(maxHeight: constraints.maxHeight - topPadding),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
                                     Text(
                                       AppLanguage.verifyNumber,
                                       style: AppTextStyles.headline1,
@@ -377,7 +383,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                     // navigation (soft buttons) by using SafeArea.
                                     SafeArea(
                                       top: false,
-                                      minimum: const EdgeInsets.only(bottom: 8.0),
+                                      minimum: const EdgeInsets.only(bottom: 24.0),
                                       child: SizedBox(
                                         width: double.infinity,
                                         child: AppButton(
@@ -396,13 +402,18 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                       ),
                                     ),
                                   ],
+                                    ),
+                                  ),
                                 );
                               }
 
                               // Phone entry form (existing)
-                              return Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
+                              return SingleChildScrollView(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(maxHeight: constraints.maxHeight - topPadding),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
                                   Text(
                                     AppLanguage.phoneNumberTitle,
                                     style: AppTextStyles.headline1,
@@ -534,7 +545,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                     ),
                                   ],
                                 ],
-                              );
+                              )));
                             },
                           ),
                         ),
