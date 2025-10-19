@@ -104,6 +104,21 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
     _phoneFocusNode.addListener(() => setState(() {}));
   }
 
+  // Helper to return to the phone-entry state cleanly.
+  void _returnToPhoneEntry(SignUpCubit cubit) {
+    cubit.setPhoneNumber(cubit.state.phoneNumber);
+
+    for (final c in _otpControllers) {
+      c.clear();
+    }
+    for (final f in _otpFocusNodes) {
+      f.unfocus();
+    }
+
+    Future.microtask(() => _phoneFocusNode.requestFocus());
+    setState(() {});
+  }
+
   @override
   void didChangeMetrics() {
     // Called when window metrics change (e.g., keyboard show/hide).
@@ -131,10 +146,9 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
       final signUpState = context.watch<SignUpCubit>().state;
       // Ensure a clearly contrasting panel color: pick an explicit grey
       // dependent on theme brightness so it's visible over the background.
-      final brightness = Theme.of(context).colorScheme.brightness;
-      final panelColor = brightness == Brightness.light
-        ? const Color(0xFFECECEC) // visible light grey on white background
-        : const Color(0xFF262626); // visible dark grey on dark background
+      // Use the theme's secondary color for the panel background so it aligns
+      // with the app's color scheme.
+      final panelColor = Theme.of(context).colorScheme.secondary;
           final fullHeight = MediaQuery.of(context).size.height;
           // content top padding inside the panel (previously spacingXXL)
           final contentTopPadding = AppDimensions.spacingXXL;
@@ -255,9 +269,42 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                       style: AppTextStyles.headline1,
                                     ),
                                     const SizedBox(height: 8),
-                                    Text(
-                                      AppLanguage.codeSent,
-                                      style: AppTextStyles.body,
+                                    // Message text that ends with the tappable phone number + icon
+                                    RichText(
+                                      text: TextSpan(
+                                        style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
+                                        children: [
+                                          TextSpan(text: AppLanguage.codeSent + ' '),
+                                          WidgetSpan(
+                                            alignment: PlaceholderAlignment.middle,
+                                            child: GestureDetector(
+                                              behavior: HitTestBehavior.opaque,
+                                              onTap: () => _returnToPhoneEntry(cubit),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Text(
+                                                    '${state.countryCode} ${state.phoneNumber}',
+                                                    style: AppTextStyles.body.copyWith(
+                                                      color: Colors.blue,
+                                                      decoration: TextDecoration.underline,
+                                                      decorationColor: Colors.blue,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  SvgPicture.asset(
+                                                    'assets/icons/edit.svg',
+                                                    width: 18,
+                                                    height: 18,
+                                                    color: Colors.blue,
+                                                    semanticsLabel: 'Edit phone',
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                     const SizedBox(height: 18),
                                     // OTP boxes
@@ -326,20 +373,26 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                       ),
                                     ),
                                     const Spacer(),
-                                    SizedBox(
-                                      width: double.infinity,
-                                      child: AppButton(
-                                        text: AppLanguage.verifyMyNumber,
-                                        onPressed: () {
-                                          final code = _otpControllers.map((c) => c.text).join();
-                                          if (code == '0000') {
-                                            // Special-case debug code
-                                            print('valid');
-                                          } else {
-                                            cubit.verifyOtp(code);
-                                          }
-                                        },
-                                        height: 48,
+                                    // Ensure the verify button is placed above system
+                                    // navigation (soft buttons) by using SafeArea.
+                                    SafeArea(
+                                      top: false,
+                                      minimum: const EdgeInsets.only(bottom: 8.0),
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        child: AppButton(
+                                          text: AppLanguage.verifyMyNumber,
+                                          onPressed: () {
+                                            final code = _otpControllers.map((c) => c.text).join();
+                                            if (code == '0000') {
+                                              // Special-case debug code
+                                              print('valid');
+                                            } else {
+                                              cubit.verifyOtp(code);
+                                            }
+                                          },
+                                          height: 48,
+                                        ),
                                       ),
                                     ),
                                   ],
