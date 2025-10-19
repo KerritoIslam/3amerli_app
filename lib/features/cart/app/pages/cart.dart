@@ -38,7 +38,12 @@ class _CartView extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
         child: BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
+          // debug
+          // ignore: avoid_print
+          print('CartPage rebuild - cartState: ${cartState.runtimeType}');
           final cartItems = cartState is CartLoaded ? cartState.items : const [];
+          // ignore: avoid_print
+          print('CartPage - cartItems count: ${cartItems.length}');
 
           return BlocBuilder<CatalogBloc, CatalogState>(builder: (context, catalogState) {
             List<Product> sourceProducts = [];

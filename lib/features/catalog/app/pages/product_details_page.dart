@@ -2,6 +2,14 @@ import 'package:amerli_app/features/catalog/domain/entities/product.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
+import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
+import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/widgets/top_toast.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
@@ -266,7 +274,50 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       ),
                       const SizedBox(width: 16),
                       InkWell(
-                        onTap: () => Navigator.of(context).pop(),
+                        onTap: () async {
+                          // Add to cart logic copied from ProductCard
+                          final productIdStr = widget.product.id.toString();
+                          CartBloc cartBloc;
+                          try {
+                            cartBloc = context.read<CartBloc>();
+                          } catch (e) {
+                            // No provider above this widget; fallback to app-scoped singleton
+                            // ignore: avoid_print
+                            print('CartBloc provider not found in context, falling back to sl: $e');
+                            cartBloc = sl<CartBloc>();
+                          }
+
+                          final state = cartBloc.state;
+                          if (state is CartLoaded) {
+                            final existingItem = state.items.firstWhereOrNull((item) => item.productId == productIdStr);
+                            if (existingItem == null) {
+                              cartBloc.add(CartAddItemEvent(CartItem(
+                                productId: productIdStr,
+                                name: widget.product.name,
+                                price: widget.product.price,
+                                quantity: _quantity,
+                                imageUrl: (widget.product.pics.isNotEmpty) ? widget.product.pics.first : null,
+                                brand: widget.product.brand,
+                                soldBy: widget.product.soldBy,
+                              )));
+                            } else {
+                              cartBloc.add(CartUpdateQuantityEvent(productId: productIdStr, quantity: existingItem.quantity + _quantity));
+                            }
+                          } else {
+                            cartBloc.add(CartAddItemEvent(CartItem(
+                              productId: productIdStr,
+                              name: widget.product.name,
+                              price: widget.product.price,
+                              quantity: _quantity,
+                              imageUrl: (widget.product.pics.isNotEmpty) ? widget.product.pics.first : null,
+                              brand: widget.product.brand,
+                              soldBy: widget.product.soldBy,
+                            )));
+                          }
+
+                          // show confirmation using reusable top toast
+                          TopToast.show(context, message: 'Votre produit a bien été ajouté au panier', duration: const Duration(milliseconds: 2200));
+                        },
                         borderRadius: BorderRadius.circular(24),
                         child: Container(
                           width: 48,

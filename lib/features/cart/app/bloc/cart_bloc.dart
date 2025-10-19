@@ -36,8 +36,14 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         items.add(event.item);
       }
       emit(CartLoaded(items));
+      // debug
+      // ignore: avoid_print
+      print('CartBloc _onAdd -> items now: ${items.map((e) => '${e.productId}(${e.quantity})').join(', ')}');
     } else {
       emit(CartLoaded([event.item]));
+      // debug
+      // ignore: avoid_print
+      print('CartBloc _onAdd -> items now: ${event.item.productId}(${event.item.quantity})');
     }
   }
 
@@ -59,6 +65,9 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         return i;
       }).where((i) => i.quantity > 0).toList();
       emit(CartLoaded(items));
+      // debug
+      // ignore: avoid_print
+      print('CartBloc _onUpdate -> items now: ${items.map((e) => '${e.productId}(${e.quantity})').join(', ')}');
     
     }
     
