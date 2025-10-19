@@ -57,7 +57,9 @@ class _CartView extends StatelessWidget {
                   description: '',
                   price: ci.price,
                   stock: 0,
-                  pic: ci.imageUrl,
+                  pics: ci.imageUrl != null && ci.imageUrl!.isNotEmpty ? [ci.imageUrl!] : const [],
+                  brand: ci.brand ?? null,
+                  soldBy: ci.soldBy,
                 ),
               );
               return Product(
@@ -67,7 +69,9 @@ class _CartView extends StatelessWidget {
                 price: p.price,
                 stock: p.stock,
                 sellerId: p.sellerId,
-                pic: p.pic,
+                soldBy: p.soldBy,
+                pics: p.pics,
+                brand: p.brand,
                 markId: p.markId,
                 isFavorit: p.isFavorit,
                 quantity: ci.quantity,

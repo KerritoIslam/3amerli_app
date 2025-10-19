@@ -26,8 +26,15 @@ class CatalogRemoteDataSource {
         'sellerId': (i % 5) + 1,
         // mark every 3rd item as favorite in mock
         'is_favorit': i % 3 == 0,
-        // Random placeholder images
-        'pic': 'https://picsum.photos/seed/prod_$i/300/300',
+        // Images: first is the thumbnail used in lists, second is a detail image with transparent background
+        'pics': [
+          'https://picsum.photos/seed/prod_$i/300/300',
+          // example transparent PNG (no-background) — transparent demo image on Wikimedia
+          'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png'
+        ],
+        'brand': 'Brand #${(i % 10) + 1}',
+        // provide a soldBy value (int) for seller mapping
+        'soldBy': (i % 7) + 1,
       });
     }
 

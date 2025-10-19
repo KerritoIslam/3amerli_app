@@ -148,6 +148,22 @@ class AppColors {
     surfaceTint: darkSurfaceTint,
   );
 
+  // Background gradients
+  // A reusable gradient that goes from `primary` at 36% opacity (top) to `onPrimary` at 0% opacity (bottom).
+  // Use AppColors.lightScheme or AppColors.darkScheme to generate theme-specific gradients.
+  static LinearGradient gradientFromScheme(ColorScheme scheme) {
+    return LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [scheme.primary.withOpacity(0.36), scheme.onPrimary.withOpacity(0.0)],
+      stops: const [0.0, 1.0],
+    );
+  }
+
+  // Convenience constants for light/dark gradients
+  static LinearGradient lightBackgroundGradient = gradientFromScheme(lightScheme);
+  static LinearGradient darkBackgroundGradient = gradientFromScheme(darkScheme);
+
   // Theme extension to expose extra brand colors through Theme.of(context).extension<BrandColors>()
 }
 

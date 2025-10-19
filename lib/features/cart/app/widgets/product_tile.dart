@@ -17,8 +17,11 @@ class _ProductTileState extends State<ProductTile> {
   
   @override
   Widget build(BuildContext context) {
-    print('product tile');
-    print(widget.product.pic);
+  // debug: product pics
+  // ignore: avoid_print
+  print('product tile');
+  // ignore: avoid_print
+  print(widget.product.pics);
     final cs = Theme.of(context).colorScheme;
     return Container(
       height: 120,
@@ -40,9 +43,9 @@ class _ProductTileState extends State<ProductTile> {
               width: 100,
               height: 112,
               color: Colors.grey.shade200,
-              child: (widget.product.pic ?? '').isNotEmpty
-                  ? Image.network(widget.product.pic!, fit: BoxFit.cover)
-                  : const SizedBox.shrink(),
+        child: (widget.product.pics.isNotEmpty ? widget.product.pics.first : '').isNotEmpty
+          ? Image.network(widget.product.pics.first, fit: BoxFit.cover)
+          : const SizedBox.shrink(),
             ),
           ),
           const SizedBox(width: 12),
@@ -77,7 +80,7 @@ class _ProductTileState extends State<ProductTile> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Vendu par ${widget.product.sellerId ?? 12}',
+                  'Vendu par ${widget.product.soldBy ?? 12}',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: cs.onSurface.withOpacity(0.6)),
                 ),
               ],

@@ -23,7 +23,15 @@ class FavoritsRemoteDataSource {
         'description': 'Loved item #$i by many users',
         'price': (30 + (i % 40)) * 1.0,
         'stock': (i % 7) + 1,
+        // Keep sellerId for backward compatibility
         'sellerId': (i % 4) + 1,
+        // Provide the same pics/brand/soldBy shape as the catalog mocks
+        'pics': [
+          'https://picsum.photos/seed/prod_$i/300/300',
+          'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png'
+        ],
+        'brand': 'Brand #${(i % 10) + 1}',
+        'soldBy': (i % 7) + 1,
         'is_favorit': true,
       });
     }

@@ -6,6 +6,8 @@ class CartItem extends Equatable {
   final double price;
   final int quantity;
   final String? imageUrl;
+  final String? brand;
+  final int? soldBy;
 
   const CartItem({
     required this.productId,
@@ -13,20 +15,24 @@ class CartItem extends Equatable {
     required this.price,
     this.quantity = 1,
     this.imageUrl,
+    this.brand,
+    this.soldBy,
   });
 
-  CartItem copyWith({int? quantity}) {
+  CartItem copyWith({int? quantity, int? soldBy}) {
     return CartItem(
       productId: productId,
       name: name,
       price: price,
       quantity: quantity ?? this.quantity,
       imageUrl: imageUrl,
+      brand: brand,
+      soldBy: soldBy ?? this.soldBy,
     );
   }
 
   double get totalPrice => price * quantity;
 
   @override
-  List<Object?> get props => [productId, name, price, quantity, imageUrl];
+  List<Object?> get props => [productId, name, price, quantity, imageUrl, brand, soldBy];
 }

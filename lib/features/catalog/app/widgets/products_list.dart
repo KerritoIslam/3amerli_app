@@ -1,6 +1,7 @@
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/features/catalog/app/widgets/product_card.dart';
+import 'package:amerli_app/features/catalog/app/pages/product_details_page.dart';
 import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
 
 typedef ProductItemBuilder = Widget Function(BuildContext context, Product product, int index);
@@ -173,14 +174,17 @@ class _ProductsListState extends State<ProductsList> {
 
         // Render ProductCard; CartBloc is provided by parent pages
         final card = ProductCard(
-          imageUrl: product.pic,
+          imageUrl: product.pics.isNotEmpty ? product.pics.first : null,
           isFavorite: product.isFavorit,
           onFavoriteToggle: null,
           title: product.name,
           subtitle: product.description,
           price: product.price,
-          soldBy: product.sellerId,
+          soldBy: product.soldBy,
           productId: product.id,
+          onTap: () {
+            Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => ProductDetailsPage(product: product)));
+          },
         );
         return card;
       },
