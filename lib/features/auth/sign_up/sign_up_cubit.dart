@@ -11,43 +11,47 @@ class SignUpCubit extends Cubit<SignUpState> {
 
   SignUpCubit({required this.repository}) : super(const SignUpState());
 
+  void _safeEmit(SignUpState s) {
+    if (!isClosed) emit(s);
+  }
+
   void setPhoneNumber(String phone) {
     if (phone.trim().isEmpty) {
-      emit(state.copyWith(status: VerificationStatus.noNumberEntered, phoneNumber: ''));
+      _safeEmit(state.copyWith(status: VerificationStatus.noNumberEntered, phoneNumber: ''));
       return;
     }
-    emit(state.copyWith(phoneNumber: phone, status: VerificationStatus.pending));
+    _safeEmit(state.copyWith(phoneNumber: phone, status: VerificationStatus.pending));
   }
 
   void setCountryCode(String code) {
-    emit(state.copyWith(countryCode: code));
+    _safeEmit(state.copyWith(countryCode: code));
   }
 
   Future<void> sendCode() async {
     
     if (state.phoneNumber.trim().isEmpty) {
-      emit(state.copyWith(status: VerificationStatus.noNumberEntered));
+      _safeEmit(state.copyWith(status: VerificationStatus.noNumberEntered));
       return;
     }
-    emit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
       
       await repository.sendOtp(state.phoneNumber);
       
-      emit(state.copyWith(status: VerificationStatus.enteringOtp));
+  _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp));
       print("111");
       print(state.status);
     } catch (e) {
-      emit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Failed to send code'));
+    _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Failed to send code'));
     }
   }
 
   Future<void> verifyOtp(String otp) async {
     if (otp.trim().length < 4) {
-      emit(state.copyWith(errorMessage: 'Code invalide'));
+      _safeEmit(state.copyWith(errorMessage: 'Code invalide'));
       return;
     }
-    emit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
       final isRegistered = await repository.validateOtp(state.phoneNumber, otp);
       print("Is Registered : $isRegistered");
@@ -66,19 +70,19 @@ class SignUpCubit extends Cubit<SignUpState> {
             authBloc.add(LogInEvent(userEntity));
           }
         }
-        emit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
+  _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
       } else {
         print("New User Detected");
-        emit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.newUser));
+  _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.newUser));
       }
       print("Verification result: ${state.result}");
     } catch (e) {
-      emit(state.copyWith(status: VerificationStatus.enteringOtp, errorMessage: 'Vérification échouée'));
+    _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp, errorMessage: 'Vérification échouée'));
     }
   }
 
   Future<void> registerProfile(Map<String, dynamic> profile) async {
-    emit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
       await repository.register(profile);
       // After registration complete, read cached user and dispatch login
@@ -92,19 +96,19 @@ class SignUpCubit extends Cubit<SignUpState> {
           authBloc.add(LogInEvent(userEntity));
         }
       }
-      emit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
+      _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
     } catch (e) {
-      emit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Échec de l\'enregistrement'));
+      _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Échec de l\'enregistrement'));
     }
   }
 
   void reset() {
-    emit(const SignUpState());
+    _safeEmit(const SignUpState());
   }
 
   /// Mark that we've started navigating to the profile completion page so
   /// the UI doesn't repeat the navigation on subsequent builds.
   void markCompletingProfile() {
-    emit(state.copyWith(result: AuthResult.completingProfileForSignUp));
+    _safeEmit(state.copyWith(result: AuthResult.completingProfileForSignUp));
   }
 }
