@@ -16,6 +16,7 @@ import 'package:amerli_app/features/auth/app/bloc/profile_event.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
 import 'package:amerli_app/features/auth/domain/entities/user.dart';
+import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -213,6 +214,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       leading: SvgPicture.asset('assets/icons/mes_commandes.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
                       title: Text('Mes Commandes', style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {},
+                    ),
+                    CardsListItem(
+                      leading: SvgPicture.asset('assets/icons/favoris_reversed.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
+                      title: Text('Favoris', style: Theme.of(context).textTheme.titleSmall),
+                      onTap: () {
+                        try {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FavoritsPage()));
+                        } catch (_) {}
+                      },
                     ),
                   ],
                 ),

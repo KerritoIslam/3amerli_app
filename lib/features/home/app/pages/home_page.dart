@@ -1,5 +1,5 @@
 import 'package:amerli_app/features/cart/app/pages/cart.dart';
-import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
+import 'package:amerli_app/features/orders/presentation/pages/orders_main_page.dart';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/widgets/animated_bottom_nav.dart';
 import 'package:amerli_app/features/catalog/app/pages/catalog_page.dart';
@@ -23,7 +23,7 @@ class _HomePageState extends State<HomePage> {
     _pages = [
       const CatalogPage(),
       const CartPage(),
-      const FavoritsPage(),
+      const OrdersMainPage(),
       const ProfilePage(),
     ];
   }
@@ -35,10 +35,10 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     final navItems = [
-      NavItem(asset: "assets/icons/home.svg", label: 'Accueil'),
-      NavItem(asset: "assets/icons/panier.svg", label: 'Panier'),
-      NavItem(asset: "assets/icons/favoris.svg", label: 'Favoris'),
-      NavItem(asset: "assets/icons/profil.svg", label: 'Profil'),
+  NavItem(asset: "assets/icons/home.svg", label: 'Accueil'),
+  NavItem(asset: "assets/icons/panier.svg", label: 'Panier'),
+  NavItem(asset: "assets/icons/orders.svg", label: 'Commandes'),
+  NavItem(asset: "assets/icons/profil.svg", label: 'Profil'),
     ];
 
     return Scaffold(

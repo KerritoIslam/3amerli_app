@@ -1,36 +1,59 @@
 import '../../domain/entities/order.dart';
-import 'order_item_model.dart';
+import '../../domain/entities/order_status.dart';
+import 'order_product_model.dart';
 
-class OrderModel {
-  final int id;
-  final int userId;
-  final double totalAmount;
-  final String status;
-  final String createdAt; // keep raw for now
-  final List<OrderItemModel> items;
+class OrderModel extends Order {
+  OrderModel({
+    required String id,
+    required String sellerId,
+    required String buyerId,
+    required String address,
+    required String paymentMethod,
+    required List<OrderProductModel> products,
+    required OrderStatus status,
+    required DateTime createdAt,
+  }) : super(
+          id: id,
+          sellerId: sellerId,
+          buyerId: buyerId,
+          address: address,
+          paymentMethod: paymentMethod,
+          products: products,
+          status: status,
+          createdAt: createdAt,
+        );
 
-  OrderModel({required this.id, required this.userId, required this.totalAmount, required this.status, required this.createdAt, required this.items});
-
-  factory OrderModel.fromJson(Map<String, dynamic> json) {
-    final itemsJson = json['items'] as List<dynamic>? ?? [];
-    return OrderModel(
-      id: (json['id'] is num) ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-      userId: (json['userId'] is num) ? (json['userId'] as num).toInt() : int.tryParse(json['userId']?.toString() ?? '') ?? 0,
-      totalAmount: (json['totalAmount'] is num) ? (json['totalAmount'] as num).toDouble() : double.tryParse(json['totalAmount']?.toString() ?? '') ?? 0.0,
-      status: json['status']?.toString() ?? '',
-      createdAt: json['createdAt']?.toString() ?? '',
-      items: itemsJson.map((e) => OrderItemModel.fromJson(e as Map<String, dynamic>)).toList(),
-    );
-  }
+  factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
+        id: json['id'] as String,
+        sellerId: json['sellerId'] as String,
+        buyerId: json['buyerId'] as String,
+        address: json['address'] as String,
+        paymentMethod: json['paymentMethod'] as String,
+        products: (json['products'] as List<dynamic>).map((e) => OrderProductModel.fromJson(e as Map<String, dynamic>)).toList(),
+        status: OrderStatusX.fromString(json['status'] as String),
+        createdAt: DateTime.parse(json['createdAt'] as String),
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
-        'userId': userId,
-        'totalAmount': totalAmount,
-        'status': status,
-        'createdAt': createdAt,
-        'items': items.map((i) => i.toJson()).toList(),
+        'sellerId': sellerId,
+        'buyerId': buyerId,
+        'address': address,
+        'paymentMethod': paymentMethod,
+        'products': products.map((p) => (p as OrderProductModel).toJson()).toList(),
+        'status': status.nameValue,
+        'createdAt': createdAt.toIso8601String(),
       };
-
-  Order toEntity() => Order(id: id, userId: userId, totalAmount: totalAmount, status: status, createdAt: DateTime.tryParse(createdAt) ?? DateTime.now());
+  
+  Order toEntity() => Order(
+        id: id,
+        sellerId: sellerId,
+        buyerId: buyerId,
+        address: address,
+        paymentMethod: paymentMethod,
+        products: products,
+        status: status,
+        createdAt: createdAt,
+      );
 }
+

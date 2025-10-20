@@ -8,8 +8,8 @@ class OrdersRepositoryImpl implements OrdersRepository {
   OrdersRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<Order>> getOrders({int page = 1, int pageSize = 50, String? query}) async {
-    final models = await remoteDataSource.fetchOrders(page: page, pageSize: pageSize, query: query);
+  Future<List<Order>> fetchOrders() async {
+    final models = await remoteDataSource.fetchOrders();
     return models.map((m) => m.toEntity()).toList();
   }
 

@@ -1,14 +1,38 @@
-import 'package:equatable/equatable.dart';
+import 'order_status.dart';
+export 'order_status.dart';
 
-class Order extends Equatable {
-  final int id;
-  final int userId;
-  final double totalAmount;
-  final String status; // consider enum
+class OrderProduct {
+  final String productId;
+  final String name;
+  final int quantity;
+  final double price;
+
+  OrderProduct({
+    required this.productId,
+    required this.name,
+    required this.quantity,
+    required this.price,
+  });
+}
+
+class Order {
+  final String id;
+  final String sellerId;
+  final String buyerId;
+  final String address;
+  final String paymentMethod;
+  final List<OrderProduct> products;
+  final OrderStatus status;
   final DateTime createdAt;
 
-  const Order({required this.id, required this.userId, required this.totalAmount, required this.status, required this.createdAt});
-
-  @override
-  List<Object?> get props => [id, userId, totalAmount, status, createdAt];
+  Order({
+    required this.id,
+    required this.sellerId,
+    required this.buyerId,
+    required this.address,
+    required this.paymentMethod,
+    required this.products,
+    required this.status,
+    required this.createdAt,
+  });
 }
