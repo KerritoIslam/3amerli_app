@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
+import 'package:amerli_app/features/cart/app/pages/paiement_screen.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_state.dart';
 import 'package:amerli_app/core/config/injection.dart';
@@ -119,9 +120,12 @@ class _CartView extends StatelessWidget {
                   child: Center(
                     child: BottomCartSummary(
                       total: total,
-                      onPay: () {
-                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Paiement non implémenté — total: ${total.toStringAsFixed(0)} DZD')));
-                      },
+                        onPay: () {
+                          // Replace the current cart page in the nested navigator with the PaiementScreen
+                          // Wrap the new route with the existing CartBloc so the payment screen can access it
+                          final cartBloc = context.read<CartBloc>();
+                          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => BlocProvider.value(value: cartBloc, child: const PaiementScreen())));
+                        },
                     ),
                   ),
                 ),
