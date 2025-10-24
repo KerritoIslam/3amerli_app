@@ -18,6 +18,9 @@ import 'package:amerli_app/core/ui/toast/toast_service.dart';
 import 'package:amerli_app/features/auth/domain/entities/user.dart';
 import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
 import 'package:amerli_app/features/profile/app/pages/user_information_page.dart';
+import 'package:amerli_app/features/profile/app/pages/support_and_aide_page.dart';
+import 'package:amerli_app/features/profile/app/pages/language_page.dart';
+import 'package:amerli_app/features/profile/app/pages/invoices_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -213,16 +216,20 @@ class _ProfilePageState extends State<ProfilePage> {
                       },
                     ),
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/moyens_de_paiement.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Moyens de Paiement', style: Theme.of(context).textTheme.titleSmall),
-                      onTap: () {},
-                    ),
-                    CardsListItem(
                       leading: SvgPicture.asset('assets/icons/favoris_reversed.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
                       title: Text('Favoris', style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
                           Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FavoritsPage()));
+                        } catch (_) {}
+                      },
+                    ),
+                    CardsListItem(
+                      leading: SvgPicture.asset('assets/icons/bills.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
+                      title: Text('Mes factures', style: Theme.of(context).textTheme.titleSmall),
+                      onTap: () {
+                        try {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const InvoicesPage()));
                         } catch (_) {}
                       },
                     ),
@@ -236,12 +243,20 @@ class _ProfilePageState extends State<ProfilePage> {
                     CardsListItem(
                       leading: SvgPicture.asset('assets/icons/support.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
                       title: Text('Support & Aide', style: Theme.of(context).textTheme.titleSmall),
-                      onTap: () {},
+                      onTap: () {
+                        try {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportAndAidePage()));
+                        } catch (_) {}
+                      },
                     ),
                     CardsListItem(
                       leading: SvgPicture.asset('assets/icons/language.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
                       title: Text('Language', style: Theme.of(context).textTheme.titleSmall),
-                      onTap: () {},
+                      onTap: () {
+                        try {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LanguagePage()));
+                        } catch (_) {}
+                      },
                     ),
                   ],
                 ),
@@ -251,8 +266,10 @@ class _ProfilePageState extends State<ProfilePage> {
                     // Use the service locator to access AuthBloc and repository.
                     // This avoids errors when the widget context doesn't contain a BlocProvider.
                     try {
+                      final router = GoRouter.of(context);
                       final authRepo = di.sl<AuthRepositoryImpl>();
                       await authRepo.signOut(); // clear tokens and cached user
+                      if (!mounted) return;
                       final authBloc = di.sl<AuthBloc>();
                       // Dispatch logout and wait until the bloc reports Unauthenticated
                       // before navigating. This avoids racing with router redirects
@@ -263,21 +280,23 @@ class _ProfilePageState extends State<ProfilePage> {
                       try {
                         authBloc.stream.firstWhere((s) => s is Unauthenticated).timeout(const Duration(seconds: 2)).then((_) {
                           try {
-                            GoRouter.of(context).go('/auth');
+                            router.go('/auth');
                           } catch (_) {}
                         }).catchError((e) {
                           // If waiting failed/timeout, still attempt navigation as a fallback
                           try {
-                            GoRouter.of(context).go('/auth');
+                            router.go('/auth');
                           } catch (_) {}
                         });
                       } catch (_) {
                         try {
-                          GoRouter.of(context).go('/auth');
+                          router.go('/auth');
                         } catch (_) {}
                       }
                     } catch (e) {
-                      print('Logout failed: $e');
+                      if (mounted) {
+                        ToastService.instance.showToast(context, 'Déconnexion échouée', type: ToastType.error);
+                      }
                     }
                   },
                   backgroundColor: AppColors.brandRed,

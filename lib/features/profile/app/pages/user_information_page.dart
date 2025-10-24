@@ -1,25 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter/services.dart';
 
 class UserInformationPage extends StatefulWidget {
-  const UserInformationPage({Key? key}) : super(key: key);
+  const UserInformationPage({super.key});
 
   @override
   State<UserInformationPage> createState() => _UserInformationPageState();
 }
 
 class _UserInformationPageState extends State<UserInformationPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameCtrl = TextEditingController();
-  final _emailCtrl = TextEditingController();
-  final _phoneCtrl = TextEditingController();
+  // Controllers/form were removed: this page currently shows read-only info
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
-    _emailCtrl.dispose();
-    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -63,12 +56,6 @@ class _UserInformationPageState extends State<UserInformationPage> {
     );
   }
 
-  void _save() {
-    if (_formKey.currentState?.validate() ?? false) {
-      // TODO: wire to bloc/repo to save user info
-      Navigator.of(context).pop();
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -232,7 +219,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
 
 // Simple placeholder edit page — replace with your real edit flow or a Bloc-backed form
 class _EditUserInformationPage extends StatelessWidget {
-  const _EditUserInformationPage({Key? key}) : super(key: key);
+  const _EditUserInformationPage();
 
   @override
   Widget build(BuildContext context) {
