@@ -16,6 +16,7 @@ class _HomePageState extends State<HomePage> {
   int _selected = 0;
 
   late final List<Widget> _pages;
+  late final List<GlobalKey<NavigatorState>> _navigatorKeys;
 
   @override
   void initState() {
@@ -26,6 +27,7 @@ class _HomePageState extends State<HomePage> {
       const OrdersMainPage(),
       const ProfilePage(),
     ];
+    _navigatorKeys = List.generate(_pages.length, (_) => GlobalKey<NavigatorState>());
   }
 
   void _onItemSelected(int idx) {
@@ -42,20 +44,27 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
-      // Use a Stack so the navigation bar can be positioned on top of
-      // page content. Pages will render beneath the nav, avoiding the
-      // overflow that occurs when content touches the bar.
+      // Use a Stack so each tab can host its own Navigator. This allows
+      // pushing/replacing routes inside a tab without affecting the
+      // global app Navigator or the bottom navigation bar.
       body: Stack(
         children: [
-          // Page content - allow it to extend to the full screen so it
-          // can appear under the nav bar.
-          Positioned.fill(
-            child: SafeArea(
-              top: true,
-              bottom: false, // let content go under the bottom nav
-              child: _pages[_selected],
+          // Build an Offstage + Navigator for each tab so they preserve
+          // their own navigation stacks independently.
+          for (int i = 0; i < _pages.length; i++)
+            Positioned.fill(
+              child: Offstage(
+                offstage: _selected != i,
+                child: SafeArea(
+                  top: true,
+                  bottom: false,
+                  child: Navigator(
+                    key: _navigatorKeys[i],
+                    onGenerateRoute: (settings) => MaterialPageRoute(builder: (_) => _pages[i]),
+                  ),
+                ),
+              ),
             ),
-          ),
 
           // Positioned nav bar at the bottom, inside a SafeArea so it
           // won't overlap system gesture area.

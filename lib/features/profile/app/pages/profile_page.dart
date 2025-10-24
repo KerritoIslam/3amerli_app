@@ -206,7 +206,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       title: Text('Informations Personnelles', style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
-                          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const UserInformationPage()));
+                          // Use push (not pushReplacement) into the nested Navigator
+                          // so the profile tab keeps its previous page in the stack.
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UserInformationPage()));
                         } catch (_) {}
                       },
                     ),
