@@ -21,6 +21,11 @@ import '../../features/delivery/app/pages/delivery_page.dart';
 import '../../features/notifications/app/pages/notifications_page.dart';
 import '../../features/admin/app/pages/admin_page.dart';
 import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
+import '../../features/catalog/app/pages/filters_page.dart';
+import '../../features/catalog/app/pages/categories_page.dart';
+import '../../features/catalog/app/pages/brands_page.dart';
+import '../../features/catalog/app/bloc/categories_bloc.dart';
+import '../../features/catalog/app/bloc/brands_bloc.dart';
 import '../config/injection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart' as fav_feature;
@@ -101,6 +106,29 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       GoRoute(
         path: '/catalog',
         builder: (context, state) => const CatalogPage(),
+      ),
+      // Filters and related pages
+      GoRoute(
+        path: '/filters',
+        builder: (context, state) => const FiltersPage(),
+      ),
+      GoRoute(
+        path: '/filters/categories',
+        builder: (context, state) {
+          return BlocProvider<CategoriesBloc>(
+            create: (_) => sl<CategoriesBloc>(),
+            child: const CategoriesPage(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/filters/brands',
+        builder: (context, state) {
+          return BlocProvider<BrandsBloc>(
+            create: (_) => sl<BrandsBloc>(),
+            child: const BrandsPage(),
+          );
+        },
       ),
       GoRoute(
         path: '/favorits',

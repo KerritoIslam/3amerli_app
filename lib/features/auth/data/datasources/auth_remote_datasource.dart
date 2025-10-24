@@ -8,13 +8,21 @@ class AuthRemoteDataSource {
 
   /// Request sending OTP to phone number. Endpoint: POST /authentication/otp/send
   Future<void> sendOtp(String phone) async {
-   try{ print("DAta Sending OTP to $phone");
-    
-    final resp = await apiService.post('/authentication/otp/send', data: {'phoneNumber': phone});
-    print("Response status code: ${resp.statusCode}");
-    }on DioException catch(e){
-     print("Error sending OTP: $e");
-   }
+    try {
+      print("DAta Sending OTP to $phone");
+
+      final resp = await apiService.post('/authentication/otp/send', data: {'phoneNumber': phone});
+      print("Response status code: ${resp.statusCode}");
+
+      // Ensure backend responded with success; otherwise throw so callers can handle the error
+      if (!((resp.statusCode == 200) || (resp.statusCode == 201))) {
+        throw DioException(requestOptions: resp.requestOptions, response: resp);
+      }
+    } on DioException catch (e) {
+      // log and rethrow so higher layers (cubit) can handle the error instead of optimistically moving to OTP state
+      print("Error sending OTP: $e");
+      rethrow;
+    }
   }
 
   /// Validate OTP. Endpoint: POST /authentication/otp/validate

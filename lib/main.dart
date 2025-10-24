@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'core/notifications/notification_service.dart';
 import 'core/config/injection.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/catalog/app/bloc/catalog_bloc.dart';
@@ -24,7 +26,16 @@ void main() async {
     DeviceOrientation.portraitUp,
   
   ]);
+  // Initialize Firebase if configured (guards against missing config in dev)
+  try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    // Safe to continue without Firebase in environments where it's not configured
+  }
   await di.init();
+
+  // Initialize local + push notifications wiring (safe even if Firebase failed)
+  await NotificationService().init();
 
   // Ensure selected app language is set from persisted settings before runApp
   final settings = di.sl<Settings>();

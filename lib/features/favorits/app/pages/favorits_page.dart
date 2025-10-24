@@ -1,8 +1,8 @@
-import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
+// skeleton import removed (not used in this page anymore)
 import 'package:amerli_app/features/catalog/app/bloc/categories_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/categories_state.dart';
 import 'package:amerli_app/features/catalog/app/bloc/categories_event.dart';
-import 'package:amerli_app/features/catalog/app/widgets/categories_row.dart';
+import 'package:amerli_app/features/catalog/app/widgets/category_grid.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,28 +53,19 @@ class _FavoritsView extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Categories row
-              SizedBox(
-                height: 48,
-                child: BlocBuilder<CategoriesBloc, CategoriesState>(builder: (context, state) {
-                  if (state is CategoriesLoading) {
-                    // Show a horizontal row of skeleton chips while categories load
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: List.generate(6, (i) => Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6.0),
-                          child: SkeletonBox(width: 88, height: 34, borderRadius: BorderRadius.all(Radius.circular(20))),
-                        )),
-                      ),
-                    );
-                  }
+              // Categories grid
+              BlocBuilder<CategoriesBloc, CategoriesState>(builder: (context, state) {
+                if (state is CategoriesLoading) {
+                  return categoriesSkeletonGrid(count: 6, crossAxisCount: 3, itemHeight: 90);
+                }
 
-                  if (state is CategoriesError) return Center(child: Text('Categories error: ${state.message}'));
-                  if (state is CategoriesLoaded) return CategoriesRow(categories: state.items);
-                  return CategoriesRow(categories: []);
-                }),
-              ),
+                if (state is CategoriesError) return Center(child: Text('Categories error: ${state.message}'));
+                if (state is CategoriesLoaded) return CategoryGrid(categories: state.items, crossAxisCount: 3, itemHeight: 90, onTap: (cat) {
+                  // Reload favorites filtered by category
+                  context.read<fav_feature.FavoritsBloc>().add(FavoritsLoadEvent());
+                });
+                return const SizedBox.shrink();
+              }),
 
               const SizedBox(height: 12),
 

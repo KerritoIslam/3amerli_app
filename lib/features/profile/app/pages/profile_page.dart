@@ -17,6 +17,7 @@ import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
 import 'package:amerli_app/features/auth/domain/entities/user.dart';
 import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
+import 'package:amerli_app/features/profile/app/pages/user_information_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -203,16 +204,15 @@ class _ProfilePageState extends State<ProfilePage> {
                     CardsListItem(
                       leading: SvgPicture.asset('assets/icons/Informations_personnelles.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
                       title: Text('Informations Personnelles', style: Theme.of(context).textTheme.titleSmall),
-                      onTap: () {},
+                      onTap: () {
+                        try {
+                          Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const UserInformationPage()));
+                        } catch (_) {}
+                      },
                     ),
                     CardsListItem(
                       leading: SvgPicture.asset('assets/icons/moyens_de_paiement.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
                       title: Text('Moyens de Paiement', style: Theme.of(context).textTheme.titleSmall),
-                      onTap: () {},
-                    ),
-                    CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/mes_commandes.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Mes Commandes', style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {},
                     ),
                     CardsListItem(

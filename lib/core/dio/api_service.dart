@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:amerli_app/core/auth/auth_service.dart';
 import 'package:amerli_app/core/dio/auth_interceptor.dart';
+import 'dart:developer' as developer;
 
 class ApiService {
   final Dio _dio;
@@ -11,8 +12,43 @@ class ApiService {
       _dio.options.baseUrl = baseUrl;
     }
 
-    // Add logging interceptor to help debug network issues (only basic logging)
-    _dio.interceptors.add(LogInterceptor(request: true, requestBody: true, responseBody: true, responseHeader: false));
+    // Add concise status logger for every response
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) {
+          options.extra['startTime'] = DateTime.now();
+          return handler.next(options);
+        },
+        onResponse: (response, handler) {
+          final started = response.requestOptions.extra['startTime'] as DateTime?;
+          final elapsedMs = started != null ? DateTime.now().difference(started).inMilliseconds : null;
+          final method = response.requestOptions.method;
+          final path = response.requestOptions.path;
+          final status = response.statusCode;
+          developer.log(
+            '[HTTP] $method $path -> $status${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}',
+            name: 'ApiService',
+          );
+          return handler.next(response);
+        },
+        onError: (error, handler) {
+          final started = error.requestOptions.extra['startTime'] as DateTime?;
+          final elapsedMs = started != null ? DateTime.now().difference(started).inMilliseconds : null;
+          final method = error.requestOptions.method;
+          final path = error.requestOptions.path;
+          final status = error.response?.statusCode;
+          developer.log(
+            '[HTTP] $method $path -> ERROR${status != null ? ' $status' : ''}${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}: ${error.message}',
+            name: 'ApiService',
+            error: error,
+          );
+          return handler.next(error);
+        },
+      ),
+    );
+
+    // Optional: verbose Dio logging (kept for deeper debugging)
+    _dio.interceptors.add(LogInterceptor(request: true, requestBody: true, responseBody: false, responseHeader: false));
 
     // Register auth interceptor if provided
     if (authService != null) {

@@ -1,6 +1,7 @@
 import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 
 class AppSearchbar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
@@ -30,8 +31,8 @@ class _AppSearchbarState extends State<AppSearchbar>
   Widget build(BuildContext context) {
     return AppTextField(
       
-      trailing: InkWell( 
-        onTap: () {},
+      trailing: InkWell(
+        onTap: () => context.push('/filters'),
         child: SvgPicture.asset("assets/icons/filter_icon.svg",color: Theme.of(context).colorScheme.primary),
       ),
       prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg",color: Theme.of(context).colorScheme.primary),

@@ -23,6 +23,10 @@ import '../../features/catalog/data/datasources/favorites_remote_datasource.dart
 import '../../features/catalog/repository/favorites_repository_impl.dart';
 import '../../features/catalog/domain/repositories/favorites_repository.dart';
 import '../../features/catalog/data/datasources/categories_remote_datasource.dart';
+import '../../features/catalog/data/datasources/brands_remote_datasource.dart';
+import '../../features/catalog/domain/repositories/brands_repository.dart';
+import '../../features/catalog/repository/brands_repository_impl.dart';
+import '../../features/catalog/app/bloc/brands_bloc.dart';
 import '../../features/catalog/repository/categories_repository_impl.dart';
 import '../../features/catalog/domain/repositories/categories_repository.dart';
 import '../../features/catalog/app/bloc/favorites_bloc.dart';
@@ -55,19 +59,19 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'settings.dart';
 import '../storage/local_storage.dart';
 import '../storage/secure_storage.dart';
+import '../../utils/constants/app_constants.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
   // External
-  // Create Dio and ApiService with placeholder values; replace baseUrl later
+  // Create Dio and ApiService
   sl.registerLazySingleton(() => Dio());
-  // Use host IP so physical devices can reach the backend. Traefik publishes port 80.
-  // Updated to the host machine IPv4 returned by `ipconfig` (Ethernet 2): 10.223.60.91
-  const placeholderBaseUrl = 'http://10.223.60.91/';
+  // Use a single source of truth for the API base url
+  const baseUrl = AppConstants.apiBaseUrl;
   // Register AuthService (uses flutter_secure_storage internally)
   sl.registerLazySingleton(() => AuthService());
-  sl.registerLazySingleton(() => ApiService(dio: sl<Dio>(), baseUrl: placeholderBaseUrl, authService: sl<AuthService>()));
+  sl.registerLazySingleton(() => ApiService(dio: sl<Dio>(), baseUrl: baseUrl, authService: sl<AuthService>()));
 
   // Storage - SharedPreferences and SecureStorage
   // Initialize SharedPreferences once and register it
@@ -94,6 +98,7 @@ Future<void> init() async {
   // Favorits
   sl.registerLazySingleton<fav_feature.FavoritsRemoteDataSource>(() => fav_feature.FavoritsRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => CategoriesRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(() => BrandsRemoteDataSource());
   sl.registerLazySingleton(() => OrdersRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => NotificationsRemoteDataSource(apiService: sl<ApiService>()));
 
@@ -108,6 +113,7 @@ Future<void> init() async {
   sl.registerLazySingleton<CatalogRepository>(() => CatalogRepositoryImpl(remoteDataSource: sl<CatalogRemoteDataSource>()));
   sl.registerLazySingleton<FavoritesRepository>(() => FavoritesRepositoryImpl(remoteDataSource: sl<FavoritesRemoteDataSource>()));
   sl.registerLazySingleton<CategoriesRepository>(() => CategoriesRepositoryImpl(remoteDataSource: sl<CategoriesRemoteDataSource>()));
+  sl.registerLazySingleton<BrandsRepository>(() => BrandsRepositoryImpl(remoteDataSource: sl<BrandsRemoteDataSource>()));
   sl.registerLazySingleton<OrdersRepository>(() => OrdersRepositoryImpl(remoteDataSource: sl<OrdersRemoteDataSource>()));
   sl.registerLazySingleton<NotificationsRepository>(() => NotificationsRepositoryImpl(remoteDataSource: sl<NotificationsRemoteDataSource>()));
   sl.registerLazySingleton<OffersRepository>(() => OffersRepositoryImpl(remoteDataSource: sl<OffersRemoteDataSource>()));
@@ -134,4 +140,6 @@ Future<void> init() async {
   sl.registerLazySingleton<NotificationsBloc>(() => NotificationsBloc());
   sl.registerLazySingleton<OffersBloc>(() => OffersBloc(repository: sl<OffersRepository>()));
   sl.registerFactory(() => AdminBloc());
+  // Brands feature
+  sl.registerFactory(() => BrandsBloc(repository: sl<BrandsRepository>()));
 }
