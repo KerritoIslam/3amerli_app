@@ -1,4 +1,4 @@
-enum OrderStatus { confirmed, preparing, delivering, delivered }
+enum OrderStatus { confirmed, preparing, delivering, delivered, canceled }
 
 extension OrderStatusX on OrderStatus {
   String get nameValue {
@@ -11,6 +11,8 @@ extension OrderStatusX on OrderStatus {
         return 'DELIVERING';
       case OrderStatus.delivered:
         return 'DELIVERED';
+      case OrderStatus.canceled:
+        return 'CANCELED';
     }
   }
 
@@ -24,6 +26,9 @@ extension OrderStatusX on OrderStatus {
         return OrderStatus.delivering;
       case 'DELIVERED':
         return OrderStatus.delivered;
+      case 'CANCELED':
+      case 'CANCELLED':
+        return OrderStatus.canceled;
       default:
         return OrderStatus.confirmed;
     }

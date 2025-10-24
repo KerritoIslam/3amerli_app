@@ -38,8 +38,8 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
     if (selected == 0) return items;
     if (selected == 1) return items.where((o) => o.status == OrderStatus.preparing || o.status == OrderStatus.delivering).toList();
     if (selected == 2) return items.where((o) => o.status == OrderStatus.delivered).toList();
-    // Annulées - none in mock; return empty
-    return [];
+    // Annulées
+    return items.where((o) => o.status == OrderStatus.canceled).toList();
   }
 
   Color _primary = const Color(0xFFA7C957);
@@ -70,9 +70,22 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                         onTap: () => setState(() => selected = i),
                         child: Column(
                           children: [
-                            Text(tabs[i], style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: active ? _dark : const Color(0xFF555555))),
+                            // Animate the text color when switching tabs
+                            AnimatedDefaultTextStyle(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: active ? _primary : const Color(0xFF555555)),
+                              child: Text(tabs[i]),
+                            ),
                             const SizedBox(height: 6),
-                            Container(height: 2, color: active ? _primary : Colors.transparent, width: double.infinity),
+                            // Smooth underline indicator transition
+                            AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                              height: 2,
+                              color: active ? _primary : Colors.transparent,
+                              width: double.infinity,
+                            ),
                           ],
                         ),
                       ),
@@ -128,13 +141,20 @@ class _OrderCard extends StatelessWidget {
   Color _statusColor(OrderStatus s) {
     switch (s) {
       case OrderStatus.delivering:
-        return const Color(0xFF5AA9E6);
+        // En livraison / delivering
+        return const Color(0xFF95A4FC);
       case OrderStatus.delivered:
-        return const Color(0xFFA7C957);
+        // Livrée / delivered
+        return const Color(0xFFA1E3CB);
       case OrderStatus.preparing:
-        return const Color(0xFF83C5BE);
+        // En préparation / preparing
+        return const Color(0xFFB1E3FF);
+      case OrderStatus.canceled:
+        // Annulée / canceled
+        return const Color(0xFFF34141);
       case OrderStatus.confirmed:
-        return const Color(0xFF5AA9E6);
+        // Use delivering color for confirmed (fallback)
+        return const Color(0xFF95A4FC);
     }
   }
 
@@ -156,13 +176,15 @@ class _OrderCard extends StatelessWidget {
             children: [
               Container(width: 8, height: 8, decoration: BoxDecoration(color: _statusColor(order.status), shape: BoxShape.circle)),
               const SizedBox(width: 8),
-              Text(_labelForStatus(order.status), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF083B2E))),
+              // Status label uses the same color as the dot
+              Text(_labelForStatus(order.status), style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: _statusColor(order.status))),
             ],
           ),
           const SizedBox(height: 8),
-          Container(height: 1, color: const Color(0xFFE5E7EB)),
-          const SizedBox(height: 8),
+          // Place the order name before the divider
           Text('Commande #${order.id}', style: const TextStyle(fontSize: 14, color: Color(0xFF555555), fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          Container(height: 1, color: const Color(0xFFE5E7EB)),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -178,7 +200,12 @@ class _OrderCard extends StatelessWidget {
               ),
               OutlinedButton(
                 onPressed: onFollow,
-                style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFFA7C957)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: const Color(0xFFA7C957), width: 2.0),
+                  shape: const StadiumBorder(),
+                  minimumSize: const Size(64, 34),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                ),
                 child: const Text('Suivre', style: TextStyle(color: Color(0xFF083B2E), fontSize: 14)),
               )
             ],
@@ -192,6 +219,8 @@ class _OrderCard extends StatelessWidget {
     switch (s) {
       case OrderStatus.confirmed:
         return 'Commande confirmée';
+      case OrderStatus.canceled:
+        return 'Annulée';
       case OrderStatus.preparing:
         return 'En préparation';
       case OrderStatus.delivering:
