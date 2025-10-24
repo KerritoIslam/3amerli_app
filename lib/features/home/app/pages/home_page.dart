@@ -1,5 +1,5 @@
 import 'package:amerli_app/features/cart/app/pages/cart.dart';
-import 'package:amerli_app/features/orders/presentation/pages/orders_main_page.dart';
+import 'package:amerli_app/features/orders/presentation/pages/mes_commandes_page.dart';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/widgets/animated_bottom_nav.dart';
 import 'package:amerli_app/features/catalog/app/pages/catalog_page.dart';
@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage> {
     _pages = [
       const CatalogPage(),
       const CartPage(),
-      const OrdersMainPage(),
+      const MesCommandesPage(),
       const ProfilePage(),
     ];
     _navigatorKeys = List.generate(_pages.length, (_) => GlobalKey<NavigatorState>());
