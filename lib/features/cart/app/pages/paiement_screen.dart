@@ -6,6 +6,7 @@ import 'package:amerli_app/features/catalog/domain/entities/product.dart';
 import 'package:amerli_app/features/success/app/pages/success_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/widgets/bottom_cart_summary.dart';
 
 class PaiementScreen extends StatefulWidget {
   const PaiementScreen({Key? key}) : super(key: key);
@@ -42,12 +43,19 @@ class _PaiementScreenState extends State<PaiementScreen> {
         title: const Text('Paiement', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 18)),
         centerTitle: true,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      // Body will be a Stack so we can position the BottomCartSummary above
+      // the bottom nav area exactly like in `cart.dart`.
+
+      body: Stack(
+        children: [
+          // Main scrollable content with bottom padding so last items aren't hidden
+          Positioned.fill(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
               const SizedBox(height: 8),
 
               // Payment methods
@@ -80,119 +88,116 @@ class _PaiementScreenState extends State<PaiementScreen> {
               const SizedBox(height: 8),
               _addressCard(),
 
-              const SizedBox(height: 24),
-
-              // Total and pay button - we'll read cart state to compute total
-              BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
-                final cartItems = cartState is CartLoaded ? cartState.items : const [];
-
-                return BlocBuilder<CatalogBloc, CatalogState>(builder: (context, catalogState) {
-                  List<Product> sourceProducts = [];
-                  if (catalogState is CatalogLoaded || catalogState is CatalogLoadingMore) {
-                    sourceProducts = (catalogState as dynamic).products as List<Product>;
-                  }
-
-                  final productsInCart = cartItems.map((ci) {
-                    final id = int.tryParse(ci.productId) ?? -1;
-                    final p = sourceProducts.firstWhere(
-                      (sp) => sp.id == id,
-                      orElse: () => Product(
-                        id: id,
-                        name: ci.name,
-                        description: '',
-                        price: ci.price,
-                        stock: 0,
-                        pics: ci.imageUrl != null && ci.imageUrl!.isNotEmpty ? [ci.imageUrl!] : const [],
-                        brand: ci.brand ?? null,
-                        soldBy: ci.soldBy,
-                      ),
-                    );
-                    return Product(
-                      id: p.id,
-                      name: p.name,
-                      description: p.description,
-                      price: p.price,
-                      stock: p.stock,
-                      sellerId: p.sellerId,
-                      soldBy: p.soldBy,
-                      pics: p.pics,
-                      brand: p.brand,
-                      markId: p.markId,
-                      isFavorit: p.isFavorit,
-                      quantity: ci.quantity,
-                    );
-                  }).where((p) => p.quantity > 0).toList();
-
-                  final total = productsInCart.fold<double>(0.0, (sum, p) => sum + (p.price * p.quantity));
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 6, offset: const Offset(0, 3))]),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Total à payer', style: TextStyle(fontSize: 15, color: Colors.grey[800])),
-                            Text('${total.toStringAsFixed(0)} DZD', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      SizedBox(
-                        height: 55,
-                        child: ElevatedButton(
-                          onPressed: _paying ? null : () => _onPay(total),
-                          style: ElevatedButton.styleFrom(
-                                backgroundColor: Theme.of(context).colorScheme.primary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                elevation: 4,
-                              ),
-                          child: _paying
-                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text('Payer ma commande', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-                    ],
-                  );
-                });
-              }),
-            ],
+                    // give enough bottom space so content isn't hidden by the summary
+                    const SizedBox(height: 140),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+
+          // Positioned summary (same placement/dimensions as CartPage)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: kBottomNavigationBarHeight + 64,
+            child: Padding(
+              // match CartPage horizontal padding
+              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              child: Center(
+                child: BlocBuilder<CartBloc, CartState>(
+                  builder: (context, cartState) {
+                    final cartItems = cartState is CartLoaded ? cartState.items : const [];
+
+                    return BlocBuilder<CatalogBloc, CatalogState>(
+                      builder: (context, catalogState) {
+                        List<Product> sourceProducts = [];
+                        if (catalogState is CatalogLoaded || catalogState is CatalogLoadingMore) {
+                          sourceProducts = (catalogState as dynamic).products as List<Product>;
+                        }
+
+                        final productsInCart = cartItems.map((ci) {
+                          final id = int.tryParse(ci.productId) ?? -1;
+                          final p = sourceProducts.firstWhere(
+                            (sp) => sp.id == id,
+                            orElse: () => Product(
+                              id: id,
+                              name: ci.name,
+                              description: '',
+                              price: ci.price,
+                              stock: 0,
+                              pics: ci.imageUrl != null && ci.imageUrl!.isNotEmpty ? [ci.imageUrl!] : const [],
+                              brand: ci.brand ?? null,
+                              soldBy: ci.soldBy,
+                            ),
+                          );
+                          return Product(
+                            id: p.id,
+                            name: p.name,
+                            description: p.description,
+                            price: p.price,
+                            stock: p.stock,
+                            sellerId: p.sellerId,
+                            soldBy: p.soldBy,
+                            pics: p.pics,
+                            brand: p.brand,
+                            markId: p.markId,
+                            isFavorit: p.isFavorit,
+                            quantity: ci.quantity,
+                          );
+                        }).where((p) => p.quantity > 0).toList();
+
+                        final total = productsInCart.fold<double>(0.0, (sum, p) => sum + (p.price * p.quantity));
+
+                        return BottomCartSummary(
+                          total: total,
+                          onPay: _paying ? null : () => _onPay(total),
+                        );
+                      },
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _paymentOption({required String label, required int index}) {
     final selected = _selectedPayment == index;
-    final primary = Theme.of(context).colorScheme.primary;
+    // Styling per request: option should NOT change background on select,
+    // should have no border and only the specified shadows, and the
+    // checkbox (when checked) should use color #1A1D1F.
     return GestureDetector(
       onTap: () => setState(() => _selectedPayment = index),
       child: Container(
         height: 55,
-        decoration: BoxDecoration(
-          color: selected ? primary.withOpacity(0.12) : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE0E0E0)),
-        ),
         padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white, // never change background on selection
+          borderRadius: BorderRadius.circular(12),
+          // translate the provided CSS shadows to Flutter BoxShadows
+          boxShadow: const [
+            BoxShadow(color: Color(0x1F000000), offset: Offset(0, 1), blurRadius: 1, spreadRadius: 0),
+            BoxShadow(color: Color(0x3D676E76), offset: Offset(0, 0), blurRadius: 0, spreadRadius: 1),
+            BoxShadow(color: Color(0x14676E76), offset: Offset(0, 2), blurRadius: 5, spreadRadius: 0),
+          ],
+        ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF333333))),
+            // Checkbox circle — restored border, fill when selected
             Container(
               width: 22,
               height: 22,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: primary),
-                color: selected ? primary : Colors.white,
+                // show a circular border around the checkbox
+                border: Border.all(color: const Color(0xFF1A1D1F)),
+                color: selected ? const Color(0xFF1A1D1F) : Colors.white,
               ),
               child: selected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
             ),
