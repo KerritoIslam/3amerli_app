@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:math' as math;
 
@@ -27,11 +28,11 @@ class _InvoicesPageState extends State<InvoicesPage> {
   Widget _buildCheckbox({required bool value, required ValueChanged<bool?> onChanged}) {
     // A circular-ish 28x28 checkbox with no visible native border and layered shadows
     return Container(
-      width: 28,
-      height: 28,
+      width: 22,
+      height: 22,
       decoration: BoxDecoration(
         color: value ? _primary : Colors.white,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(6),
         boxShadow: const [
           BoxShadow(color: Color(0x1F000000), offset: Offset(0, 1), blurRadius: 1),
           BoxShadow(color: Color(0x29676E76), offset: Offset(0, 0), blurRadius: 0, spreadRadius: 1),
@@ -71,11 +72,61 @@ class _InvoicesPageState extends State<InvoicesPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Table text styles (slightly reduced for better fit)
+    final tableHeaderStyle = const TextStyle(color: _darkGreen, fontWeight: FontWeight.w700, fontSize: 13);
+    final tableBodyIdStyle = const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF333333), fontSize: 13);
+    final tableBodyDateStyle = const TextStyle(color: Colors.grey, fontSize: 12);
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
+            // Top app-bar like row: back button + centered title
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(
+                        'assets/icons/back_arrow.svg',
+                        width: 16,
+                        height: 16,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        placeholderBuilder: (context) => Icon(
+                          Icons.arrow_back,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Mes Factures',
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+
+                  // balance spacing with an invisible box same as back button
+                  const SizedBox(width: 40, height: 40),
+                ],
+              ),
+            ),
+
             const SizedBox(height: 12),
 
             // Container sized to content with a reasonable max height
@@ -93,16 +144,16 @@ class _InvoicesPageState extends State<InvoicesPage> {
                     BoxShadow(color: Color(0x14676E76), offset: Offset(0, 2), blurRadius: 5),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
                 child: Column(
                   children: [
-                    // Header row
+                    // Header row (checkbox | ID Commande | Date de Facture | Actions)
                     Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
                       child: Row(
                         children: [
                           // Select-all checkbox aligned with the row checkboxes
-                          SizedBox(width: 36, child: Center(child: _buildCheckbox(
+                          SizedBox(width: 30, child: Center(child: _buildCheckbox(
                             value: _selected.length == _items.length && _items.isNotEmpty,
                             onChanged: (v) {
                               setState(() {
@@ -115,17 +166,21 @@ class _InvoicesPageState extends State<InvoicesPage> {
                             },
                           ))),
 
-                          // Keep header text in a single line and ellipsize if needed
-                          const Expanded(
+                          // ID column (expandable)
+                          Expanded(
                             child: Text(
                               'ID Commande',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: _darkGreen, fontWeight: FontWeight.w700, fontSize: 14),
+                              style: tableHeaderStyle,
                             ),
                           ),
-                          const SizedBox(width: 120, child: Text('Date de Facture', style: TextStyle(color: _darkGreen, fontWeight: FontWeight.w700, fontSize: 14))),
-                          const SizedBox(width: 90, child: Text('Actions', textAlign: TextAlign.right, style: TextStyle(color: _darkGreen, fontWeight: FontWeight.w700, fontSize: 14))),
+
+                          // Date column (fixed width)
+                          SizedBox(width: 120, child: Text('Date de Facture', style: tableHeaderStyle)),
+
+                          // Actions column (narrower)
+                          SizedBox(width: 72, child: Text('Actions', textAlign: TextAlign.right, style: tableHeaderStyle)),
                         ],
                       ),
                     ),
@@ -155,45 +210,49 @@ class _InvoicesPageState extends State<InvoicesPage> {
                                   height: 56,
                                   child: Row(
                                     children: [
-                                      SizedBox(width: 36, child: Center(child: _buildCheckbox(
+                                      // checkbox column (narrow)
+                                      SizedBox(width: 44, child: Center(child: _buildCheckbox(
                                         value: _selected.contains(id),
                                         onChanged: (v) => setState(() => v! ? _selected.add(id) : _selected.remove(id)),
                                       ))),
+
+                                      // ID column (expandable)
                                       Expanded(
-                                        child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          mainAxisAlignment: MainAxisAlignment.center,
+                                        child: Text(id, style: tableBodyIdStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      ),
+
+                                      // Date column (fixed)
+                                      SizedBox(width: 120, child: Text(item['date']!, style: tableBodyDateStyle)),
+
+                                      // Actions (narrow with reduced spacing)
+                                      SizedBox(
+                                        width: 72,
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.end,
                                           children: [
-                                            Text(id, style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF333333))),
-                                            const SizedBox(height: 4),
-                                            Text(item['date']!, style: const TextStyle(color: Colors.grey, fontSize: 14)),
+                                            InkWell(
+                                              onTap: () => _openPdf(context, item['pdf']),
+                                              borderRadius: BorderRadius.circular(20),
+                                              child: Container(
+                                                width: 32,
+                                                height: 32,
+                                                alignment: Alignment.center,
+                                                child: const Icon(Icons.download, color: _darkGreen, size: 18),//TODO : change the icons 
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            InkWell(
+                                              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceDetailPage(invoiceId: id, pdfUrl: item['pdf']))),
+                                              borderRadius: BorderRadius.circular(20),
+                                              child: Container(
+                                                width: 32,
+                                                height: 32,
+                                                alignment: Alignment.center,
+                                                child: const Icon(Icons.visibility, color: _darkGreen, size: 18),//TODO : change the icons
+                                              ),
+                                            ),
                                           ],
                                         ),
-                                      ),
-                                      Row(
-                                        children: [
-                                          InkWell(
-                                            onTap: () => _openPdf(context, item['pdf']),
-                                            borderRadius: BorderRadius.circular(24),
-                                            child: Container(
-                                              width: 36,
-                                              height: 36,
-                                              alignment: Alignment.center,
-                                              child: const Icon(Icons.download, color: _darkGreen),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          InkWell(
-                                            onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceDetailPage(invoiceId: id, pdfUrl: item['pdf']))),
-                                            borderRadius: BorderRadius.circular(24),
-                                            child: Container(
-                                              width: 36,
-                                              height: 36,
-                                              alignment: Alignment.center,
-                                              child: const Icon(Icons.visibility, color: _darkGreen),
-                                            ),
-                                          ),
-                                        ],
                                       )
                                     ],
                                   ),

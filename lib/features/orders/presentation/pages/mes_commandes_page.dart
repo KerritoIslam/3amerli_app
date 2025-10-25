@@ -18,29 +18,32 @@ class MesCommandesPage extends StatefulWidget {
 class _MesCommandesPageState extends State<MesCommandesPage> {
   final tabs = const ['Tous', 'En cours', 'Livrées', 'Annulées'];
   int selected = 0;
-
   late final OrdersBloc _bloc;
+  late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
     _bloc = OrdersBloc(repository: OrdersRepositoryImpl(remote: MockOrdersRemoteDataSource()));
     _bloc.add(OrdersLoadEvent());
+    _pageController = PageController(initialPage: selected);
   }
 
   @override
   void dispose() {
     _bloc.close();
+    _pageController.dispose();
     super.dispose();
   }
 
-  List<Order> _filter(List<Order> items) {
-    if (selected == 0) return items;
-    if (selected == 1) return items.where((o) => o.status == OrderStatus.preparing || o.status == OrderStatus.delivering).toList();
-    if (selected == 2) return items.where((o) => o.status == OrderStatus.delivered).toList();
-    // Annulées
+  List<Order> _filterForIndex(List<Order> items, int tabIndex) {
+    if (tabIndex == 0) return items;
+    if (tabIndex == 1) return items.where((o) => o.status == OrderStatus.preparing || o.status == OrderStatus.delivering).toList();
+    if (tabIndex == 2) return items.where((o) => o.status == OrderStatus.delivered).toList();
     return items.where((o) => o.status == OrderStatus.canceled).toList();
   }
+
+  // Old single-index filter removed; use _filterForIndex instead
 
   Color _primary = const Color(0xFFA7C957);
   Color _dark = const Color(0xFF083B2E);
@@ -60,38 +63,50 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                 Center(child: Text('Mes Commandes', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _dark))),
                 const SizedBox(height: 16),
 
-                // Tabs
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: List.generate(tabs.length, (i) {
-                    final active = i == selected;
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => setState(() => selected = i),
-                        child: Column(
-                          children: [
-                            // Animate the text color when switching tabs
-                            AnimatedDefaultTextStyle(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: active ? _primary : const Color(0xFF555555)),
-                              child: Text(tabs[i]),
-                            ),
-                            const SizedBox(height: 6),
-                            // Smooth underline indicator transition
-                            AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                              height: 2,
-                              color: active ? _primary : Colors.transparent,
-                              width: double.infinity,
-                            ),
-                          ],
-                        ),
+                // Tabs with sliding indicator and swipe-to-change via PageView
+                LayoutBuilder(builder: (context, constraints) {
+                  final tabWidth = constraints.maxWidth / tabs.length;
+                  return Column(
+                    children: [
+                      Stack(
+                        children: [
+                          Row(
+                            children: List.generate(tabs.length, (i) {
+                              final active = i == selected;
+                              return Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    _pageController.animateToPage(i, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+                                    setState(() => selected = i);
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    alignment: Alignment.center,
+                                    child: Text(tabs[i], style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: active ? _primary : const Color(0xFF555555))),
+                                  ),
+                                ),
+                              );
+                            }),
+                          ),
+                          // Sliding indicator
+                          AnimatedBuilder(
+                            animation: _pageController,
+                            builder: (context, child) {
+                              final page = (_pageController.hasClients && _pageController.page != null) ? _pageController.page! : selected.toDouble();
+                              final left = page * tabWidth;
+                              return Positioned(
+                                left: left,
+                                bottom: 0,
+                                width: tabWidth,
+                                child: Container(height: 2, color: _primary),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    );
-                  }),
-                ),
+                    ],
+                  );
+                }),
 
                 const SizedBox(height: 12),
 
@@ -101,25 +116,31 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                     if (state is OrdersLoading) return const Center(child: CircularProgressIndicator());
                     if (state is OrdersError) return Center(child: Text('Erreur: ${state.message}'));
 
-                    final items = state is OrdersLoaded ? _filter(state.items) : const <Order>[];
-
-                    return RefreshIndicator(
-                      onRefresh: () async {
-                        _bloc.add(OrdersLoadEvent());
-                        // wait until loaded
-                        await _bloc.stream.firstWhere((s) => s is! OrdersLoading);
+                    // Use PageView so users can swipe between tabs
+                    return PageView.builder(
+                      controller: _pageController,
+                      itemCount: tabs.length,
+                      onPageChanged: (idx) => setState(() => selected = idx),
+                      itemBuilder: (context, pageIndex) {
+                        final items = state is OrdersLoaded ? _filterForIndex(state.items, pageIndex) : const <Order>[];
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            _bloc.add(OrdersLoadEvent());
+                            await _bloc.stream.firstWhere((s) => s is! OrdersLoading);
+                          },
+                          child: ListView.builder(
+                            padding: const EdgeInsets.only(top: 8, bottom: 20),
+                            itemCount: items.length,
+                            itemBuilder: (context, index) {
+                              final o = items[index];
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 16.0),
+                                child: _OrderCard(order: o, onFollow: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => OrderTrackingPage(order: o)))),
+                              );
+                            },
+                          ),
+                        );
                       },
-                      child: ListView.builder(
-                        padding: const EdgeInsets.only(top: 8, bottom: 20),
-                        itemCount: items.length,
-                        itemBuilder: (context, index) {
-                          final o = items[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: _OrderCard(order: o, onFollow: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => OrderTrackingPage(order: o)))),
-                          );
-                        },
-                      ),
                     );
                   }),
                 )

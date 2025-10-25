@@ -2,8 +2,9 @@
 import 'package:amerli_app/features/catalog/app/bloc/categories_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/categories_state.dart';
 import 'package:amerli_app/features/catalog/app/bloc/categories_event.dart';
-import 'package:amerli_app/features/catalog/app/widgets/category_grid.dart';
-import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/features/catalog/app/widgets/categories_row.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart' as fav_feature;
@@ -43,24 +44,58 @@ class _FavoritsView extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Top app-bar like row: back button + centered title
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Catégories', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
-                  Text('Voir tout', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint, decoration: TextDecoration.underline ,decorationColor: AppColors.hint)),
+                  InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(
+                        'assets/icons/back_arrow.svg',
+                        width: 16,
+                        height: 16,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        placeholderBuilder: (context) => Icon(
+                          Icons.arrow_back,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        'Favories',
+                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+
+                  // balance spacing with an invisible box same as back button
+                  SizedBox(width: 40, height: 40),
                 ],
               ),
 
               const SizedBox(height: 12),
 
-              // Categories grid
+              // Categories row
               BlocBuilder<CategoriesBloc, CategoriesState>(builder: (context, state) {
                 if (state is CategoriesLoading) {
-                  return categoriesSkeletonGrid(count: 6, crossAxisCount: 3, itemHeight: 90);
+                  return _categoriesSkeletonRow();
                 }
 
                 if (state is CategoriesError) return Center(child: Text('Categories error: ${state.message}'));
-                if (state is CategoriesLoaded) return CategoryGrid(categories: state.items, crossAxisCount: 3, itemHeight: 90, onTap: (cat) {
+                if (state is CategoriesLoaded) return CategoriesRow(categories: state.items, onTap: (cat) {
                   // Reload favorites filtered by category
                   context.read<fav_feature.FavoritsBloc>().add(FavoritsLoadEvent());
                 });
@@ -97,6 +132,26 @@ class _FavoritsView extends StatelessWidget {
       ),
     );
   }
+}
+
+// Horizontal skeleton row used while categories load
+Widget _categoriesSkeletonRow() {
+  final widths = [80.0, 100.0, 90.0, 70.0, 110.0, 90.0];
+  return SizedBox(
+    height: 56,
+    child: SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: List.generate(6, (i) {
+          final w = widths[i % widths.length];
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: SkeletonBox(width: w, height: 36, borderRadius: BorderRadius.circular(100)),
+          );
+        }),
+      ),
+    ),
+  );
 }
 
 

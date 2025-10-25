@@ -1,3 +1,4 @@
+import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,7 +12,7 @@ class SupportAndAidePage extends StatefulWidget {
 
 class _SupportAndAidePageState extends State<SupportAndAidePage> {
   static const Color _darkGreen = Color(0xFF083B2E);
-  static const Color _linkBlue = Color(0xFF007AFF);
+  
 
   Future<void> _launchPhone(String phone) async {
     final uri = Uri.parse('tel:$phone');
@@ -82,15 +83,36 @@ class _SupportAndAidePageState extends State<SupportAndAidePage> {
                     Text('Besoin d\'aide ? Nous sommes là pour vous', style: const TextStyle(fontFamily: 'Geist', fontWeight: FontWeight.w700, fontSize: 18, color: _darkGreen)),
                     const SizedBox(height: 12),
                     const Text('Contactez-nous directement au :', style: TextStyle(fontSize: 14)),
-                    const SizedBox(height: 18),
-                    GestureDetector(
-                      onTap: () => _launchPhone('+213770123456'),
-                      child: Text('+213 770 123 456', style: const TextStyle(fontSize: 16, color: _linkBlue, height: 1.25)),
-                    ),
-                    const SizedBox(height: 8),
-                    GestureDetector(
-                      onTap: () => _launchEmail('Support@3ammerli.dz'),
-                      child: Text('Support@3ammerli.dz', style: const TextStyle(fontSize: 16, color: _linkBlue, height: 1.25)),
+                    const SizedBox(height: 12),
+                    // Phone and email in a single horizontal line; use horizontal scroll if viewport is too small
+                    SizedBox(
+                      height: 28,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _launchPhone('+213770123456'),
+                              child: Text(
+                                '+213 770 123 456',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal, height: 1.25 , decoration: TextDecoration.underline , decorationColor: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Text('ou', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, height: 1.25)),
+                            const SizedBox(width: 8),
+                            GestureDetector(
+                              onTap: () => _launchEmail('Support@3ammerli.dz'),
+                              child: Text(
+                                'Support@3ammerli.dz',
+                                style:  TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal, height: 1.25 , decoration: TextDecoration.underline , decorationColor: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal,
+                              ),
+                            ),
+                        )],
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
                   ],

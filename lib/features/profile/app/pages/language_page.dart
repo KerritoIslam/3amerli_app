@@ -7,10 +7,11 @@ class LanguagePage extends StatelessWidget {
   static const Color _darkGreen = Color(0xFF083B2E);
 
   void _openLanguageSelector(BuildContext context) {
-    showModalBottomSheet<void>(
+    showDialog<void>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
+      builder: (ctx) => AlertDialog(
+        title: const Text('Choisir la langue'),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
@@ -36,6 +37,7 @@ class LanguagePage extends StatelessWidget {
             ),
           ],
         ),
+        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Fermer'))],
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -86,22 +87,25 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
 
                     const SizedBox(height: 24),
 
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        OutlinedButton(
-                          onPressed: _openPdf,
-                          style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: _primary), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10)),
-                          child: const Text('Partager', style: TextStyle(color: _darkGreen)),
-                        ),
-                        const SizedBox(width: 20),
-                        ElevatedButton(
-                          onPressed: _openPdf,
-                          style: ElevatedButton.styleFrom(backgroundColor: _darkGreen, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10)),
-                          child: const Text('Imprimer', style: TextStyle(color: Colors.white)),
-                        ),
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 28.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          OutlinedButton(
+                            onPressed: _openPdf,
+                            style: OutlinedButton.styleFrom(
+                                side:  BorderSide(color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4)),
+                            child:  Text('Partager', style: TextStyle(color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal)),
+                          ),
+                          const SizedBox(width: 20),
+                          ElevatedButton(
+                            onPressed: _openPdf,
+                            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8)),
+                            child: const Text('Imprimer', style: TextStyle(color: Colors.white)),
+                          ),
+                        ],
+                      ),
                     ),
 
                     const SizedBox(height: 24),

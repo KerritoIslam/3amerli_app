@@ -7,7 +7,9 @@ import 'package:flutter/material.dart';
 
 class CategoriesRow extends StatefulWidget {
   final List<Category> categories;
-  const CategoriesRow({super.key, required this.categories});
+  // Optional callback when a category is tapped (passes the category)
+  final ValueChanged<Category>? onTap;
+  const CategoriesRow({super.key, required this.categories, this.onTap});
 
   @override
   State<CategoriesRow> createState() => _CategoriesRowState();
@@ -168,6 +170,8 @@ class _CategoriesRowState extends State<CategoriesRow> {
                           }
                         });
                         debugPrint('Selected categories: ${_selectedCategories.toString()}');
+                        // Notify parent about the selection so pages can react (e.g. filter favorites)
+                        widget.onTap?.call(category);
                       },
                       // ... (trailing widget implementation is unchanged)
                       trailing: (category.image != null && category.image!.isNotEmpty)

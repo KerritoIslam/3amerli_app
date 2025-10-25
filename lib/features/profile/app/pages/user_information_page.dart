@@ -20,19 +20,19 @@ class _UserInformationPageState extends State<UserInformationPage> {
   String? _imageUrl = 'https://picsum.photos/seed/profile/300/300';
 
   Future<void> _showImagePickerOptions() async {
-    // Simple bottom sheet stub — integrate image_picker plugin if you want
-    await showModalBottomSheet<void>(
+    // Use a centered dialog instead of a bottom sheet so it isn't covered by nav bars
+    await showDialog<void>(
       context: context,
-      builder: (context) => SafeArea(
-        child: Column(
+      builder: (ctx) => AlertDialog(
+        title: const Text('Modifier la photo de profil'),
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera),
               title: const Text('Prendre une photo'),
               onTap: () {
-                // TODO: open camera and update _imageUrl
-                Navigator.of(context).pop();
+                Navigator.of(ctx).pop();
                 // simulate change
                 setState(() {
                   _imageUrl = 'https://picsum.photos/seed/profile_camera/300/300';
@@ -43,16 +43,15 @@ class _UserInformationPageState extends State<UserInformationPage> {
               leading: const Icon(Icons.photo_library),
               title: const Text('Choisir depuis la galerie'),
               onTap: () {
-                // TODO: open gallery and update _imageUrl
-                Navigator.of(context).pop();
+                Navigator.of(ctx).pop();
                 setState(() {
                   _imageUrl = 'https://picsum.photos/seed/profile_gallery/300/300';
                 });
               },
             ),
-            const SizedBox(height: 8),
           ],
         ),
+        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler'))],
       ),
     );
   }
@@ -143,7 +142,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                                     width: 30,
                                     height: 30,
                                     decoration: BoxDecoration(
-                                        color: Theme.of(context).extension<BrandColors>()?.brandTeal,
+                                        color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal,
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(0, 2)),
@@ -207,7 +206,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).extension<BrandColors>()?.brandDeep, decoration: TextDecoration.underline),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).extension<BrandColors>()?.brandDeep ?? AppColors.brandDeep, decoration: TextDecoration.underline),
           textAlign: TextAlign.start,
         ),
         const SizedBox(height: 4),
