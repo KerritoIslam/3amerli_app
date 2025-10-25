@@ -9,21 +9,6 @@ class OrderTrackingPage extends StatelessWidget {
 
   static const Color _primary = Color(0xFFA7C957);
   static const Color _dark = Color(0xFF083B2E);
-  Color _statusColor(OrderStatus s) {
-    switch (s) {
-      case OrderStatus.delivering:
-        return const Color(0xFF95A4FC);
-      case OrderStatus.delivered:
-        return const Color(0xFFA1E3CB);
-      case OrderStatus.preparing:
-        return const Color(0xFFB1E3FF);
-      case OrderStatus.canceled:
-        return const Color(0xFFF34141);
-      case OrderStatus.confirmed:
-        return const Color(0xFF95A4FC);
-    }
-  }
-
   Widget _buildStep({
     required bool active,
     required IconData icon,

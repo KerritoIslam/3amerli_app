@@ -1,3 +1,4 @@
+import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -138,17 +139,17 @@ class _UserInformationPageState extends State<UserInformationPage> {
                                 bottom: 0,
                                 child: GestureDetector(
                                   onTap: _showImagePickerOptions,
-                                  child: Container(
+                                    child: Container(
                                     width: 30,
                                     height: 30,
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context).colorScheme.primary,
+                                        color: Theme.of(context).extension<BrandColors>()?.brandTeal,
                                       shape: BoxShape.circle,
                                       boxShadow: [
                                         BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(0, 2)),
                                       ],
                                     ),
-                                    child: const Icon(Icons.edit, size: 14, color: Colors.white),
+                                    child: const Icon(Icons.edit, size: 14, color: Colors.white),//TODO : CHANGE ICON 
                                   ),
                                 ),
                               ),
@@ -206,7 +207,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
       children: [
         Text(
           label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.green[700], decoration: TextDecoration.underline),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).extension<BrandColors>()?.brandDeep, decoration: TextDecoration.underline),
           textAlign: TextAlign.start,
         ),
         const SizedBox(height: 4),

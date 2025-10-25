@@ -75,6 +75,8 @@ class AppColors {
   static const Color brandRed = Color(0xFFC94949);
   // Brand teal requested: #48A9A6
   static const Color brandTeal = Color(0xFF48A9A6);
+  // Deep brand teal / dark accent: #04272D
+  static const Color brandDeep = Color(0xFF04272D);
   // Neutral light used for hints and subtle borders (#D3D3D3)
   static const Color neutralLight300 = Color(0xFFD3D3D3);
   // A convenient alias for UI hint color usage (match Theme.hintColor)
@@ -169,15 +171,16 @@ class AppColors {
 
 class BrandColors extends ThemeExtension<BrandColors> {
   final Color brandTeal;
+  final Color brandDeep;
 
-  const BrandColors({required this.brandTeal});
+  const BrandColors({required this.brandTeal, required this.brandDeep});
 
-  static const BrandColors light = BrandColors(brandTeal: AppColors.brandTeal);
-  static const BrandColors dark = BrandColors(brandTeal: AppColors.brandTeal);
+  static const BrandColors light = BrandColors(brandTeal: AppColors.brandTeal, brandDeep: AppColors.brandDeep);
+  static const BrandColors dark = BrandColors(brandTeal: AppColors.brandTeal, brandDeep: AppColors.brandDeep);
 
   @override
-  BrandColors copyWith({Color? brandTeal}) {
-    return BrandColors(brandTeal: brandTeal ?? this.brandTeal);
+  BrandColors copyWith({Color? brandTeal, Color? brandDeep}) {
+    return BrandColors(brandTeal: brandTeal ?? this.brandTeal, brandDeep: brandDeep ?? this.brandDeep);
   }
 
   @override
@@ -185,6 +188,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
     if (other is! BrandColors) return this;
     return BrandColors(
       brandTeal: Color.lerp(brandTeal, other.brandTeal, t) ?? brandTeal,
+      brandDeep: Color.lerp(brandDeep, other.brandDeep, t) ?? brandDeep,
     );
   }
 }
