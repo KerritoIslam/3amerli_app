@@ -1,9 +1,11 @@
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:amerli_app/features/auth/domain/entities/user.dart';
 
 class UserInformationPage extends StatefulWidget {
-  const UserInformationPage({super.key});
+  final User? user;
+  const UserInformationPage({super.key, this.user});
 
   @override
   State<UserInformationPage> createState() => _UserInformationPageState();
@@ -12,12 +14,13 @@ class UserInformationPage extends StatefulWidget {
 class _UserInformationPageState extends State<UserInformationPage> {
   // Controllers/form were removed: this page currently shows read-only info
 
+  User? _user;
+  String? _imageUrl;
+
   @override
   void dispose() {
     super.dispose();
   }
-
-  String? _imageUrl = 'https://picsum.photos/seed/profile/300/300';
 
   Future<void> _showImagePickerOptions() async {
     // Use a centered dialog instead of a bottom sheet so it isn't covered by nav bars
@@ -59,6 +62,10 @@ class _UserInformationPageState extends State<UserInformationPage> {
 
   @override
   Widget build(BuildContext context) {
+    // initialize local user & image from passed user if not set
+    _user ??= widget.user;
+    _imageUrl ??= _user?.profilePic ?? 'https://picsum.photos/seed/profile/300/300';
+
     // Layout matches requested design: centered, scrollable, with avatar + edit
     return Scaffold(
       backgroundColor: Colors.white,
@@ -168,13 +175,13 @@ class _UserInformationPageState extends State<UserInformationPage> {
                         const SizedBox(height: 20),
 
                         // Info fields (left-aligned, reduced spacing, underlined labels)
-                        _infoField(label: 'Nom de la supérette', value: 'Superette El Malika'),
+                        _infoField(label: 'Nom de la supérette', value: _user?.supermarketName ?? '—'),
                         const SizedBox(height: 10),
-                        _infoField(label: 'Nom et prénom du représentant', value: 'Nacer Amira Yassamine'),
+                        _infoField(label: 'Nom et prénom du représentant', value: _user?.name ?? '—'),
                         const SizedBox(height: 10),
-                        _infoField(label: 'Numéro de téléphone', value: '0655180239'),
+                        _infoField(label: 'Numéro de téléphone', value: _user?.phoneNumber ?? '—'),
                         const SizedBox(height: 10),
-                        _infoField(label: 'Adresse complète', value: '12 Rue des Jasmins, Quartier El Mokrani, Aïn Naadja, Alger, Algérie'),
+                        _infoField(label: 'Adresse complète', value: _user?.locationUrl ?? '—'),
 
                         const SizedBox(height: 28),
 

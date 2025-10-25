@@ -207,11 +207,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     CardsListItem(
                       leading: SvgPicture.asset('assets/icons/Informations_personnelles.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
                       title: Text('Informations Personnelles', style: Theme.of(context).textTheme.titleSmall),
-                      onTap: () {
+                      onTap: () async {
                         try {
-                          // Use push (not pushReplacement) into the nested Navigator
-                          // so the profile tab keeps its previous page in the stack.
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const UserInformationPage()));
+                          User? user;
+                          // Try ProfileBloc first
+                          try {
+                            final profileBloc = BlocProvider.of<ProfileBloc>(context);
+                            final s = profileBloc.state;
+                            if (s is ProfileLoaded) user = s.user;
+                          } catch (_) {}
+
+                          // Fallback to AuthBloc
+                          if (user == null) {
+                            try {
+                              final authBloc = BlocProvider.of<AuthBloc>(context);
+                              final aState = authBloc.state;
+                              if (aState is Authenticated) user = aState.user;
+                            } catch (_) {}
+                          }
+
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserInformationPage(user: user)));
                         } catch (_) {}
                       },
                     ),
