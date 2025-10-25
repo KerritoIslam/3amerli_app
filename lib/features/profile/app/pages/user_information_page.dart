@@ -148,7 +148,16 @@ class _UserInformationPageState extends State<UserInformationPage> {
                                         BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(0, 2)),
                                       ],
                                     ),
-                                    child: const Icon(Icons.edit, size: 14, color: Colors.white),//TODO : CHANGE ICON 
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(4.0),
+                                      child: SvgPicture.asset(
+                                        'assets/icons/edit.svg',
+                                        width: 8,
+                                        height: 8,
+                                        color: Colors.white,
+                                        placeholderBuilder: (_) => const Icon(Icons.edit, size: 14, color: Colors.white),
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ),

@@ -82,7 +82,11 @@ class LanguagePage extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 2))],
+                    // Use the requested dual shadows to match the design
+                    boxShadow: const [
+                      BoxShadow(color: Color(0x1F000000), offset: Offset(4, 4), blurRadius: 8),
+                      BoxShadow(color: Color(0x1F000000), offset: Offset(-4, -4), blurRadius: 8),
+                    ],
                   ),
                   child: Row(
                     children: [

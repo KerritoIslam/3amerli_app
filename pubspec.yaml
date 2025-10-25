@@ -83,6 +83,7 @@ flutter:
     - assets/images/hero/
     - assets/icons/
     - assets/fonts/Geist/
+    - assets/logo/
 
   fonts:
     - family: Geist

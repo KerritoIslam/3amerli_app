@@ -237,10 +237,16 @@ class _InvoicesPageState extends State<InvoicesPage> {
                                                 width: 32,
                                                 height: 32,
                                                 alignment: Alignment.center,
-                                                child: const Icon(Icons.download, color: _darkGreen, size: 18),//TODO : change the icons 
+                                                child: SvgPicture.asset(
+                                                  'assets/icons/download.svg',
+                                                  width: 18,
+                                                  height: 18,
+                                                  color: _darkGreen,
+                                                  placeholderBuilder: (_) => const Icon(Icons.download, color: _darkGreen, size: 18),
+                                                ),
                                               ),
                                             ),
-                                            const SizedBox(width: 8),
+                                            const SizedBox(width: 2),
                                             InkWell(
                                               onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceDetailPage(invoiceId: id, pdfUrl: item['pdf']))),
                                               borderRadius: BorderRadius.circular(20),
@@ -248,7 +254,13 @@ class _InvoicesPageState extends State<InvoicesPage> {
                                                 width: 32,
                                                 height: 32,
                                                 alignment: Alignment.center,
-                                                child: const Icon(Icons.visibility, color: _darkGreen, size: 18),//TODO : change the icons
+                                                child: SvgPicture.asset(
+                                                  'assets/icons/visible.svg',
+                                                  width: 18,
+                                                  height: 18,
+                                                  color: _darkGreen,
+                                                  placeholderBuilder: (_) => const Icon(Icons.remove_red_eye, color: _darkGreen, size: 18),
+                                                ),
                                               ),
                                             ),
                                           ],

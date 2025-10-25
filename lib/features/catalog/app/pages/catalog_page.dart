@@ -21,6 +21,7 @@ import 'package:amerli_app/features/catalog/app/bloc/offers_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/offers_event.dart';
 import 'package:amerli_app/features/catalog/app/bloc/offers_state.dart';
 import 'package:amerli_app/core/config/injection.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
@@ -106,7 +107,14 @@ class _CatalogPageState extends State<CatalogPage> {
           child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Text('Bienvenue sur {Logo}', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+            Row(
+              children: [
+                Text('Bienvenue sur ', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+                const SizedBox(width: 8),
+                // Use the correct asset path (logo is under assets/logo/ in the project)
+                SvgPicture.asset('assets/logo/full_logo.svg', width: 40, height: 40),
+              ],
+            ),
             const SizedBox(height: 15),
 
             // Search + notifications
@@ -121,7 +129,7 @@ class _CatalogPageState extends State<CatalogPage> {
                   ),
                   const SizedBox(width: 10),
                   InkWell(
-                    onTap: () {},
+                    onTap: () => context.push('/notifications'),
                     borderRadius: BorderRadius.circular(20),
                     child: IconCircle(
                       asset: 'assets/icons/notifications.svg',

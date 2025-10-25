@@ -137,7 +137,7 @@ Future<void> init() async {
   sl.registerFactory(() => OrdersBloc(repository: sl<OrdersRepository>()));
   sl.registerFactory(() => PaymentsBloc(repository: sl<PaymentsRepository>()));
   sl.registerFactory(() => DeliveryBloc());
-  sl.registerLazySingleton<NotificationsBloc>(() => NotificationsBloc());
+  sl.registerLazySingleton<NotificationsBloc>(() => NotificationsBloc(repository: sl<NotificationsRepository>()));
   sl.registerLazySingleton<OffersBloc>(() => OffersBloc(repository: sl<OffersRepository>()));
   sl.registerFactory(() => AdminBloc());
   // Brands feature

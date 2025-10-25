@@ -102,7 +102,13 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                           ElevatedButton(
                             onPressed: _openPdf,
                             style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8)),
-                            child: const Text('Imprimer', style: TextStyle(color: Colors.white)),
+                            child: Row(
+                              children: [
+                                SvgPicture.asset('assets/icons/print.svg', width: 20, height: 20),
+                                const SizedBox(width: 8),
+                                const Text('Imprimer', style: TextStyle(color: Colors.white)),
+                              ],
+                            ),
                           ),
                         ],
                       ),
