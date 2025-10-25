@@ -1,4 +1,6 @@
+import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import '../../domain/entities/order.dart';
 
 class OrderTrackingPage extends StatelessWidget {
@@ -35,10 +37,44 @@ class OrderTrackingPage extends StatelessWidget {
     // Make circles bigger; diameter 44 (radius ~22)
     final circleSize = 44.0;
   // connector thickness and lengths
-  const connectorWidth = 3.0;
-  // make connectors shorter and rely on no inter-step gap so they touch
-  const connectorTopHeight = 12.0;
-  const connectorBottomHeight = 12.0;
+     const connectorWidth = 3.0;
+     // increase connector lengths to create more spacing between states
+     // keep inter-step SizedBox at 0 so connectors form a continuous line
+     const connectorTopHeight = 24.0;
+     const connectorBottomHeight = 24.0;
+
+    // determine whether connectors should be shown as active (colored) based on current order.status
+    int _statusIndex(OrderStatus s) {
+      switch (s) {
+        case OrderStatus.confirmed:
+          return 0;
+        case OrderStatus.preparing:
+          return 1;
+        case OrderStatus.delivering:
+          return 2;
+        case OrderStatus.delivered:
+          return 3;
+        case OrderStatus.canceled:
+          return -1; // canceled is special
+      }
+    }
+
+    final stepIdx = _statusIndex(stepStatus);
+    final currentIdx = _statusIndex(order.status);
+
+    Color _connectorColorTop() {
+      if (!showTopConnector) return const Color(0xFFE5E7EB);
+      // top connector (between stepIdx-1 and stepIdx) is active if we've reached at least this step
+      if (currentIdx >= stepIdx) return AppColors.lightPrimary;
+      return const Color(0xFFE5E7EB);
+    }
+
+    Color _connectorColorBottom() {
+      if (!showBottomConnector) return const Color(0xFFE5E7EB);
+      // bottom connector (between stepIdx and stepIdx+1) is active if we've reached the next step
+      if (currentIdx >= stepIdx + 1) return AppColors.lightPrimary;
+      return const Color(0xFFE5E7EB);
+    }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -49,7 +85,7 @@ class OrderTrackingPage extends StatelessWidget {
           child: Column(
             children: [
               // top connector (touches circle)
-              if (showTopConnector) Container(width: connectorWidth, height: connectorTopHeight, color: const Color(0xFFE5E7EB)),
+              if (showTopConnector) Container(width: connectorWidth, height: connectorTopHeight, color: _connectorColorTop()),
               Container(
                 width: circleSize,
                 height: circleSize,
@@ -57,7 +93,7 @@ class OrderTrackingPage extends StatelessWidget {
                 child: Icon(icon, size: 20, color: active ? Colors.white : Colors.grey.shade700),
               ),
               // bottom connector (touches circle)
-              if (showBottomConnector) Container(width: connectorWidth, height: connectorBottomHeight, color: const Color(0xFFE5E7EB)),
+              if (showBottomConnector) Container(width: connectorWidth, height: connectorBottomHeight, color: _connectorColorBottom()),
             ],
           ),
         ),
@@ -90,16 +126,35 @@ class OrderTrackingPage extends StatelessWidget {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
               child: Row(
                 children: [
                   InkWell(
                     onTap: () => Navigator.of(context).maybePop(),
                     borderRadius: BorderRadius.circular(24),
-                    child: Container(width: 40, height: 40, alignment: Alignment.center, child: const Icon(Icons.arrow_back, color: _dark)),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(
+                        'assets/icons/back_arrow.svg',
+                        width: 16,
+                        height: 16,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        placeholderBuilder: (context) => Icon(
+                          Icons.arrow_back,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
+                      ),
+                    ),
                   ),
                   const Spacer(),
-                  Text('Suivre Ma Commande', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _dark)),
+                  Text('Suivre \nMa Commande', textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _dark)),
                   const Spacer(flex: 2),
                 ],
               ),
