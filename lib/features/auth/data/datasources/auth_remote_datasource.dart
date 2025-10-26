@@ -1,10 +1,24 @@
 import 'package:dio/dio.dart';
 import 'package:amerli_app/core/dio/api_service.dart';
 
+/// A simple API exception that higher layers can catch and display to the user.
+class ApiException implements Exception {
+  final String message;
+  final int? statusCode;
+  final bool isNetworkError;
+
+  ApiException(this.message, {this.statusCode, this.isNetworkError = false});
+
+  @override
+  String toString() => 'ApiException(status: $statusCode, network: $isNetworkError): $message';
+}
+
 class AuthRemoteDataSource {
   final ApiService apiService;
 
   AuthRemoteDataSource({required this.apiService});
+
+  bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
 
   /// Request sending OTP to phone number. Endpoint: POST /authentication/otp/send
   Future<void> sendOtp(String phone) async {
@@ -14,53 +28,89 @@ class AuthRemoteDataSource {
       final resp = await apiService.post('/authentication/otp/send', data: {'phoneNumber': phone});
       print("Response status code: ${resp.statusCode}");
 
-      // Ensure backend responded with success; otherwise throw so callers can handle the error
-      if (!((resp.statusCode == 200) || (resp.statusCode == 201))) {
-        throw DioException(requestOptions: resp.requestOptions, response: resp);
+      // Accept any 2xx response as success
+      if (!_isSuccess(resp.statusCode)) {
+        final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to send OTP';
+        throw ApiException(msg, statusCode: resp.statusCode);
       }
     } on DioException catch (e) {
-      // log and rethrow so higher layers (cubit) can handle the error instead of optimistically moving to OTP state
-      print("Error sending OTP: $e");
-      rethrow;
+      // Network / transport level errors
+      print("Dio error sending OTP: $e");
+      final msg = e.message ?? 'Network error while sending OTP';
+      throw ApiException(msg, statusCode: e.response?.statusCode, isNetworkError: true);
+    } catch (e) {
+      print("Unexpected error sending OTP: $e");
+      throw ApiException('Unexpected error while sending OTP');
     }
   }
 
   /// Validate OTP. Endpoint: POST /authentication/otp/validate
   /// Expects response with accessToken, refreshToken, user, isRegistered
   Future<Map<String, dynamic>> validateOtp(String phone, String otp) async {
-    final resp = await apiService.post('/authentication/otp/validate', data: {'phoneNumber': phone, 'otp': otp});
-    print("Register Data Response for validateOtp: ${resp.data}");
-    if (((resp.statusCode == 201) || (resp.statusCode == 200)) && resp.data != null) {
-      return Map<String, dynamic>.from(resp.data as Map);
+    try {
+      final resp = await apiService.post('/authentication/otp/validate', data: {'phoneNumber': phone, 'otp': otp});
+      print("Register Data Response for validateOtp: ${resp.data}");
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        return Map<String, dynamic>.from(resp.data as Map);
+      }
+
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Invalid OTP or server error';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      print("Dio error validateOtp: $e");
+      final msg = e.message ?? 'Network error while validating OTP';
+      throw ApiException(msg, statusCode: e.response?.statusCode, isNetworkError: true);
+    } catch (e) {
+      print("Unexpected error validateOtp: $e");
+      throw ApiException('Unexpected error while validating OTP');
     }
-    throw DioError(requestOptions: resp.requestOptions, response: resp);
   }
 
   /// Register user (complete profile). Endpoint: PUT /authentication/register
   Future<Map<String, dynamic>> register(Map<String, dynamic> profile) async {
-    // ApiService with AuthInterceptor will attach access token automatically;
-    // but accept accessToken override for direct calls if needed.
-    print("Register Data Sent: $profile");
-    final resp = await apiService.client.put('/authentication/register', data: profile);
-    print("Register status code: ${resp.statusCode}");
-    print("Register Data Response: ${resp.data}");
-    if (((resp.statusCode == 201) || (resp.statusCode == 200)) && resp.data != null) {
-      return Map<String, dynamic>.from(resp.data as Map);
+    try {
+      print("Register Data Sent: $profile");
+      final resp = await apiService.client.put('/authentication/register', data: profile);
+      print("Register status code: ${resp.statusCode}");
+      print("Register Data Response: ${resp.data}");
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        return Map<String, dynamic>.from(resp.data as Map);
+      }
+
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Registration failed';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      print("Dio error register: $e");
+      final msg = e.message ?? 'Network error while registering';
+      throw ApiException(msg, statusCode: e.response?.statusCode, isNetworkError: true);
+    } catch (e) {
+      print("Unexpected error register: $e");
+      throw ApiException('Unexpected error while registering');
     }
-    throw DioError(requestOptions: resp.requestOptions, response: resp);
   }
 
   /// Refresh tokens using a refresh token. Calls POST /authentication/refresh with
   /// Authorization: Bearer <refreshToken>. Uses a bare Dio instance to avoid
   /// interceptor loops.
   Future<Map<String, dynamic>> refresh(String refreshToken) async {
-    final baseUrl = apiService.client.options.baseUrl;
-    final d = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 10)));
-    final resp = await d.post('/authentication/refresh', options: Options(headers: {'Authorization': 'Bearer $refreshToken'}));
-    if (((resp.statusCode == 201) || (resp.statusCode == 200))&& resp.data != null) {
-      return Map<String, dynamic>.from(resp.data as Map);
+    try {
+      final baseUrl = apiService.client.options.baseUrl;
+      final d = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 10)));
+      final resp = await d.post('/authentication/refresh', options: Options(headers: {'Authorization': 'Bearer $refreshToken'}));
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        return Map<String, dynamic>.from(resp.data as Map);
+      }
+
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to refresh token';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      print("Dio error refresh: $e");
+      final msg = e.message ?? 'Network error while refreshing token';
+      throw ApiException(msg, statusCode: e.response?.statusCode, isNetworkError: true);
+    } catch (e) {
+      print("Unexpected error refresh: $e");
+      throw ApiException('Unexpected error while refreshing token');
     }
-    throw Exception('refresh_failed');
   }
 }
 

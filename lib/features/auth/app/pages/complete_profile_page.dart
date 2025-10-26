@@ -6,6 +6,8 @@ import 'package:amerli_app/widgets/app_button.dart';
 import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:amerli_app/widgets/custom_tab_bar.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:amerli_app/core/ui/toast/toast_service.dart';
+import 'package:amerli_app/features/auth/data/datasources/auth_remote_datasource.dart' show ApiException;
 import 'package:geocoding/geocoding.dart';
 import '../../../../utils/constants/app_dimensions.dart';
 
@@ -30,7 +32,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
   final _streetController = TextEditingController();
   final _quarterController = TextEditingController();
   final _cityController = TextEditingController();
-  String? _fetchedLocationUrl;
+  // location url is intentionally not sent to backend; we don't store it here
   bool _isFetchingLocation = false;
 
   @override
@@ -56,34 +58,41 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     _goTo(1);
   }
 
-  void _onLocationValidate() {
+  Future<void> _onLocationValidate() async {
     final valid = _locationKey.currentState?.validate() ?? false;
     if (!valid) return;
+
     // build profile payload and call cubit to register
     final profile = {
       'name': _repNameController.text.trim(),
-      'locationUrl': _fetchedLocationUrl ?? "https://maps.google.com/?q=36.7528,3.0422",
       'supermarketName': _storeNameController.text.trim(),
-      'role': 'SUPERMARKET',
       'address': {
         'street': _streetController.text.trim(),
         'city': _cityController.text.trim(),
         'district': _quarterController.text.trim(),
       }
     };
-    
+
     final cubit = BlocProvider.of<SignUpCubit>(context);
-    cubit.registerProfile(profile).then((_) {
+    try {
+      await cubit.registerProfile(profile);
+
       // Navigate to Home via GoRouter to keep a single routing API and
       // avoid creating a second Navigator that could conflict with the
       // app-level GoRouter (which manages '/home'). This also clears
       // previous history similar to pushAndRemoveUntil.
-      
+      if (!mounted) return;
       GoRouter.of(context).go('/home');
-    }).catchError((e) {
-      print("Registration Error: $e");
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Échec de l\'enregistrement')));
-    });
+    } catch (e, st) {
+      // Log full error
+      print("Registration Error: $e\n$st");
+
+      // Show 'Network error' when error denotes network/backend transport issue
+      final msg = (e is ApiException && e.isNetworkError) ? 'Network error' : (e is ApiException ? e.message : 'Échec de l\'enregistrement');
+      if (mounted) {
+        ToastService.instance.showToast(context, msg, type: ToastType.error);
+      }
+    }
   }
 
   Future<void> _useCurrentLocation() async {
@@ -137,9 +146,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
 
       // permission granted
       final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-      final lat = pos.latitude;
-      final lon = pos.longitude;
-      final mapsUrl = 'https://maps.google.com/?q=$lat,$lon';
+  final lat = pos.latitude;
+  final lon = pos.longitude;
 
       // reverse geocode
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
@@ -153,12 +161,12 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
           _streetController.text = streetParts.join(', ');
           _quarterController.text = p.subAdministrativeArea ?? p.subLocality ?? '';
           _cityController.text = p.locality ?? p.administrativeArea ?? '';
-          _fetchedLocationUrl = mapsUrl;
+          // do not persist or send mapsUrl to backend per requirements
         });
       } else {
         // no placemarks, still set maps url
         setState(() {
-          _fetchedLocationUrl = mapsUrl;
+          // do not persist or send mapsUrl to backend per requirements
         });
       }
     } catch (e, st) {

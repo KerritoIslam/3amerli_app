@@ -5,6 +5,7 @@ import 'package:amerli_app/features/auth/app/bloc/auth_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/auth_event.dart';
 import 'package:amerli_app/core/config/injection.dart' show sl;
 import 'package:amerli_app/features/auth/domain/entities/supermarket.dart';
+import 'package:amerli_app/features/auth/data/datasources/auth_remote_datasource.dart' show ApiException;
 
 class SignUpCubit extends Cubit<SignUpState> {
   final AuthRepositoryImpl repository;
@@ -85,7 +86,7 @@ class SignUpCubit extends Cubit<SignUpState> {
     _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
       await repository.register(profile);
-      // After registration complete, read cached user and dispatch login
+      // After registration complete, read cached user and dispatch login only if we actually have a user
       final userModel = await repository.readCachedUser();
       if (userModel != null) {
         final userEntity = userModel.toEntity();
@@ -95,10 +96,18 @@ class SignUpCubit extends Cubit<SignUpState> {
         } else {
           authBloc.add(LogInEvent(userEntity));
         }
+        _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
+      } else {
+        // No user saved -> treat as failure
+        _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Échec de l\'enregistrement'));
+        throw Exception('Registration did not produce a user');
       }
-      _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
     } catch (e) {
-      _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Échec de l\'enregistrement'));
+      // Prefer ApiException message when available
+      String err = 'Échec de l\'enregistrement';
+      if (e is ApiException) err = e.message;
+      _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: err));
+      rethrow; // rethrow so UI callers (that used .then/.catchError) receive the error
     }
   }
 

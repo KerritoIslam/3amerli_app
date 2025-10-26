@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 class BottomCartSummary extends StatelessWidget {
   final double total;
   final VoidCallback? onPay;
+  final Widget? payButton;
 
-  const BottomCartSummary({Key? key, required this.total, this.onPay}) : super(key: key);
+  const BottomCartSummary({Key? key, required this.total, this.onPay, this.payButton}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +54,7 @@ class BottomCartSummary extends StatelessWidget {
                 const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: payButton ?? ElevatedButton(
                     onPressed: onPay,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,

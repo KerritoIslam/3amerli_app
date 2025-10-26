@@ -43,13 +43,16 @@ class AuthRepositoryImpl {
     return isRegistered; // true -> existing user (go to Home), false -> new user (go to CompleteProfile)
   }
 
-  Future<void> register(Map<String, dynamic> profile) async {
+  /// Register user and return the server user JSON on success.
+  /// Throws whatever `remote.register` throws on failure.
+  Future<Map<String, dynamic>> register(Map<String, dynamic> profile) async {
     final resp = await remote.register(profile);
     print("Register Response: $resp");
     // resp is the user JSON
     if (resp.isNotEmpty) {
       await local.saveUserJson(resp);
     }
+    return resp;
   }
 
   Future<void> signOut() async {
