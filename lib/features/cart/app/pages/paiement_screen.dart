@@ -1,13 +1,21 @@
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
+import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_state.dart';
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
 import 'package:amerli_app/features/success/app/pages/success_page.dart';
+import 'package:amerli_app/features/orders/app/bloc/orders_bloc.dart';
+import 'package:amerli_app/features/orders/app/bloc/orders_event.dart';
+import 'package:amerli_app/features/orders/app/bloc/orders_state.dart';
+import 'package:amerli_app/features/orders/utils/order_payload_builder.dart';
+import 'package:amerli_app/core/config/injection.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/widgets/bottom_cart_summary.dart';
+import 'package:amerli_app/features/cart/app/pages/address_selection_page.dart';
+import 'package:amerli_app/features/cart/app/pages/payment_webview_page.dart';
 
 
 class PaiementScreen extends StatefulWidget {
@@ -19,12 +27,138 @@ class PaiementScreen extends StatefulWidget {
 
 class _PaiementScreenState extends State<PaiementScreen> {
   bool _paying = false;
-  int _selectedPayment = 0; // 0 = Par Carte, 1 = Sur Place
+  bool _animationComplete = false;
+  String? _pendingCheckoutUrl; // Store checkout URL when order is created
+  Map<String, dynamic>? _selectedAddress; // Store selected address
 
-  void _onPay(double total) async {
+  @override
+  void initState() {
+    super.initState();
+    // Listen to OrdersBloc state changes
+    sl<OrdersBloc>().stream.listen((state) {
+      if (!mounted) return;
+      
+      if (state is OrderCreated) {
+        // Order created successfully - store the checkout URL
+        _pendingCheckoutUrl = state.checkoutUrl;
+        // ignore: avoid_print
+        print('✅ Order created! CheckoutUrl: $_pendingCheckoutUrl | Animation complete: $_animationComplete');
+        
+        // If animation already completed, navigate immediately
+        if (_animationComplete) {
+          // ignore: avoid_print
+          print('🚀 Animation already done, navigating now...');
+          _navigateAfterOrder(_pendingCheckoutUrl);
+        } else {
+          // ignore: avoid_print
+          print('⏳ Waiting for animation to complete...');
+        }
+        // Otherwise, animation will trigger navigation when complete
+      } else if (state is OrdersError) {
+        // ignore: avoid_print
+        print('❌ Error creating order: ${state.message}');
+        setState(() {
+          _paying = false;
+          _animationComplete = false;
+          _pendingCheckoutUrl = null;
+        });
+      }
+    });
+  }
+
+  void _navigateAfterOrder(String? checkoutUrl) {
+    // ignore: avoid_print
+    print('🎯 _navigateAfterOrder called with URL: $checkoutUrl');
+    
+    if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
+      // Online payment - open in WebView
+      // ignore: avoid_print
+      print('🌐 Opening payment URL in WebView...');
+      
+      // Reset paying state
+      setState(() {
+        _paying = false;
+        _animationComplete = false;
+        _pendingCheckoutUrl = null;
+      });
+      
+      // Navigate to WebView page
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PaymentWebViewPage(checkoutUrl: checkoutUrl),
+        ),
+      );
+    } else {
+      // Cash payment or no checkout URL - go directly to success
+      // ignore: avoid_print
+      print('💵 Cash payment, going to success page...');
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const SuccessPage()),
+      );
+    }
+  }
+
+  void _onPay(List<CartItem> cartItems) async {
+    // Validate that an address is selected
+    if (_selectedAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Veuillez sélectionner une adresse de livraison'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     // start local animation overlay
     setState(() => _paying = true);
-    // The animation overlay will navigate to SuccessPage when done.
+
+    try {
+      // Hardcode payment method as CIB for now
+      // User will choose payment method after redirection to web
+      final paymentMethod = PaymentMethod.cib;
+
+      // Use the selected address
+      final address = OrderPayloadBuilder.buildAddress(
+        street: _selectedAddress!['street'] ?? '',
+        city: _selectedAddress!['city'] ?? '',
+        district: _selectedAddress!['district'] ?? '',
+      );
+
+      // Build order payload according to API spec
+      final payload = OrderPayloadBuilder.build(
+        cartItems: cartItems,
+        paymentMethod: paymentMethod,
+        address: address,
+        // Or use addressId if user selected existing address:
+        // addressId: selectedAddressId,
+      );
+
+      // Dispatch order creation event
+      if (!mounted) return;
+      sl<OrdersBloc>().add(OrdersCreateEvent(payload: payload));
+
+      // State listener will handle navigation when order is created
+    } catch (e) {
+      // Print error instead of showing snackbar
+      // ignore: avoid_print
+      print('Error creating order: $e');
+      if (mounted) setState(() => _paying = false);
+    }
+  }
+
+  Future<void> _openAddressSelection() async {
+    final result = await Navigator.of(context).push<Map<String, dynamic>>(
+      MaterialPageRoute(
+        builder: (_) => AddressSelectionPage(currentAddress: _selectedAddress),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _selectedAddress = result;
+      });
+    }
   }
 
   @override
@@ -34,9 +168,30 @@ class _PaiementScreenState extends State<PaiementScreen> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
+        leading: InkWell(
+          onTap: () => Navigator.of(context).pop(),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            width: 32,
+            height: 32,
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.tertiaryContainer,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: SvgPicture.asset(
+              'assets/icons/back_arrow.svg',
+              width: 14,
+              height: 14,
+              color: Theme.of(context).colorScheme.onPrimary,
+              placeholderBuilder: (context) => Icon(
+                Icons.arrow_back,
+                size: 14,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+            ),
+          ),
         ),
         title: const Text('Paiement', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 18)),
         centerTitle: true,
@@ -56,14 +211,6 @@ class _PaiementScreenState extends State<PaiementScreen> {
                   children: [
               const SizedBox(height: 8),
 
-              // Payment methods
-              const SizedBox(height: 8),
-              const Text('Moyens de Paiement', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
-              const SizedBox(height: 8),
-              _paymentOption(label: 'Par Carte', index: 0),
-              const SizedBox(height: 12),
-              _paymentOption(label: 'Sur Place', index: 1),
-
               // Order preview
               const SizedBox(height: 24),
               const Text('Ma Commande', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
@@ -76,15 +223,16 @@ class _PaiementScreenState extends State<PaiementScreen> {
                 children: [
                   const Expanded(child: Text('Adresse', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A)))),
                   GestureDetector(
-                        onTap: () {
-                          // TODO: open address management
-                        },
-                        child: Text('Ajouter une adresse', style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.primary)),
+                        onTap: _openAddressSelection,
+                        child: Text(
+                          _selectedAddress == null ? 'Ajouter une adresse' : 'Modifier',
+                          style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.primary),
+                        ),
                       ),
                 ],
               ),
               const SizedBox(height: 8),
-              _addressCard(),
+              _selectedAddress != null ? _addressCard() : _emptyAddressCard(),
 
                     // give enough bottom space so content isn't hidden by the summary
                     const SizedBox(height: 140),
@@ -109,7 +257,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
                     // The normal BottomCartSummary
                     BlocBuilder<CartBloc, CartState>(
                       builder: (context, cartState) {
-                        final cartItems = cartState is CartLoaded ? cartState.items : const [];
+                        final List<CartItem> cartItems = cartState is CartLoaded ? cartState.items : const [];
 
                         return BlocBuilder<CatalogBloc, CatalogState>(
                           builder: (context, catalogState) {
@@ -159,12 +307,27 @@ class _PaiementScreenState extends State<PaiementScreen> {
                             // with the animation overlay when paying.
                             return BottomCartSummary(
                               total: total,
-                              onPay: _paying ? null : () => _onPay(total),
+                              onPay: _paying ? null : () => _onPay(cartItems),
                               payButton: _paying
-                                  ? PaymentAnimationOverlay(width: w, height: h, onComplete: () {
-                                      if (!mounted) return;
-                                      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (_) => const SuccessPage()));
-                                    })
+                                  ? PaymentAnimationOverlay(
+                                      width: w,
+                                      height: h,
+                                      onComplete: () {
+                                        // ignore: avoid_print
+                                        print('🎬 Animation complete! Pending URL: $_pendingCheckoutUrl | Paying: $_paying');
+                                        setState(() => _animationComplete = true);
+                                        // If order was created while animation was running, navigate now
+                                        // Check if we have a checkout URL (order was created) OR if we're still in paying state
+                                        if (_pendingCheckoutUrl != null) {
+                                          // ignore: avoid_print
+                                          print('✨ Order already created, navigating now...');
+                                          _navigateAfterOrder(_pendingCheckoutUrl);
+                                        } else if (_paying) {
+                                          // ignore: avoid_print
+                                          print('⏰ Still creating order, will navigate when done...');
+                                        }
+                                      },
+                                    )
                                   : null,
                             );
                           },
@@ -179,77 +342,6 @@ class _PaiementScreenState extends State<PaiementScreen> {
         ],
       ),
     );
-  }
-
-  Widget _paymentOption({required String label, required int index}) {
-    final selected = _selectedPayment == index;
-    // Styling per request: option should NOT change background on select,
-    // should have no border and only the specified shadows, and the
-    // checkbox (when checked) should use color #1A1D1F.
-    // If this is the second payment option (index == 1) and the payment
-    // animation is running, animate a slight scale-down and upward translation
-    // so it looks like the truck is lifting it.
-    final Widget optionContent = GestureDetector(
-      onTap: () => setState(() => _selectedPayment = index),
-      child: Container(
-        height: 55,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: Colors.white, // never change background on selection
-          borderRadius: BorderRadius.circular(12),
-          // translate the provided CSS shadows to Flutter BoxShadows
-          boxShadow: const [
-            BoxShadow(color: Color(0x1F000000), offset: Offset(0, 1), blurRadius: 1, spreadRadius: 0),
-            BoxShadow(color: Color(0x3D676E76), offset: Offset(0, 0), blurRadius: 0, spreadRadius: 1),
-            BoxShadow(color: Color(0x14676E76), offset: Offset(0, 2), blurRadius: 5, spreadRadius: 0),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Color(0xFF333333))),
-            // Checkbox circle — restored border, fill when selected
-            Container(
-              width: 22,
-              height: 22,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                // show a circular border around the checkbox
-                border: Border.all(color: const Color(0xFF1A1D1F)),
-                color: selected ? const Color(0xFF1A1D1F) : Colors.white,
-              ),
-              child: selected ? const Icon(Icons.check, size: 14, color: Colors.white) : null,
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (index == 1) {
-      // animate lift/scale when paying
-      final double target = _paying ? 1.0 : 0.0;
-      return TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.0, end: target),
-        duration: const Duration(milliseconds: 420),
-        curve: Curves.easeOutBack,
-        builder: (context, val, child) {
-          // val: 0.0 -> idle, 1.0 -> lifted
-          final double lift = -8.0 * val; // lift up to 8px
-          final double scale = 1.0 - (0.08 * val); // scale down up to 8%
-          return Transform.translate(
-            offset: Offset(0, lift),
-            child: Transform.scale(
-              scale: scale,
-              alignment: Alignment.center,
-              child: child,
-            ),
-          );
-        },
-        child: optionContent,
-      );
-    }
-
-    return optionContent;
   }
 
   Widget _orderPreview() {
@@ -292,25 +384,110 @@ class _PaiementScreenState extends State<PaiementScreen> {
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[100]),
       child: url == null || url.isEmpty
           ? const Icon(Icons.image, color: Colors.grey)
-          : ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(url, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Icons.broken_image, color: Colors.grey))),
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Center(
+                    child: CircularProgressIndicator(
+                      value: loadingProgress.expectedTotalBytes != null
+                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          : null,
+                      strokeWidth: 2,
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  // Silently handle error and show placeholder
+                  return const Icon(Icons.broken_image, color: Colors.grey, size: 24);
+                },
+              ),
+            ),
     );
   }
 
   Widget _addressCard() {
+    final street = _selectedAddress!['street'] ?? '';
+    final district = _selectedAddress!['district'] ?? '';
+    final city = _selectedAddress!['city'] ?? '';
+    final fullAddress = [street, district, city].where((s) => s.isNotEmpty).join(', ');
+
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 3))]),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          const Expanded(child: Text('12 Rue des Jasmins, Quartier El Mokrani, Ain Naadja, Alger, Algérie', style: TextStyle(fontSize: 14, color: Color(0xFF333333)))),
+          Expanded(
+            child: Text(
+              fullAddress.isNotEmpty ? fullAddress : 'Adresse incomplète',
+              style: const TextStyle(fontSize: 14, color: Color(0xFF333333)),
+            ),
+          ),
           const SizedBox(width: 8),
           Container(
             width: 28,
             height: 28,
-            decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: Theme.of(context).colorScheme.primary)),
-            child: Icon(Icons.check, size: 16, color: Theme.of(context).colorScheme.primary),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Theme.of(context).colorScheme.primary),
+            ),
+            child: Icon(
+              Icons.check,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
           )
         ],
+      ),
+    );
+  }
+
+  Widget _emptyAddressCard() {
+    return GestureDetector(
+      onTap: _openAddressSelection,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.add_location_alt, color: Theme.of(context).colorScheme.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Appuyez pour ajouter une adresse de livraison',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

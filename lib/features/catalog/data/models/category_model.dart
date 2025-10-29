@@ -12,24 +12,33 @@ class CategoryModel {
   CategoryModel({required this.id, required this.name, this.description, this.image, this.products = const [], this.subcategories = const []});
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) => CategoryModel(
-        id: (json['id'] is num) ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-        name: json['name']?.toString() ?? '',
-        description: json['description']?.toString(),
-        image: json['image']?.toString(),
-        products: (json['products'] is List) ? (json['products'] as List<dynamic>).map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList() : [],
-        subcategories: (json['subcategories'] is List)
-            ? (json['subcategories'] as List<dynamic>)
-                .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
-                .toList()
-            : [],
-      );
+    id: (json['id'] is num) ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+    // API may return 'label' and 'pictureUrl' instead of 'name'/'image'.
+    // Keep fallbacks for backward compatibility.
+    name: json['label']?.toString() ?? json['name']?.toString() ?? '',
+    description: json['description']?.toString(),
+    image: json['pictureUrl']?.toString() ?? json['image']?.toString(),
+    products: (json['products'] is List) ? (json['products'] as List<dynamic>).map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList() : [],
+    subcategories: (json['subcategories'] is List)
+      ? (json['subcategories'] as List<dynamic>)
+        .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+        .toList()
+      : [],
+    );
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'description': description, 'image': image, 'products': products.map((p) => p.toJson()).toList()};
+  // Serialize using API field names when producing payloads (label / pictureUrl).
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': name,
+        'description': description,
+        'pictureUrl': image,
+        'products': products.map((p) => p.toJson()).toList()
+      };
   Map<String, dynamic> toJsonFull() => {
         'id': id,
-        'name': name,
+        'label': name,
         'description': description,
-        'image': image,
+        'pictureUrl': image,
         'products': products.map((p) => p.toJson()).toList(),
         'subcategories': subcategories.map((c) => c.toJsonFull()).toList(),
       };

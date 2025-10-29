@@ -16,11 +16,11 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
 
   Future<void> _onLoad(CatalogLoadEvent event, Emitter<CatalogState> emit) async {
     try {
-      if (event.loadMore) {
+  if (event.loadMore) {
         // If there is already loaded content, emit loading-more state with current items so UI can extend
         if (_items.isNotEmpty) emit(CatalogLoadingMore(List<Product>.from(_items), page: _currentPage, hasMore: true));
         final nextPage = _currentPage + 1;
-        final List<Product> newItems = await repository.getProducts(page: nextPage, pageSize: event.pageSize, query: event.query);
+  final List<Product> newItems = await repository.getProducts(page: nextPage, pageSize: event.pageSize, query: event.query, categoryIds: event.categoryIds);
         if (newItems.isNotEmpty) {
           _currentPage = nextPage;
           _items.addAll(newItems);
@@ -35,7 +35,7 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
         // fresh load
         emit(CatalogLoading());
         _currentPage = 1;
-        final List<Product> products = await repository.getProducts(page: _currentPage, pageSize: event.pageSize, query: event.query);
+  final List<Product> products = await repository.getProducts(page: _currentPage, pageSize: event.pageSize, query: event.query, categoryIds: event.categoryIds);
         _items.clear();
         _items.addAll(products);
         final hasMore = products.length >= event.pageSize;

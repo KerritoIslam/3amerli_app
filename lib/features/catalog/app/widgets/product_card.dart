@@ -17,6 +17,7 @@ class ProductCard extends StatefulWidget {
   final String? subtitle;
   final double? price;
   final int? soldBy;
+  final String? sellerName;
   final int? productId;
   final String? brand;
   final VoidCallback? onTap;
@@ -31,6 +32,7 @@ class ProductCard extends StatefulWidget {
     this.subtitle,
     this.price,
     this.soldBy,
+    this.sellerName,
     this.productId,
     this.brand,
   });
@@ -174,6 +176,15 @@ class _ProductCardState extends State<ProductCard> {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
                         ),
+                        if (widget.brand != null && (widget.brand ?? '').isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.brand!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Theme.of(context).colorScheme.secondary),
+                          ),
+                        ],
                         const SizedBox(height: 0),
                         if ((widget.subtitle ?? '').isNotEmpty)
                           Text(
@@ -188,10 +199,10 @@ class _ProductCardState extends State<ProductCard> {
                             '${widget.price!.toStringAsFixed(2)} DZD',
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                        if (widget.soldBy != null) ...[
+                        if ((widget.sellerName ?? widget.soldBy?.toString()) != null) ...[
                           const SizedBox(height: 0),
                           Text(
-                            'Vondu par: ${widget.soldBy}',
+                            'Vendu par: ${widget.sellerName ?? widget.soldBy?.toString()}',
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w400),
                           ),
                         ],

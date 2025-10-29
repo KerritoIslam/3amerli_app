@@ -10,7 +10,7 @@ class FakeRepoSuccess implements CatalogRepository {
   FakeRepoSuccess(this.totalItems);
 
   @override
-  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, bool forceRefresh = false}) async {
+  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds, bool forceRefresh = false}) async {
     // simulate small delay
     await Future.delayed(const Duration(milliseconds: 50));
     final start = (page - 1) * pageSize + 1;
@@ -25,7 +25,7 @@ class FakeRepoSuccess implements CatalogRepository {
 
 class FakeRepoError implements CatalogRepository {
   @override
-  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, bool forceRefresh = false}) async {
+  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds, bool forceRefresh = false}) async {
     await Future.delayed(const Duration(milliseconds: 50));
     throw Exception('network');
   }

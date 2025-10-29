@@ -13,6 +13,7 @@ class ProductsList extends StatefulWidget {
   final int rowsToTrigger;
   final ProductItemBuilder? itemBuilder;
   final bool isLoading;
+  final bool hasMore;
 
   const ProductsList({
     super.key,
@@ -22,6 +23,7 @@ class ProductsList extends StatefulWidget {
     this.rowsToTrigger = 7,
     this.itemBuilder,
     this.isLoading = false,
+    this.hasMore = true,
   }) : assert(columns > 0 && rowsToTrigger > 0);
 
   @override
@@ -125,7 +127,12 @@ class _ProductsListState extends State<ProductsList> {
 
     return GridView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: EdgeInsets.only(
+        left: 12,
+        right: 12,
+        top: 8,
+        bottom: widget.hasMore ? 8 : 100, // Add extra space when no more items to prevent bottom nav covering
+      ),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: widget.columns,
         crossAxisSpacing: 12,
@@ -181,6 +188,8 @@ class _ProductsListState extends State<ProductsList> {
           subtitle: product.description,
           price: product.price,
           soldBy: product.soldBy,
+          sellerName: product.sellerName,
+          brand: product.brand,
           productId: product.id,
           
           

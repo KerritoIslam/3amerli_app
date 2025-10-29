@@ -187,7 +187,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Vendu par: ${widget.product.soldBy ?? 'Inconnu'}',
+                          'Vendu par: ${widget.product.sellerName ?? widget.product.soldBy?.toString() ?? 'Inconnu'}',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w500,
                             color: Theme.of(context).extension<BrandColors>()?.brandTeal,

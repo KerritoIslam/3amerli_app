@@ -1,4 +1,5 @@
 import '../../domain/entities/order.dart';
+import '../../domain/entities/create_order_result.dart';
 import '../../domain/repositories/orders_repository.dart';
 import '../datasources/mock_orders_remote_datasource.dart';
 import '../models/order_model.dart';
@@ -16,7 +17,7 @@ class OrdersRepositoryImpl implements OrdersRepository {
   }
 
   @override
-  Future<Order> createOrder(Map<String, dynamic> payload) async {
+  Future<CreateOrderResult> createOrder(Map<String, dynamic> payload) async {
     // Not implemented for the mock repository
     throw UnimplementedError();
   }

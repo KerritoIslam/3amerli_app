@@ -24,14 +24,14 @@ class OrderModel extends Order {
         );
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
-        id: json['id'] as String,
-        sellerId: json['sellerId'] as String,
-        buyerId: json['buyerId'] as String,
-        address: json['address'] as String,
-        paymentMethod: json['paymentMethod'] as String,
-        products: (json['products'] as List<dynamic>).map((e) => OrderProductModel.fromJson(e as Map<String, dynamic>)).toList(),
-        status: OrderStatusX.fromString(json['status'] as String),
-        createdAt: DateTime.parse(json['createdAt'] as String),
+        id: json['id']?.toString() ?? '',
+        sellerId: json['sellerId']?.toString() ?? '',
+        buyerId: json['buyerId']?.toString() ?? '',
+        address: json['address']?.toString() ?? '',
+        paymentMethod: json['paymentMethod']?.toString() ?? json['payementWay']?.toString() ?? '',
+        products: (json['products'] as List<dynamic>?)?.map((e) => OrderProductModel.fromJson(e as Map<String, dynamic>)).toList() ?? [],
+        status: OrderStatusX.fromString(json['status']?.toString() ?? 'pending'),
+        createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
       );
 
   Map<String, dynamic> toJson() => {

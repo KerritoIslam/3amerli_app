@@ -37,7 +37,7 @@ class UserModel {
         'phoneNumber': phoneNumber,
         'name': name,
         'locationUrl': locationUrl,
-        'addressId': addressId,
+        'addressId': addressId,//TODO use adress class instead of id
         'supermarketName': supermarketName,
         'profilePic': profilePic,
         'role': role,

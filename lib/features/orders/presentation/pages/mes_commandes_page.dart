@@ -4,8 +4,7 @@ import '../../domain/entities/order.dart';
 import '../../../orders/app/bloc/orders_bloc.dart';
 import '../../../orders/app/bloc/orders_event.dart';
 import '../../../orders/app/bloc/orders_state.dart';
-import '../../data/repositories/orders_repository_impl.dart';
-import '../../data/datasources/mock_orders_remote_datasource.dart';
+import '../../../../core/config/injection.dart';
 import 'order_tracking_page.dart';
 
 class MesCommandesPage extends StatefulWidget {
@@ -18,20 +17,17 @@ class MesCommandesPage extends StatefulWidget {
 class _MesCommandesPageState extends State<MesCommandesPage> {
   final tabs = const ['Tous', 'En cours', 'Livrées', 'Annulées'];
   int selected = 0;
-  late final OrdersBloc _bloc;
   late final PageController _pageController;
 
   @override
   void initState() {
     super.initState();
-    _bloc = OrdersBloc(repository: OrdersRepositoryImpl(remote: MockOrdersRemoteDataSource()));
-    _bloc.add(OrdersLoadEvent());
+    sl<OrdersBloc>().add(OrdersLoadEvent());
     _pageController = PageController(initialPage: selected);
   }
 
   @override
   void dispose() {
-    _bloc.close();
     _pageController.dispose();
     super.dispose();
   }
@@ -51,7 +47,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
-      value: _bloc,
+      value: sl<OrdersBloc>(),
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
@@ -125,8 +121,8 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                         final items = state is OrdersLoaded ? _filterForIndex(state.items, pageIndex) : const <Order>[];
                         return RefreshIndicator(
                           onRefresh: () async {
-                            _bloc.add(OrdersLoadEvent());
-                            await _bloc.stream.firstWhere((s) => s is! OrdersLoading);
+                            sl<OrdersBloc>().add(OrdersLoadEvent());
+                            await sl<OrdersBloc>().stream.firstWhere((s) => s is! OrdersLoading);
                           },
                           child: ListView.builder(
                             padding: const EdgeInsets.only(top: 8, bottom: 20),

@@ -14,13 +14,14 @@ class FavoritesRepositoryImpl implements FavoritesRepository {
   }
 
   @override
-  Future<Favorite> addFavorite({required int userId, required int productId}) async {
-    final model = await remoteDataSource.addFavorite(userId: userId, productId: productId);
-    return model.toEntity();
+  Future<void> addFavorite({required int userId, required int productId}) async {
+    // Backend exposes a toggle endpoint for favorites; call it to add.
+    await remoteDataSource.toggleFavorite(productId);
   }
 
   @override
-  Future<void> removeFavorite(int id) async {
-    await remoteDataSource.removeFavorite(id);
+  Future<void> removeFavorite(int productId) async {
+    // Use the same toggle endpoint to remove the favorite.
+    await remoteDataSource.toggleFavorite(productId);
   }
 }

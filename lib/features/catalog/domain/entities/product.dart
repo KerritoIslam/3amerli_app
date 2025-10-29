@@ -11,6 +11,8 @@ class Product extends Equatable {
   final int? sellerId;
   // Optional seller id from APIs under the key `soldBy`
   final int? soldBy;
+  // Optional seller display name (some backends provide seller as object or name)
+  final String? sellerName;
   // List of image URLs for the product. The first element is the thumbnail
   // used across lists, the second can be used in the product details page.
   final List<String> pics;
@@ -30,6 +32,7 @@ class Product extends Equatable {
     required this.stock,
     this.sellerId,
     this.soldBy,
+  this.sellerName,
     this.pics = const [],
     this.brand,
     this.markId,
@@ -38,5 +41,5 @@ class Product extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, description, price, stock, sellerId, soldBy, pics, brand, markId, isFavorit, quantity];
+  List<Object?> get props => [id, name, description, price, stock, sellerId, soldBy, sellerName, pics, brand, markId, isFavorit, quantity];
 }

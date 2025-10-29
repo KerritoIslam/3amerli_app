@@ -1,6 +1,10 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:amerli_app/core/dio/api_service.dart';
+import 'package:amerli_app/core/network/api_exception.dart';
+import 'package:dio/dio.dart';
+
 import '../models/discount_model.dart';
 import '../models/transaction_model.dart';
 import '../models/card_model.dart';
@@ -20,9 +24,32 @@ class PaymentsRemoteDataSource {
   }
 
   Future<TransactionModel> createTransaction(Map<String, dynamic> payload) async {
-    await Future.delayed(const Duration(seconds: 2));
-    final result = {'id': 999, ...payload, 'createdAt': DateTime.now().toIso8601String()};
-    return TransactionModel.fromJson(result);
+    // Call backend /order endpoint which may return an order object and checkoutUrl
+    bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
+
+    try {
+      developer.log('createTransaction payload: $payload', name: 'PaymentsRemoteDataSource');
+      final resp = await apiService.post('/order', data: payload);
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        // TransactionModel.fromJson handles multiple shapes (checkoutUrl at top-level or inside 'order')
+        final data = resp.data;
+        developer.log('createTransaction response: $data', name: 'PaymentsRemoteDataSource');
+        if (data is Map<String, dynamic>) return TransactionModel.fromJson(data);
+        if (data is Map) return TransactionModel.fromJson(Map<String, dynamic>.from(data));
+        // fallback
+        return TransactionModel.fromJson({'id': -1, 'userId': payload['buyerId'] ?? 0, 'amount': payload['totalAmount'] ?? payload['amount'] ?? 0.0, 'status': 'PENDING', 'createdAt': DateTime.now().toIso8601String(), 'checkoutUrl': null});
+      }
+
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to create transaction';
+      throw ApiException(msg, statusCode: resp.statusCode, serverResponse: resp.data);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+      final baseMsg = e.message ?? 'Network error while creating transaction';
+      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log('Dio error createTransaction - status: $status, serverResponse: $serverResp', name: 'PaymentsRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      throw ApiException(detailed, statusCode: status, isNetworkError: true, serverResponse: serverResp);
+    }
   }
 
   Future<List<TransactionModel>> fetchTransactions({int page = 1, int pageSize = 50}) async {

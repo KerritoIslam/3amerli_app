@@ -15,3 +15,9 @@ class OrdersError extends OrdersState {
 	final String message;
 	OrdersError(this.message);
 }
+
+class OrderCreated extends OrdersState {
+	final Order order;
+	final String? checkoutUrl;
+	OrderCreated(this.order, {this.checkoutUrl});
+}

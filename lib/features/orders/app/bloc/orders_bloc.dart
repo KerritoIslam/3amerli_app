@@ -23,7 +23,9 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
 
   Future<void> _onCreate(OrdersCreateEvent event, Emitter<OrdersState> emit) async {
     try {
-      await repository.createOrder(event.payload);
+      final result = await repository.createOrder(event.payload);
+      emit(OrderCreated(result.order, checkoutUrl: result.checkoutUrl));
+      // Reload orders list
       add(OrdersLoadEvent());
     } catch (e) {
       emit(OrdersError(e.toString()));

@@ -5,7 +5,7 @@ import 'package:amerli_app/features/auth/app/bloc/auth_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/auth_event.dart';
 import 'package:amerli_app/core/config/injection.dart' show sl;
 import 'package:amerli_app/features/auth/domain/entities/supermarket.dart';
-import 'package:amerli_app/features/auth/data/datasources/auth_remote_datasource.dart' show ApiException;
+import 'package:amerli_app/core/network/api_exception.dart' show ApiException;
 
 class SignUpCubit extends Cubit<SignUpState> {
   final AuthRepositoryImpl repository;

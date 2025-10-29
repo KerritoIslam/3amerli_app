@@ -66,7 +66,9 @@ final sl = GetIt.instance;
 Future<void> init() async {
   // External
   // Create Dio and ApiService
-  sl.registerLazySingleton(() => Dio());
+  sl.registerLazySingleton(() => Dio(BaseOptions(
+    validateStatus: (status) => status != null && status < 500, // Don't throw on 4xx errors
+  )));
   // Use a single source of truth for the API base url
   const baseUrl = AppConstants.apiBaseUrl;
   // Register AuthService (uses flutter_secure_storage internally)
@@ -98,7 +100,7 @@ Future<void> init() async {
   // Favorits
   sl.registerLazySingleton<fav_feature.FavoritsRemoteDataSource>(() => fav_feature.FavoritsRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => CategoriesRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => BrandsRemoteDataSource());
+  sl.registerLazySingleton(() => BrandsRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => OrdersRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => NotificationsRemoteDataSource(apiService: sl<ApiService>()));
 
@@ -134,7 +136,7 @@ Future<void> init() async {
   // Favorits Bloc
   sl.registerFactory<fav_feature.FavoritsBloc>(() => fav_feature.FavoritsBloc(repository: sl<fav_feature.FavoritsRepository>()));
   sl.registerFactory(() => ProfileBloc(repository: sl<ProfileRepository>()));
-  sl.registerFactory(() => OrdersBloc(repository: sl<OrdersRepository>()));
+  sl.registerLazySingleton<OrdersBloc>(() => OrdersBloc(repository: sl<OrdersRepository>()));
   sl.registerFactory(() => PaymentsBloc(repository: sl<PaymentsRepository>()));
   sl.registerFactory(() => DeliveryBloc());
   sl.registerLazySingleton<NotificationsBloc>(() => NotificationsBloc(repository: sl<NotificationsRepository>()));

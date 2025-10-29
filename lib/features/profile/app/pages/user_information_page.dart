@@ -2,6 +2,9 @@ import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/features/auth/domain/entities/user.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/features/auth/data/datasources/profile_remote_datasource.dart';
 
 class UserInformationPage extends StatefulWidget {
   final User? user;
@@ -16,6 +19,8 @@ class _UserInformationPageState extends State<UserInformationPage> {
 
   User? _user;
   String? _imageUrl;
+  bool _uploadingImage = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void dispose() {
@@ -36,10 +41,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
               title: const Text('Prendre une photo'),
               onTap: () {
                 Navigator.of(ctx).pop();
-                // simulate change
-                setState(() {
-                  _imageUrl = 'https://picsum.photos/seed/profile_camera/300/300';
-                });
+                _pickAndUploadImage(ImageSource.camera);
               },
             ),
             ListTile(
@@ -47,9 +49,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
               title: const Text('Choisir depuis la galerie'),
               onTap: () {
                 Navigator.of(ctx).pop();
-                setState(() {
-                  _imageUrl = 'https://picsum.photos/seed/profile_gallery/300/300';
-                });
+                _pickAndUploadImage(ImageSource.gallery);
               },
             ),
           ],
@@ -59,12 +59,65 @@ class _UserInformationPageState extends State<UserInformationPage> {
     );
   }
 
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    try {
+      // Pick image
+      final XFile? image = await _picker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      // Show loading state
+      setState(() => _uploadingImage = true);
+
+      // Upload to backend
+      final profileDataSource = sl<ProfileRemoteDataSourceImpl>();
+      final newImageUrl = await profileDataSource.uploadProfilePicture(image.path);
+
+      // Update local state
+      if (mounted) {
+        setState(() {
+          _imageUrl = newImageUrl;
+          _uploadingImage = false;
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Photo de profil mise à jour avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      // Handle error
+      if (mounted) {
+        setState(() => _uploadingImage = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la mise à jour: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     // initialize local user & image from passed user if not set
     _user ??= widget.user;
-    _imageUrl ??= _user?.profilePic ?? 'https://picsum.photos/seed/profile/300/300';
+    // Only use profilePic if it's a valid URL, otherwise use null to show placeholder
+    _imageUrl ??= (_user?.profilePic != null && 
+                   _user!.profilePic!.isNotEmpty && 
+                   (_user!.profilePic!.startsWith('http://') || _user!.profilePic!.startsWith('https://')))
+        ? _user!.profilePic
+        : null;
 
     // Layout matches requested design: centered, scrollable, with avatar + edit
     return Scaffold(
@@ -135,16 +188,45 @@ class _UserInformationPageState extends State<UserInformationPage> {
                           child: Stack(
                             alignment: Alignment.center,
                             children: [
-                              CircleAvatar(
-                                radius: 56,
-                                backgroundColor: Colors.grey.shade200,
-                                backgroundImage: _imageUrl != null ? NetworkImage(_imageUrl!) : null,
+                              // Avatar with loading overlay
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 56,
+                                    backgroundColor: Colors.grey.shade200,
+                                    backgroundImage: (_imageUrl != null && _imageUrl!.isNotEmpty) 
+                                        ? NetworkImage(_imageUrl!) 
+                                        : null,
+                                    onBackgroundImageError: (exception, stackTrace) {
+                                      // Silently handle image loading errors
+                                    },
+                                    child: (_imageUrl == null || _imageUrl!.isEmpty) 
+                                        ? const Icon(Icons.person, size: 48, color: Colors.grey) 
+                                        : null,
+                                  ),
+                                  if (_uploadingImage)
+                                    Container(
+                                      width: 112,
+                                      height: 112,
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.5),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
+                              // Edit button
                               Positioned(
                                 right: 0,
                                 bottom: 0,
                                 child: GestureDetector(
-                                  onTap: _showImagePickerOptions,
+                                  onTap: _uploadingImage ? null : _showImagePickerOptions,
                                     child: Container(
                                     width: 30,
                                     height: 30,

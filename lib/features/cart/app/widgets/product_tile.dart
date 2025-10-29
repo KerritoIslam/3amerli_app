@@ -43,9 +43,38 @@ class _ProductTileState extends State<ProductTile> {
               width: 100,
               height: 112,
               color: Colors.grey.shade200,
-        child: (widget.product.pics.isNotEmpty ? widget.product.pics.first : '').isNotEmpty
-          ? Image.network(widget.product.pics.first, fit: BoxFit.cover)
-          : const SizedBox.shrink(),
+              child: (widget.product.pics.isNotEmpty ? widget.product.pics.first : '').isNotEmpty
+                  ? Image.network(
+                      widget.product.pics.first,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                : null,
+                            strokeWidth: 2,
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) {
+                        return Center(
+                          child: Icon(
+                            Icons.broken_image,
+                            size: 32,
+                            color: Colors.grey.shade400,
+                          ),
+                        );
+                      },
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.image_not_supported,
+                        size: 32,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(width: 12),

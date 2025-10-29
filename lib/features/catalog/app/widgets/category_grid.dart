@@ -4,16 +4,18 @@ import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
 import 'category_chip.dart';
 
 typedef CategoryTapCallback = void Function(Category category);
+typedef CategorySelectionCallback = void Function(List<int> selectedIds);
 
 class CategoryGrid extends StatefulWidget {
   final List<Category> categories;
   final CategoryTapCallback? onTap;
+  final CategorySelectionCallback? onSelectionChanged;
   final int crossAxisCount;
   final double itemHeight;
 
   // crossAxisCount and itemHeight are kept for API compatibility but are
   // ignored in the wrap-based layout (chips size themselves).
-  const CategoryGrid({super.key, required this.categories, this.onTap, this.crossAxisCount = 3, this.itemHeight = 90});
+  const CategoryGrid({super.key, required this.categories, this.onTap, this.onSelectionChanged, this.crossAxisCount = 3, this.itemHeight = 90});
 
   @override
   State<CategoryGrid> createState() => _CategoryGridState();
@@ -46,6 +48,13 @@ class _CategoryGridState extends State<CategoryGrid> {
                   if (_selectedIds.contains(cat.id)) _selectedIds.remove(cat.id);
                   else _selectedIds.add(cat.id);
                 });
+                // Notify parent with the updated selection array
+                if (widget.onSelectionChanged != null) {
+                  // ignore: avoid_print
+                  print('[CategoryGrid] Selection changed: ${_selectedIds.toList()}');
+                  widget.onSelectionChanged!(_selectedIds.toList());
+                }
+                // Keep backward compatibility with single-tap callback
                 if (widget.onTap != null) widget.onTap!(cat);
               },
               trailing: cat.image != null && cat.image!.isNotEmpty

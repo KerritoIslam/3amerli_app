@@ -7,7 +7,7 @@ import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:amerli_app/widgets/custom_tab_bar.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
-import 'package:amerli_app/features/auth/data/datasources/auth_remote_datasource.dart' show ApiException;
+import 'package:amerli_app/core/network/api_exception.dart' show ApiException;
 import 'package:geocoding/geocoding.dart';
 import '../../../../utils/constants/app_dimensions.dart';
 

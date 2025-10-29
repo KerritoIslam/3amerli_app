@@ -38,6 +38,10 @@ class _CatalogPageState extends State<CatalogPage> {
   late final CategoriesBloc _categoriesBloc;
   late final CatalogBloc _catalogBloc;
   final PageController _offersPageController = PageController(viewportFraction: 1.0);
+  
+  // Track selected category IDs
+  List<int> _selectedCategoryIds = [];
+  
   @override
   void initState() {
     super.initState();
@@ -48,10 +52,32 @@ class _CatalogPageState extends State<CatalogPage> {
 
     // Dispatch load events after first frame so UI is ready to show loading state
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _offersBloc.add(OffersLoadEvent());
+     // _offersBloc.add(OffersLoadEvent());
       _categoriesBloc.add(CategoriesLoadEvent());
       _catalogBloc.add(CatalogLoadEvent());
     });
+  }
+  
+  // Fetch products with current category filter
+  void _fetchProductsWithCategories() {
+    // Always fetch products - include categoryIds only if list is not empty
+    // ignore: avoid_print
+    print('[CatalogPage] Fetching products with categoryIds: ${_selectedCategoryIds.isEmpty ? 'null (all products)' : _selectedCategoryIds}');
+    _catalogBloc.add(CatalogLoadEvent(
+      categoryIds: _selectedCategoryIds.isEmpty ? null : _selectedCategoryIds,
+    ));
+  }
+  
+  // Update selected categories and refetch products
+  void _updateSelectedCategories(List<int> categoryIds) {
+    // Always update state and fetch, even if the list becomes empty
+    // ignore: avoid_print
+    print('[CatalogPage] Selected categories updated: $categoryIds');
+    setState(() {
+      _selectedCategoryIds = categoryIds;
+    });
+    // Always trigger fetch to show all products when selection is cleared
+    _fetchProductsWithCategories();
   }
 
   @override
@@ -124,7 +150,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 children: [
                   Expanded(
                     child: AppSearchbar(
-                      onChanged: (_) => context.read<CatalogBloc>().add(CatalogLoadEvent()),
+                      onChanged: (value) => context.read<CatalogBloc>().add(CatalogLoadEvent(query: value)),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -145,7 +171,7 @@ class _CatalogPageState extends State<CatalogPage> {
             const SizedBox(height: 25),
 
             // Offers (single page view with skeleton while loading)
-            Visibility(
+            /* Visibility(
               visible: false,
               child: SizedBox(
                 height: 160,
@@ -210,7 +236,7 @@ class _CatalogPageState extends State<CatalogPage> {
                 }),
               ),
             ),
-
+ */
             const SizedBox(height: 20),
 
             // Categories header
@@ -241,9 +267,9 @@ class _CatalogPageState extends State<CatalogPage> {
                   categories: state.items,
                   crossAxisCount: 3,
                   itemHeight: 90,
-                  onTap: (cat) {
-                    // Filter catalog by category name or id
-                    context.read<CatalogBloc>().add(CatalogLoadEvent(query: cat.name));
+                  onSelectionChanged: (selectedIds) {
+                    // Update selected categories with the full array
+                    _updateSelectedCategories(selectedIds);
                   },
                 );
               }
@@ -260,20 +286,24 @@ class _CatalogPageState extends State<CatalogPage> {
                 if (state is CatalogLoadingMore) {
                   // Keep showing the existing items while loading more; the ProductsList will show skeleton tiles for the end
                   final products = state.products;
+                  final hasMore = state.hasMore;
                   if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
                   return ProductsList(
                     products: products,
                     isLoading: true,
+                    hasMore: hasMore,
                     onLoadMore: () => _loadMoreAsync(),
                   );
                 }
 
                 if (state is CatalogLoaded) {
                   final products = state.products;
+                  final hasMore = state.hasMore;
                   if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
                   return ProductsList(
                     products: state.products,
                     isLoading: isLoadingMore,
+                    hasMore: hasMore,
                     onLoadMore: () => _loadMoreAsync(),
                   );
                 }

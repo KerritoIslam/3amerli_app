@@ -4,6 +4,8 @@ import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
 import 'package:amerli_app/features/home/app/pages/home_page.dart';
 import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
 import 'package:amerli_app/features/profile/app/pages/profile_page.dart';
+import 'package:amerli_app/features/success/app/pages/success_page.dart';
+import 'package:amerli_app/features/failure/app/pages/failure_page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 // GetIt is not used here; AuthBloc is injected by the caller
@@ -15,8 +17,6 @@ import '../storage/local_storage.dart';
 
 import '../../features/catalog/app/pages/catalog_page.dart';
 import '../../features/onboarding/app/pages/onboarding_flow.dart';
-import '../../features/orders/app/pages/orders_page.dart';
-import '../../features/payments/app/pages/payments_page.dart';
 import '../../features/delivery/app/pages/delivery_page.dart';
 import '../../features/notifications/app/pages/notifications_page.dart';
 import '../../features/admin/app/pages/admin_page.dart';
@@ -61,25 +61,94 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
     initialLocation: '/auth',
     refreshListenable: refresh,
     redirect: (context, state) {
-      // Define which paths are non-protected (allowed when unauthenticated).
-      final nonProtected = <String>{'/', '/auth', '/complete-profile'};
-      final loggedIn = authBloc.state is Authenticated;
       final loc = state.uri.path;
+      final fullUri = state.uri.toString();
+      final scheme = state.uri.scheme;
+      final host = state.uri.host;
+      
+      // Debug: Log all navigation attempts
+      // ignore: avoid_print
+      print('🔗 Router redirect check: path=$loc, fullUri=$fullUri, scheme=$scheme, host=$host');
+      
+      // Check if this is a deep link with custom scheme (amerli://success or amerli://failure)
+      if (scheme == 'amerli' && (host == 'success' || host == 'failure')) {
+        // ignore: avoid_print
+        print('🔗 Deep link detected, allowing navigation');
+        return null; // Allow the deep link to proceed
+      }
+      
+      // Define which paths are non-protected (allowed when unauthenticated).
+      final nonProtected = <String>{
+        '/', 
+        '/auth', 
+        '/complete-profile',
+        '/payment/success',  // Allow deep link access
+        '/payment/failure',  // Allow deep link access
+        '/success',  // Allow custom scheme deep link (amerli://success)
+        '/failure',  // Allow custom scheme deep link (amerli://failure)
+      };
+      final loggedIn = authBloc.state is Authenticated;
 
       final isNonProtected = nonProtected.contains(loc) || nonProtected.any((p) => loc.startsWith(p));
 
+      // ignore: avoid_print
+      print('🔗 loggedIn=$loggedIn, isNonProtected=$isNonProtected');
+
       // If not logged in and trying to access a protected route, send to /auth
-      if (!loggedIn && !isNonProtected) return '/auth';
+      if (!loggedIn && !isNonProtected) {
+        // ignore: avoid_print
+        print('🔗 Redirecting to /auth (not logged in)');
+        return '/auth';
+      }
 
       // If logged in but at auth path, send to home
-      if (loggedIn && (loc == '/auth' || loc == '/')) return '/home';
+      if (loggedIn && (loc == '/auth' || (loc == '/' && scheme != 'amerli'))) {
+        // ignore: avoid_print
+        print('🔗 Redirecting to /home (logged in at auth)');
+        return '/home';
+      }
 
+      // ignore: avoid_print
+      print('🔗 No redirect needed');
       return null;
     },
     routes: [
+      // Special handler for root path "/" - handles custom scheme deep links
       GoRoute(
         path: '/',
-        builder: (context, state) => const SizedBox.shrink(),
+        builder: (context, state) {
+          // Check if this is a deep link with custom scheme
+          final uri = state.uri;
+          // ignore: avoid_print
+          print('🏠 Root path accessed: scheme=${uri.scheme}, host=${uri.host}, fullUri=$uri');
+          
+          if (uri.scheme == 'amerli' && uri.host == 'success') {
+            final params = uri.queryParameters;
+            // ignore: avoid_print
+            print('✅ Deep link success detected, building SuccessPage');
+            return SuccessPage(
+              orderId: params['orderId'],
+              date: params['date'],
+              paymentMethod: params['paymentMethod'] ?? params['payementWay'],
+              amount: params['amount'] ?? params['total'],
+              invoiceUrl: params['invoiceUrl'],
+            );
+          } else if (uri.scheme == 'amerli' && uri.host == 'failure') {
+            final params = uri.queryParameters;
+            // ignore: avoid_print
+            print('❌ Deep link failure detected, building FailurePage');
+            return FailurePage(
+              orderId: params['orderId'],
+              date: params['date'],
+              paymentMethod: params['paymentMethod'] ?? params['payementWay'],
+              amount: params['amount'] ?? params['total'],
+              failureReason: params['reason'] ?? params['error'] ?? 'Erreur inconnue',
+            );
+          }
+          
+          // Default: return empty container, will be redirected by redirect logic
+          return const SizedBox.shrink();
+        },
       ),
       GoRoute(
         path: '/auth',
@@ -140,12 +209,73 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
           );
         },
       ),
-      GoRoute(path: '/orders', builder: (context, state) => const OrdersPage()),
-      GoRoute(path: '/payments', builder: (context, state) => const PaymentsPage()),
+      
       GoRoute(path: '/delivery', builder: (context, state) => const DeliveryPage()),
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsPage()),
       GoRoute(path: '/profile', builder: (context, state) => const ProfilePage() ),
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
+      
+      // Deep link routes for payment success/failure (HTTPS format)
+      GoRoute(
+        path: '/payment/success',
+        builder: (context, state) {
+          final params = state.uri.queryParameters;
+          return SuccessPage(
+            orderId: params['orderId'],
+            date: params['date'],
+            paymentMethod: params['paymentMethod'] ?? params['payementWay'],
+            amount: params['amount'] ?? params['total'],
+            invoiceUrl: params['invoiceUrl'],
+          );
+        },
+      ),
+      GoRoute(
+        path: '/payment/failure',
+        builder: (context, state) {
+          final params = state.uri.queryParameters;
+          return FailurePage(
+            orderId: params['orderId'],
+            date: params['date'],
+            paymentMethod: params['paymentMethod'] ?? params['payementWay'],
+            amount: params['amount'] ?? params['total'],
+            failureReason: params['reason'] ?? params['error'] ?? 'Erreur inconnue',
+          );
+        },
+      ),
+      
+      // Deep link routes for custom scheme (amerli://success and amerli://failure)
+      // Note: For custom scheme amerli://success, go_router sees path as "/" with host="success"
+      // So we need a special handler that checks the URI scheme and host
+      GoRoute(
+        path: '/success',
+        builder: (context, state) {
+          final params = state.uri.queryParameters;
+          // ignore: avoid_print
+          print('✅ Building SuccessPage with params: $params');
+          return SuccessPage(
+            orderId: params['orderId'],
+            date: params['date'],
+            paymentMethod: params['paymentMethod'] ?? params['payementWay'],
+            amount: params['amount'] ?? params['total'],
+            invoiceUrl: params['invoiceUrl'],
+          );
+        },
+      ),
+      GoRoute(
+        path: '/failure',
+        builder: (context, state) {
+          final params = state.uri.queryParameters;
+          // ignore: avoid_print
+          print('❌ Building FailurePage with params: $params');
+          return FailurePage(
+            orderId: params['orderId'],
+            date: params['date'],
+            paymentMethod: params['paymentMethod'] ?? params['payementWay'],
+            amount: params['amount'] ?? params['total'],
+            failureReason: params['reason'] ?? params['error'] ?? 'Erreur inconnue',
+          );
+        },
+      ),
     ],
   );
 }

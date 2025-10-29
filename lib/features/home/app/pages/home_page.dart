@@ -44,6 +44,8 @@ class _HomePageState extends State<HomePage> {
     ];
 
     return Scaffold(
+      // Prevent scaffold from resizing when keyboard appears
+      resizeToAvoidBottomInset: false,
       // Use a Stack so each tab can host its own Navigator. This allows
       // pushing/replacing routes inside a tab without affecting the
       // global app Navigator or the bottom navigation bar.

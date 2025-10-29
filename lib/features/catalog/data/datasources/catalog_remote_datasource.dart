@@ -1,43 +1,60 @@
 import 'package:amerli_app/core/dio/api_service.dart';
+import 'package:amerli_app/core/network/api_exception.dart';
 import 'package:amerli_app/features/catalog/data/models/product_model.dart';
+import 'package:dio/dio.dart';
+import 'dart:developer' as developer;
 
 class CatalogRemoteDataSource {
   final ApiService apiService;
 
   CatalogRemoteDataSource({required this.apiService});
 
-  Future<List<ProductModel>> fetchProducts({int page = 1, int pageSize = 50, String? query}) async {
-    // Mocked paginated response — generate synthetic products so we can test pagination
-    await Future.delayed(const Duration(seconds: 1));
+  bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
 
-    // Simulate finite total items so pagination ends naturally
-    const totalItems = 95;
-    final start = (page - 1) * pageSize + 1;
-    var end = start + pageSize - 1;
-    if (end > totalItems) end = totalItems;
-    final List<Map<String, dynamic>> list = [];
-    for (var i = start; i <= end; i++) {
-      list.add({
-        'id': i,
-        'name': 'Product #$i',
-        'description': 'This is description for product #$i',
-        'price': (20 + (i % 50)) * 1.0,
-        'stock': (i % 10) + 1,
-        'sellerId': (i % 5) + 1,
-        // mark every 3rd item as favorite in mock
-        'is_favorit': i % 3 == 0,
-        // Images: first is the thumbnail used in lists, second is a detail image with transparent background
-        'pics': [
-          'https://picsum.photos/seed/prod_$i/300/300',
-          // example transparent PNG (no-background) — transparent demo image on Wikimedia
-          'https://upload.wikimedia.org/wikipedia/commons/4/47/PNG_transparency_demonstration_1.png'
-        ],
-        'brand': 'Brand #${(i % 10) + 1}',
-        // provide a soldBy value (int) for seller mapping
-        'soldBy': (i % 7) + 1,
-      });
+  /// Calls GET /products/all?page=&limit=&search=&categoryIds=
+  Future<List<ProductModel>> fetchProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds}) async {
+    try {
+      final qp = <String, dynamic>{'page': page, 'limit': pageSize};
+      if (query != null && query.isNotEmpty) qp['search'] = query;
+  if (categoryIds != null && categoryIds.isNotEmpty) qp['categoryIds'] = categoryIds;
+
+      final resp = await apiService.get('/products/all', queryParameters: qp);
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        final data = resp.data as Map<String, dynamic>;
+        final items = (data['data'] as List<dynamic>?) ?? [];
+        return items.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+      }
+
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to fetch products';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+      final baseMsg = e.message ?? 'Network error while fetching products';
+      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log('Dio error fetchProducts - status: $status, serverResponse: $serverResp', name: 'CatalogRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+    } catch (e, st) {
+      developer.log('Unexpected error while fetching products: $e', name: 'CatalogRemoteDataSource', error: e, stackTrace: st as StackTrace?);
+      throw ApiException('Unexpected error while fetching products: $e');
     }
+  }
 
-    return list.map((e) => ProductModel.fromJson(e)).toList();
+  Future<ProductModel> fetchProductById(int id) async {
+    try {
+      final resp = await apiService.get('/products/$id');
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        return ProductModel.fromJson(Map<String, dynamic>.from(resp.data as Map));
+      }
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to fetch product';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+      final baseMsg = e.message ?? 'Network error while fetching product';
+      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log('Dio error fetchProductById - status: $status, serverResponse: $serverResp', name: 'CatalogRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+    }
   }
 }

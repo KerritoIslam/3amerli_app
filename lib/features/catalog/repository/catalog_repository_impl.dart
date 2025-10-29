@@ -15,13 +15,13 @@ class CatalogRepositoryImpl implements CatalogRepository {
 
   CatalogRepositoryImpl({required this.remoteDataSource});
 
-  String _cacheKey({int page = 1, int pageSize = 50, String? query}) {
-    return 'p:$page|s:$pageSize|q:${query ?? ''}';
+  String _cacheKey({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds}) {
+    return 'p:$page|s:$pageSize|q:${query ?? ''}|c:${(categoryIds ?? []).map((e) => e.toString()).join(',')}';
   }
 
   @override
-  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, bool forceRefresh = false}) async {
-    final key = _cacheKey(page: page, pageSize: pageSize, query: query);
+  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds, bool forceRefresh = false}) async {
+    final key = _cacheKey(page: page, pageSize: pageSize, query: query, categoryIds: categoryIds);
 
     if (!forceRefresh && _cache.containsKey(key)) {
       return _cache[key]!;
@@ -33,7 +33,7 @@ class CatalogRepositoryImpl implements CatalogRepository {
     while (true) {
       try {
         attempt++;
-        final List<ProductModel> models = await remoteDataSource.fetchProducts(page: page, pageSize: pageSize, query: query);
+  final List<ProductModel> models = await remoteDataSource.fetchProducts(page: page, pageSize: pageSize, query: query, categoryIds: categoryIds);
 
         final entities = models.map((m) => m.toEntity()).toList();
 
