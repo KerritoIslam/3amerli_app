@@ -25,6 +25,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 class CatalogPage extends StatefulWidget {
   const CatalogPage({super.key});
@@ -127,18 +128,42 @@ class _CatalogPageState extends State<CatalogPage> {
         // Provide CartBloc app-scoped so ProductCard can access it
         BlocProvider.value(value: sl<CartBloc>()),
       ],
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
-          child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      child: MultiBlocListener(
+        listeners: [
+          BlocListener<CatalogBloc, CatalogState>(
+            listener: (context, state) {
+              if (state is CatalogError) {
+                ErrorHandler.showError(context, state.message);
+              }
+            },
+          ),
+          BlocListener<CategoriesBloc, CategoriesState>(
+            listener: (context, state) {
+              if (state is CategoriesError) {
+                ErrorHandler.showError(context, state.message);
+              }
+            },
+          ),
+          BlocListener<OffersBloc, OffersState>(
+            listener: (context, state) {
+              if (state is OffersError) {
+                ErrorHandler.showError(context, state.message);
+              }
+            },
+          ),
+        ],
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
+            child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Text('Bienvenue sur ', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+                Text('Bienvenue sur', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
                 const SizedBox(width: 8),
                 // Use the correct asset path (logo is under assets/logo/ in the project)
-                SvgPicture.asset('assets/logo/full_logo.svg', width: 40, height: 40),
+                SizedBox(height: 32 , width: 116, child: Image.asset('assets/logo/full_logo.png', width: 116, height: 116)),
               ],
             ),
             const SizedBox(height: 15),
@@ -260,7 +285,10 @@ class _CatalogPageState extends State<CatalogPage> {
                 return categoriesSkeletonGrid(count: 6, crossAxisCount: 3, itemHeight: 90);
               }
 
-              if (state is CategoriesError) return Center(child: Text('Categories error: ${state.message}'));
+              if (state is CategoriesError) {
+                // Error handled by BlocListener
+                return const SizedBox.shrink();
+              }
               if (state is CategoriesLoaded) {
                 // Show a small grid with two rows (adjust crossAxisCount based on width)
                 return CategoryGrid(
@@ -282,7 +310,16 @@ class _CatalogPageState extends State<CatalogPage> {
               child: BlocBuilder<CatalogBloc, CatalogState>(builder: (context, state) {
                 final isLoading = state is CatalogLoading;
                 final isLoadingMore = state is CatalogLoadingMore;
-                if (state is CatalogError) return Center(child: Text('Catalog error: ${state.message}'));
+                
+                if (state is CatalogError) {
+                  // Error handled by BlocListener
+                  return Center(
+                    child: Text(
+                      'Aucun produit trouvé',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint),
+                    ),
+                  );
+                }
                 if (state is CatalogLoadingMore) {
                   // Keep showing the existing items while loading more; the ProductsList will show skeleton tiles for the end
                   final products = state.products;
@@ -320,6 +357,7 @@ class _CatalogPageState extends State<CatalogPage> {
         ),
       ),
     ),
-  );
+    ),
+    );
   }
 }

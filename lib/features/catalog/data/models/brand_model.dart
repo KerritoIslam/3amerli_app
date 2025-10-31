@@ -9,7 +9,7 @@ class BrandModel {
 
   factory BrandModel.fromJson(Map<String, dynamic> json) => BrandModel(
         id: (json['id'] is num) ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-        name: json['name']?.toString() ?? '',
+        name: json['label']?.toString() ?? json['name']?.toString() ?? '',
         image: json['image']?.toString(),
       );
 

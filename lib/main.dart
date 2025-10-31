@@ -158,7 +158,7 @@ class _MyAppState extends State<MyApp> {
       ],
       child: MaterialApp.router(
         
-        debugShowCheckedModeBanner: true,
+        debugShowCheckedModeBanner: false,
         title: '3amerli',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

@@ -7,6 +7,7 @@ import '../bloc/brands_event.dart';
 import '../bloc/brands_state.dart';
 import '../bloc/catalog_bloc.dart';
 import '../bloc/catalog_event.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 class BrandsPage extends StatefulWidget {
   const BrandsPage({super.key});
@@ -25,11 +26,17 @@ class _BrandsPageState extends State<BrandsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.gradientFromScheme(Theme.of(context).colorScheme)),
-        child: SafeArea(
+    return BlocListener<BrandsBloc, BrandsState>(
+      listener: (context, state) {
+        if (state is BrandsError) {
+          ErrorHandler.showError(context, state.message);
+        }
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        body: Container(
+          decoration: BoxDecoration(gradient: AppColors.gradientFromScheme(Theme.of(context).colorScheme)),
+          child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
             child: Column(
@@ -153,7 +160,7 @@ class _BrandsPageState extends State<BrandsPage> {
                         ],
                       );
                     }
-                    if (state is BrandsError) return Center(child: Text('Error: ${state.message}'));
+                    if (state is BrandsError) return const Center(child: Text('Aucune marque trouvée'));
                     return const SizedBox.shrink();
                   }),
                 ),
@@ -162,6 +169,7 @@ class _BrandsPageState extends State<BrandsPage> {
           ),
         ),
       ),
-    );
+    ), // Scaffold closing
+    ); // BlocListener closing
   }
 }

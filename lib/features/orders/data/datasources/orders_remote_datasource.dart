@@ -13,7 +13,7 @@ class OrdersRemoteDataSource {
   bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
 
   /// GET /order/all
-  Future<List<OrderModel>> fetchOrders({int page = 1, int pageSize = 50}) async {
+  Future<List<OrderModel>> fetchOrders({int page = 1, int pageSize = 10}) async {
     try {
       final resp = await apiService.get('/order/all', queryParameters: {'page': page, 'limit': pageSize});
       if (_isSuccess(resp.statusCode) && resp.data != null) {

@@ -66,6 +66,10 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+        ),
         title: Text('Échec du paiement', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
       ),

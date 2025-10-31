@@ -13,6 +13,7 @@ import 'package:amerli_app/features/favorits/app/bloc/favorits_state.dart';
 import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 class FavoritsPage extends StatelessWidget {
   const FavoritsPage({super.key});
@@ -37,8 +38,25 @@ class _FavoritsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<CategoriesBloc, CategoriesState>(
+          listener: (context, state) {
+            if (state is CategoriesError) {
+              ErrorHandler.showError(context, state.message);
+            }
+          },
+        ),
+        BlocListener<fav_feature.FavoritsBloc, FavoritsState>(
+          listener: (context, state) {
+            if (state is FavoritsError) {
+              ErrorHandler.showError(context, state.message);
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
           child: Column(
@@ -94,7 +112,7 @@ class _FavoritsView extends StatelessWidget {
                   return _categoriesSkeletonRow();
                 }
 
-                if (state is CategoriesError) return Center(child: Text('Categories error: ${state.message}'));
+                if (state is CategoriesError) return const Center(child: Text('Aucune catégorie trouvée'));
                 if (state is CategoriesLoaded) return CategoriesRow(categories: state.items, onTap: (cat) {
                   // Reload favorites filtered by category
                   context.read<fav_feature.FavoritsBloc>().add(FavoritsLoadEvent());
@@ -119,7 +137,7 @@ class _FavoritsView extends StatelessWidget {
                         return ProductsList(products: state.products);
                       }
                       if (state is FavoritsError) {
-                        return Center(child: Text('Error: ${state.message}'));
+                        return const Center(child: Text('Aucun favori trouvé'));
                       }
                       return const SizedBox.shrink();
                     },
@@ -130,7 +148,8 @@ class _FavoritsView extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ), // Scaffold closing
+    ); // MultiBlocListener closing
   }
 }
 

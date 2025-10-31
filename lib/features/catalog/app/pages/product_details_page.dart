@@ -10,6 +10,10 @@ import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/widgets/top_toast.dart';
+import 'package:amerli_app/features/catalog/app/bloc/favorites_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/favorites_event.dart';
+import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
@@ -21,6 +25,13 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   int _quantity = 1;
+  late bool _localFavorite;
+
+  @override
+  void initState() {
+    super.initState();
+    _localFavorite = widget.product.isFavorit;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -89,7 +100,43 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           height: 40,
                           alignment: Alignment.center,
                           child: InkWell(
-                            onTap: () {},
+                            onTap: () {
+                              final favoritesBloc = sl<FavoritesBloc>();
+                              
+                              if (_localFavorite) {
+                                favoritesBloc.add(FavoritesRemoveEvent(id: widget.product.id));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${widget.product.name} retiré des favoris'),
+                                    backgroundColor: Colors.orange,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              } else {
+                                favoritesBloc.add(FavoritesAddEvent(userId: 0, productId: widget.product.id));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('${widget.product.name} ajouté aux favoris'),
+                                    backgroundColor: Colors.green,
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+
+                              // Update local state immediately for instant UI feedback
+                              setState(() {
+                                _localFavorite = !_localFavorite;
+                              });
+
+                              // Refresh catalog after a short delay to update the product list
+                              Future.delayed(const Duration(milliseconds: 500), () {
+                                try {
+                                  sl<CatalogBloc>().add(CatalogLoadEvent());
+                                } catch (e) {
+                                  // Catalog bloc might not be available
+                                }
+                              });
+                            },
                             borderRadius: BorderRadius.circular(24),
                             child: Container(
                               width: 40,
@@ -104,12 +151,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               ),
                               alignment: Alignment.center,
                               child: SvgPicture.asset(
-                                'assets/icons/favoris_reversed.svg',
+                                _localFavorite 
+                                    ? 'assets/icons/favoris.svg'
+                                    : 'assets/icons/favoris_reversed.svg',
                                 width: 24,
                                 height: 24,
                                 color: Theme.of(context).colorScheme.primary,
                                 placeholderBuilder: (context) => Icon(
-                                  Icons.favorite_border,
+                                  _localFavorite 
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
                                   size: 20,
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
@@ -210,7 +261,50 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconTextButton(onTap: () {}, iconAsset: 'assets/icons/bag.svg', text: 'En stock', color: Colors.green),
-                        IconTextButton(onTap: () {}, iconAsset: 'assets/icons/favoris_reversed.svg', text: '102', color: Colors.red),
+                        IconTextButton(
+                          onTap: () {
+                            final favoritesBloc = sl<FavoritesBloc>();
+                            
+                            if (_localFavorite) {
+                              favoritesBloc.add(FavoritesRemoveEvent(id: widget.product.id));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${widget.product.name} retiré des favoris'),
+                                  backgroundColor: Colors.orange,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else {
+                              favoritesBloc.add(FavoritesAddEvent(userId: 0, productId: widget.product.id));
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${widget.product.name} ajouté aux favoris'),
+                                  backgroundColor: Colors.green,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+
+                            // Update local state immediately for instant UI feedback
+                            setState(() {
+                              _localFavorite = !_localFavorite;
+                            });
+
+                            // Refresh catalog after a short delay
+                            Future.delayed(const Duration(milliseconds: 500), () {
+                              try {
+                                sl<CatalogBloc>().add(CatalogLoadEvent());
+                              } catch (e) {
+                                // Catalog bloc might not be available
+                              }
+                            });
+                          },
+                          iconAsset: _localFavorite 
+                              ? 'assets/icons/favoris.svg'
+                              : 'assets/icons/favoris_reversed.svg',
+                          text: '102',
+                          color: Colors.red,
+                        ),
                         IconTextButton(onTap: () {}, iconAsset: 'assets/icons/panier_reversed.svg', text: 'Livré en 48h', color: Colors.blue),
                       ],
                     ),

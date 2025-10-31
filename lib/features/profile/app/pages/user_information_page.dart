@@ -5,6 +5,9 @@ import 'package:amerli_app/features/auth/domain/entities/user.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/features/auth/data/datasources/profile_remote_datasource.dart';
+import 'package:amerli_app/features/auth/app/bloc/profile_bloc.dart';
+import 'package:amerli_app/features/auth/app/bloc/profile_event.dart';
+import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
 
 class UserInformationPage extends StatefulWidget {
   final User? user;
@@ -85,6 +88,14 @@ class _UserInformationPageState extends State<UserInformationPage> {
           _uploadingImage = false;
         });
 
+        // Update ProfileBloc to persist the change globally
+        try {
+          final profileBloc = sl<ProfileBloc>();
+          profileBloc.add(UpdateProfilePictureEvent(imageUrl: newImageUrl));
+        } catch (e) {
+          // ProfileBloc might not be registered, continue anyway
+        }
+
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -110,14 +121,31 @@ class _UserInformationPageState extends State<UserInformationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // initialize local user & image from passed user if not set
-    _user ??= widget.user;
-    // Only use profilePic if it's a valid URL, otherwise use null to show placeholder
-    _imageUrl ??= (_user?.profilePic != null && 
-                   _user!.profilePic!.isNotEmpty && 
-                   (_user!.profilePic!.startsWith('http://') || _user!.profilePic!.startsWith('https://')))
-        ? _user!.profilePic
-        : null;
+    // Try to get latest user from ProfileBloc
+    User? latestUser = widget.user;
+    try {
+      final profileBloc = sl<ProfileBloc>();
+      final state = profileBloc.state;
+      if (state is ProfileLoaded) {
+        latestUser = state.user;
+      }
+    } catch (_) {
+      // ProfileBloc not available, use widget.user
+    }
+
+    // initialize local user & image from latest user if not set
+    _user ??= latestUser;
+    
+    // Always update imageUrl if we have a newer profilePic from the user
+    if (latestUser?.profilePic != null && 
+        latestUser!.profilePic!.isNotEmpty && 
+        (latestUser.profilePic!.startsWith('http://') || latestUser.profilePic!.startsWith('https://'))) {
+      _imageUrl = latestUser.profilePic;
+    } else if (_imageUrl == null) {
+      _imageUrl = '';
+    }
+    
+    final hasValidImage = _imageUrl != null && _imageUrl!.isNotEmpty;
 
     // Layout matches requested design: centered, scrollable, with avatar + edit
     return Scaffold(
@@ -192,19 +220,20 @@ class _UserInformationPageState extends State<UserInformationPage> {
                               Stack(
                                 alignment: Alignment.center,
                                 children: [
-                                  CircleAvatar(
-                                    radius: 56,
-                                    backgroundColor: Colors.grey.shade200,
-                                    backgroundImage: (_imageUrl != null && _imageUrl!.isNotEmpty) 
-                                        ? NetworkImage(_imageUrl!) 
-                                        : null,
-                                    onBackgroundImageError: (exception, stackTrace) {
-                                      // Silently handle image loading errors
-                                    },
-                                    child: (_imageUrl == null || _imageUrl!.isEmpty) 
-                                        ? const Icon(Icons.person, size: 48, color: Colors.grey) 
-                                        : null,
-                                  ),
+                                  hasValidImage
+                                      ? CircleAvatar(
+                                          radius: 56,
+                                          backgroundColor: Colors.grey.shade200,
+                                          backgroundImage: NetworkImage(_imageUrl!),
+                                          onBackgroundImageError: (exception, stackTrace) {
+                                            // Silently handle image loading errors
+                                          },
+                                        )
+                                      : CircleAvatar(
+                                          radius: 56,
+                                          backgroundColor: Colors.grey.shade200,
+                                          child: const Icon(Icons.person, size: 48, color: Colors.grey),
+                                        ),
                                   if (_uploadingImage)
                                     Container(
                                       width: 112,

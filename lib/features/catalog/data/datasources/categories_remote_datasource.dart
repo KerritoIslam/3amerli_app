@@ -37,7 +37,7 @@ class CategoriesRemoteDataSource {
   /// POST /categories/categories
   Future<CategoryModel> createCategory({required String label, int? parentId}) async {
     try {
-      final resp = await apiService.post('/categories/categories', data: {'label': label, if (parentId != null) 'parentId': parentId});
+      final resp = await apiService.post('/categories', data: {'label': label, if (parentId != null) 'parentId': parentId});
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         return CategoryModel.fromJson(Map<String, dynamic>.from(resp.data as Map));
       }
@@ -56,7 +56,7 @@ class CategoriesRemoteDataSource {
   /// PUT /categories/categories/{id}
   Future<void> updateCategory(int id, {String? label, int? parentId}) async {
     try {
-      final resp = await apiService.client.put('/categories/categories/$id', data: {'label': label, if (parentId != null) 'parentId': parentId});
+      final resp = await apiService.client.put('/categories/$id', data: {'label': label, if (parentId != null) 'parentId': parentId});
       if (_isSuccess(resp.statusCode)) return;
       final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to update category';
       throw ApiException(msg, statusCode: resp.statusCode);
@@ -73,7 +73,7 @@ class CategoriesRemoteDataSource {
   /// DELETE /categories/categories/{id}
   Future<void> deleteCategory(int id) async {
     try {
-      final resp = await apiService.client.delete('/categories/categories/$id');
+      final resp = await apiService.client.delete('/categories/$id');
       if (_isSuccess(resp.statusCode)) return;
       final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to delete category';
       throw ApiException(msg, statusCode: resp.statusCode);
@@ -90,7 +90,7 @@ class CategoriesRemoteDataSource {
   /// GET /categories/categories/{id}/children
   Future<List<CategoryModel>> fetchChildren(int parentId) async {
     try {
-      final resp = await apiService.get('/categories/categories/$parentId/children');
+      final resp = await apiService.get('/categories/$parentId/children');
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         final list = resp.data as List<dynamic>;
         return list.map((e) => CategoryModel.fromJson(e as Map<String, dynamic>)).toList();

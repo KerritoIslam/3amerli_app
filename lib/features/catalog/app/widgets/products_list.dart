@@ -3,6 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:amerli_app/features/catalog/app/widgets/product_card.dart';
 import 'package:amerli_app/features/catalog/app/pages/product_details_page.dart';
 import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
+import 'package:amerli_app/features/catalog/app/bloc/favorites_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/favorites_event.dart';
+import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
+import 'package:amerli_app/core/config/injection.dart';
 
 typedef ProductItemBuilder = Widget Function(BuildContext context, Product product, int index);
 
@@ -183,7 +188,43 @@ class _ProductsListState extends State<ProductsList> {
         final card = ProductCard(
           imageUrl: product.pics.isNotEmpty ? product.pics.first : null,
           isFavorite: product.isFavorit,
-          onFavoriteToggle: null,
+          onFavoriteToggle: () {
+            // Toggle favorite in backend
+            try {
+              final favoritesBloc = sl<FavoritesBloc>();
+              if (product.isFavorit) {
+                // Remove from favorites - pass productId as id
+                favoritesBloc.add(FavoritesRemoveEvent(id: product.id));
+              } else {
+                // Add to favorites - userId will be fetched from auth service in the repository
+                favoritesBloc.add(FavoritesAddEvent(userId: 0, productId: product.id));
+              }
+              
+              // Refresh catalog to reflect changes after a short delay
+              Future.delayed(const Duration(milliseconds: 500), () {
+                final catalogBloc = sl<CatalogBloc>();
+                catalogBloc.add(CatalogLoadEvent(loadMore: false));
+              });
+              
+              // Show toast
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(product.isFavorit ? 'Retiré des favoris' : 'Ajouté aux favoris'),
+                  duration: const Duration(seconds: 1),
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                ),
+              );
+            } catch (e) {
+              debugPrint('Error toggling favorite: $e');
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Erreur lors de la mise à jour des favoris'),
+                  duration: Duration(seconds: 2),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
           title: product.name,
           subtitle: product.description,
           price: product.price,

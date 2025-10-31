@@ -9,6 +9,7 @@ import '../bloc/categories_event.dart';
 import '../bloc/categories_state.dart';
 import '../../domain/entities/category.dart';
 import 'subcategories_page.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
@@ -42,11 +43,17 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      body: Container(
-        decoration: BoxDecoration(gradient: AppColors.gradientFromScheme(Theme.of(context).colorScheme)),
-        child: SafeArea(
+    return BlocListener<CategoriesBloc, CategoriesState>(
+      listener: (context, state) {
+        if (state is CategoriesError) {
+          ErrorHandler.showError(context, state.message);
+        }
+      },
+      child: Scaffold(
+        extendBodyBehindAppBar: true,
+        body: Container(
+          decoration: BoxDecoration(gradient: AppColors.gradientFromScheme(Theme.of(context).colorScheme)),
+          child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
             child: Column(
@@ -178,7 +185,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         ],
                       );
                     }
-                    if (state is CategoriesError) return Center(child: Text('Error: ${state.message}'));
+                    if (state is CategoriesError) return const Center(child: Text('Aucune catégorie trouvée'));
                     return const SizedBox.shrink();
                   }),
                 ),
@@ -187,6 +194,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
           ),
         ),
       ),
-    );
+    ), // Scaffold closing
+    ); // BlocListener closing
   }
 }

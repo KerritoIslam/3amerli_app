@@ -282,8 +282,24 @@ class _ProductCardState extends State<ProductCard> {
                                       brand: widget.brand,
                                       soldBy: widget.soldBy,
                                     )));
+                                    // Show toast notification
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('$_quantity x ${widget.title} ajouté au panier'),
+                                        duration: const Duration(seconds: 2),
+                                        backgroundColor: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    );
                                   } else {
                                     cartBloc.add(CartUpdateQuantityEvent(productId: productIdStr, quantity: existingItem.quantity + _quantity));
+                                    // Show toast notification
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text('Quantité mise à jour: ${existingItem.quantity + _quantity} x ${widget.title}'),
+                                        duration: const Duration(seconds: 2),
+                                        backgroundColor: Theme.of(context).colorScheme.primary,
+                                      ),
+                                    );
                                   }
                                 } else {
                                   cartBloc.add(CartAddItemEvent(CartItem(
@@ -295,6 +311,14 @@ class _ProductCardState extends State<ProductCard> {
                                     brand: widget.brand,
                                     soldBy: widget.soldBy,
                                   )));
+                                  // Show toast notification
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text('$_quantity x ${widget.title} ajouté au panier'),
+                                      duration: const Duration(seconds: 2),
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                    ),
+                                  );
                                 }
                               },
                               child: IconCircle(isSelected: true, asset: 'assets/icons/panier.svg', size: 26, selectedColor: Theme.of(context).colorScheme.primary),

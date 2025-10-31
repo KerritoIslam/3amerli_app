@@ -6,6 +6,7 @@ import '../../../orders/app/bloc/orders_event.dart';
 import '../../../orders/app/bloc/orders_state.dart';
 import '../../../../core/config/injection.dart';
 import 'order_tracking_page.dart';
+import '../../../../core/error/error_handler.dart';
 
 class MesCommandesPage extends StatefulWidget {
   const MesCommandesPage({Key? key}) : super(key: key);
@@ -48,7 +49,13 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
   Widget build(BuildContext context) {
     return BlocProvider.value(
       value: sl<OrdersBloc>(),
-      child: Scaffold(
+      child: BlocListener<OrdersBloc, OrdersState>(
+        listener: (context, state) {
+          if (state is OrdersError) {
+            ErrorHandler.showError(context, state.message);
+          }
+        },
+        child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
           child: Padding(
@@ -110,7 +117,10 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                 Expanded(
                   child: BlocBuilder<OrdersBloc, OrdersState>(builder: (context, state) {
                     if (state is OrdersLoading) return const Center(child: CircularProgressIndicator());
-                    if (state is OrdersError) return Center(child: Text('Erreur: ${state.message}'));
+                    if (state is OrdersError) {
+                      // Error handled by BlocListener
+                      return const Center(child: Text('Aucune commande trouvée'));
+                    }
 
                     // Use PageView so users can swipe between tabs
                     return PageView.builder(
@@ -144,6 +154,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

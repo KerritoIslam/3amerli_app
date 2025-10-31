@@ -14,7 +14,7 @@ class BrandsRemoteDataSource {
   /// GET /products/brands
   Future<List<BrandModel>> fetchBrands() async {
     try {
-      final resp = await apiService.get('/products/brands');
+      final resp = await apiService.get('/brands');
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         final list = resp.data as List<dynamic>;
         return list.map((e) => BrandModel.fromJson(e as Map<String, dynamic>)).toList();
@@ -34,7 +34,7 @@ class BrandsRemoteDataSource {
   /// POST /products/brands
   Future<BrandModel> createBrand(String label) async {
     try {
-      final resp = await apiService.post('/products/brands', data: {'label': label});
+      final resp = await apiService.post('/brands', data: {'label': label});
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         return BrandModel.fromJson(Map<String, dynamic>.from(resp.data as Map));
       }
@@ -53,7 +53,7 @@ class BrandsRemoteDataSource {
   /// PUT /products/brands/{id}
   Future<BrandModel> updateBrand(int id, String label) async {
     try {
-      final resp = await apiService.put('/products/brands/$id', data: {'label': label});
+      final resp = await apiService.put('/brands/$id', data: {'label': label});
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         return BrandModel.fromJson(Map<String, dynamic>.from(resp.data as Map));
       }
@@ -72,7 +72,7 @@ class BrandsRemoteDataSource {
   /// DELETE /products/brands/{id}
   Future<void> deleteBrand(int id) async {
     try {
-      final resp = await apiService.client.delete('/products/brands/$id');
+      final resp = await apiService.client.delete('/brands/$id');
       if (_isSuccess(resp.statusCode)) return;
       final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to delete brand';
       throw ApiException(msg, statusCode: resp.statusCode);
