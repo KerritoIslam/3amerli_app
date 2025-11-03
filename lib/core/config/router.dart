@@ -20,6 +20,14 @@ import '../../features/onboarding/app/pages/onboarding_flow.dart';
 import '../../features/delivery/app/pages/delivery_page.dart';
 import '../../features/notifications/app/pages/notifications_page.dart';
 import '../../features/admin/app/pages/admin_page.dart';
+import '../../features/admin/products/app/pages/add_product_page.dart';
+import '../../features/admin/categories/app/pages/admin_categories_page.dart';
+import '../../features/admin/categories/app/pages/add_category_page.dart';
+import '../../features/admin/categories/app/bloc/admin_categories_bloc.dart';
+import '../../features/admin/orders/app/pages/order_detail_page.dart';
+import '../../features/admin/orders/app/bloc/admin_orders_bloc.dart';
+import '../../features/admin/users/app/pages/user_detail_page.dart';
+import '../../features/admin/users/app/bloc/admin_users_bloc.dart';
 import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
 import '../../features/catalog/app/pages/filters_page.dart';
 import '../../features/catalog/app/pages/categories_page.dart';
@@ -101,10 +109,41 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
         return '/auth';
       }
 
-      // If logged in but at auth path, send to home
+      // If logged in, check for admin role and redirect accordingly
+      if (loggedIn) {
+        final authState = authBloc.state;
+        if (authState is Authenticated) {
+          final userRole = authState.user.role;
+          
+          // If admin tries to access regular home, redirect to admin
+          if (userRole == 'ADMIN' && loc == '/home') {
+            print('🔗 Admin user trying to access /home, redirecting to /admin');
+            return '/admin';
+          }
+          
+          // If regular user tries to access admin, redirect to home
+          if (userRole != 'ADMIN' && loc == '/admin') {
+            print('🔗 Non-admin user trying to access /admin, redirecting to /home');
+            return '/home';
+          }
+        }
+      }
+
+      // If logged in but at auth path, send to home or admin based on role
       if (loggedIn && (loc == '/auth' || (loc == '/' && scheme != 'amerli'))) {
         // ignore: avoid_print
-        print('🔗 Redirecting to /home (logged in at auth)');
+        print('🔗 Redirecting to home/admin (logged in at auth)');
+        
+        // Check if user is admin
+        final authState = authBloc.state;
+        if (authState is Authenticated) {
+          final userRole = authState.user.role;
+          if (userRole == 'ADMIN') {
+            print('🔗 User is ADMIN, redirecting to /admin');
+            return '/admin';
+          }
+        }
+        
         return '/home';
       }
 
@@ -214,6 +253,65 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       GoRoute(path: '/notifications', builder: (context, state) => const NotificationsPage()),
       GoRoute(path: '/profile', builder: (context, state) => const ProfilePage() ),
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
+      GoRoute(
+        path: '/admin/products/add',
+        builder: (context, state) => const AddProductPage(),
+      ),
+      GoRoute(
+        path: '/admin/products/edit/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          return AddProductPage(productId: id);
+        },
+      ),
+      GoRoute(
+        path: '/admin/categories',
+        builder: (context, state) {
+          return BlocProvider(
+            create: (_) => sl<AdminCategoriesBloc>(),
+            child: const AdminCategoriesPage(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/admin/categories/add',
+        builder: (context, state) {
+          return BlocProvider(
+            create: (_) => sl<AdminCategoriesBloc>(),
+            child: const AddCategoryPage(),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/admin/categories/edit/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          return BlocProvider(
+            create: (_) => sl<AdminCategoriesBloc>(),
+            child: AddCategoryPage(categoryId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/admin/orders/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return BlocProvider(
+            create: (_) => sl<AdminOrdersBloc>(),
+            child: OrderDetailPage(orderId: id),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/admin/users/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return BlocProvider(
+            create: (_) => sl<AdminUsersBloc>(),
+            child: UserDetailPage(userId: id),
+          );
+        },
+      ),
       
       // Deep link routes for payment success/failure (HTTPS format)
       GoRoute(

@@ -17,6 +17,21 @@ import '../../features/catalog/repository/offers_repository_impl.dart';
 import '../../features/catalog/domain/repositories/offers_repository.dart';
 import '../../features/catalog/app/bloc/offers_bloc.dart';
 import '../../features/admin/app/bloc/admin_bloc.dart';
+import '../../features/admin/dashboard/app/bloc/dashboard_bloc.dart';
+import '../../features/admin/dashboard/data/repositories/dashboard_repository_impl.dart';
+import '../../features/admin/dashboard/domain/repositories/dashboard_repository.dart';
+import '../../features/admin/orders/app/bloc/admin_orders_bloc.dart';
+import '../../features/admin/orders/data/repositories/admin_orders_repository_impl.dart';
+import '../../features/admin/orders/domain/repositories/admin_orders_repository.dart';
+import '../../features/admin/users/app/bloc/admin_users_bloc.dart';
+import '../../features/admin/users/data/repositories/admin_users_repository_impl.dart';
+import '../../features/admin/users/domain/repositories/admin_users_repository.dart';
+import '../../features/admin/products/app/bloc/admin_products_bloc.dart';
+import '../../features/admin/products/data/repositories/admin_products_repository_impl.dart';
+import '../../features/admin/products/domain/repositories/admin_products_repository.dart';
+import '../../features/admin/categories/app/bloc/admin_categories_bloc.dart';
+import '../../features/admin/categories/data/repositories/admin_categories_repository_impl.dart';
+import '../../features/admin/categories/domain/repositories/admin_categories_repository.dart';
 import '../../features/catalog/repository/catalog_repository_impl.dart';
 import '../../features/catalog/domain/repositories/catalog_repository.dart';
 import '../../features/catalog/data/datasources/favorites_remote_datasource.dart';
@@ -142,6 +157,17 @@ Future<void> init() async {
   sl.registerLazySingleton<NotificationsBloc>(() => NotificationsBloc(repository: sl<NotificationsRepository>()));
   sl.registerLazySingleton<OffersBloc>(() => OffersBloc(repository: sl<OffersRepository>()));
   sl.registerFactory(() => AdminBloc());
+  // Admin features
+  sl.registerLazySingleton<DashboardRepository>(() => DashboardRepositoryImpl());
+  sl.registerFactory(() => DashboardBloc(sl<DashboardRepository>()));
+  sl.registerLazySingleton<AdminOrdersRepository>(() => AdminOrdersRepositoryImpl());
+  sl.registerFactory(() => AdminOrdersBloc(sl<AdminOrdersRepository>()));
+  sl.registerLazySingleton<AdminUsersRepository>(() => AdminUsersRepositoryImpl());
+  sl.registerFactory(() => AdminUsersBloc(repository: sl<AdminUsersRepository>()));
+  sl.registerLazySingleton<AdminProductsRepository>(() => AdminProductsRepositoryImpl());
+  sl.registerLazySingleton<AdminProductsBloc>(() => AdminProductsBloc(sl<AdminProductsRepository>()));
+  sl.registerLazySingleton<AdminCategoriesRepository>(() => AdminCategoriesRepositoryImpl());
+  sl.registerFactory(() => AdminCategoriesBloc(sl<AdminCategoriesRepository>()));
   // Brands feature
   sl.registerFactory(() => BrandsBloc(repository: sl<BrandsRepository>()));
 }

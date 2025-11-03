@@ -1,4 +1,4 @@
-import 'package:amerli_app/core/ui/toast/toast_service.dart';
+
 import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -18,12 +18,12 @@ import 'package:amerli_app/features/catalog/app/bloc/categories_event.dart';
 import 'package:amerli_app/features/catalog/app/bloc/categories_state.dart';
 
 import 'package:amerli_app/features/catalog/app/bloc/offers_bloc.dart';
-import 'package:amerli_app/features/catalog/app/bloc/offers_event.dart';
+
 import 'package:amerli_app/features/catalog/app/bloc/offers_state.dart';
 import 'package:amerli_app/core/config/injection.dart';
-import 'package:flutter_svg/svg.dart';
+
 import 'package:go_router/go_router.dart';
-import 'package:amerli_app/core/ui/skeleton/skeleton.dart';
+
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
 
