@@ -159,7 +159,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
 
                     if (state is AdminCategoriesLoaded) {
                       return SingleChildScrollView(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(horizontal: 12.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -214,7 +214,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
         children: [
           // Header Row
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: const BorderRadius.only(
@@ -225,7 +225,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
             child: Row(
               children: [
                 SizedBox(
-                  width: 40,
+                  width: 36,
                   child: Checkbox(
                     value: _selectedIds.length == state.filteredCategories.length &&
                         _selectedIds.isNotEmpty,
@@ -255,18 +255,18 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                   ),
                 ),
                 const SizedBox(
-                  width: 80,
+                  width: 64,
                   child: Text(
                     'Produits',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                   ),
                 ),
                 const SizedBox(
-                  width: 50,
+                  width: 44,
                   child: Text(
                     'Actions',
                     style: TextStyle(
@@ -290,11 +290,11 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 child: Row(
                   children: [
                     SizedBox(
-                      width: 40,
+                      width: 36,
                       child: Checkbox(
                         value: isSelected,
                         onChanged: (value) {
@@ -314,8 +314,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                       child: Row(
                         children: [
                           Container(
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
@@ -323,10 +323,10 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                             child: Icon(
                               Icons.category,
                               color: Theme.of(context).colorScheme.primary,
-                              size: 20,
+                              size: 18,
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 6),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -334,7 +334,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                                 Text(
                                   category.name,
                                   style: const TextStyle(
-                                    fontSize: 12,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                     color: Colors.black,
                                   ),
@@ -344,7 +344,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                                 Text(
                                   category.id,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 9,
                                     color: Colors.grey.shade600,
                                   ),
                                 ),
@@ -355,17 +355,17 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                       ),
                     ),
                     SizedBox(
-                      width: 80,
+                      width: 64,
                       child: Text(
                         '${category.productCount}',
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: 9,
                           color: Colors.black,
                         ),
                       ),
                     ),
                     SizedBox(
-                      width: 50,
+                      width: 44,
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -373,16 +373,16 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                             onTap: () => context.push('/admin/categories/edit/${category.id}'),
                             child: Icon(
                               Icons.edit,
-                              size: 18,
+                              size: 16,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 4),
                           InkWell(
                             onTap: () => _showDeleteDialog(category.id),
                             child: const Icon(
                               Icons.delete,
-                              size: 18,
+                              size: 16,
                               color: Colors.red,
                             ),
                           ),
@@ -410,7 +410,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
         children: [
           // Header Row
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.grey.shade50,
               borderRadius: const BorderRadius.only(
@@ -466,7 +466,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 child: Row(
                   children: [
                     Expanded(
@@ -474,7 +474,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                       child: Text(
                         subCategory.name,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.black,
                         ),
                       ),
@@ -484,7 +484,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                       child: Text(
                         subCategory.categoryName,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: 10,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -498,16 +498,16 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                             onTap: () {},
                             child: Icon(
                               Icons.edit,
-                              size: 18,
+                              size: 16,
                               color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 6),
                           InkWell(
                             onTap: () => _showDeleteSubCategoryDialog(subCategory.id),
                             child: const Icon(
                               Icons.delete,
-                              size: 18,
+                              size: 16,
                               color: Colors.red,
                             ),
                           ),

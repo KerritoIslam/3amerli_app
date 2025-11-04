@@ -224,7 +224,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                         }
 
                         return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 16),
+                          margin: const EdgeInsets.symmetric(horizontal: 10),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: const BorderRadius.only(
@@ -242,8 +242,8 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                             // Table Header
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
+                                horizontal: 6,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.grey.shade50,
@@ -256,8 +256,8 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                                 children: [
                                   // Select All Checkbox
                                   SizedBox(
-                                    width: 24,
-                                    height: 24,
+                                    width: 18,
+                                    height: 18,
                                     child: Checkbox(
                                       value: _selectedOrderIds.length ==
                                           state.orders.length,
@@ -276,47 +276,48 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                                       activeColor: AppColors.brandDeep,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    flex: 3,
-                                    child: Text(
+                                  const SizedBox(width: 6),
+                                  SizedBox(
+                                    width: 80,
+                                    child: const Text(
                                       'N° Commande',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ),
-                                  const Expanded(
-                                    flex: 3,
-                                    child: Text(
-                                      'Client',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 11,
+                                        fontSize: 10,
                                       ),
                                     ),
                                   ),
                                   const Expanded(
                                     flex: 2,
                                     child: Text(
+                                      'Client',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 10,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    flex: 2,
+                                    child: Text(
                                       'Statut',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 11,
+                                        fontSize: 10,
                                       ),
-                                      textAlign: TextAlign.center,
+                                      textAlign: TextAlign.start,
                                     ),
                                   ),
                                   const SizedBox(
-                                    width: 50,
+                                    width: 40,
                                     child: Text(
                                       'Actions',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 11,
+                                        fontSize: 10,
                                       ),
-                                      textAlign: TextAlign.center,
+                                      textAlign: TextAlign.start,
                                     ),
                                   ),
                                 ],
@@ -398,13 +399,13 @@ class _OrderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
         children: [
           // Checkbox
           SizedBox(
-            width: 24,
-            height: 24,
+            width: 18,
+            height: 18,
             child: Checkbox(
               value: isSelected,
               onChanged: onSelectChanged,
@@ -412,16 +413,16 @@ class _OrderRow extends StatelessWidget {
               activeColor: AppColors.brandDeep,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
 
           // Order Number
-          Expanded(
-            flex: 3,
+          SizedBox(
+            width: 80,
             child: Text(
               order.orderNumber,
               style: const TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: 12,
+                fontSize: 10,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -430,23 +431,28 @@ class _OrderRow extends StatelessWidget {
 
           // Client Name
           Expanded(
-            flex: 3,
-            child: Text(
-              order.customerName,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
+            flex: 2,
+            child: SizedBox(
+              width: 70,
+              child: Text(
+                order.customerName,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
             ),
           ),
+
+          const SizedBox(width: 12),
 
           // Status
           Expanded(
             flex: 2,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 Container(
                   width: 8,
@@ -456,12 +462,12 @@ class _OrderRow extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 3),
                 Flexible(
                   child: Text(
                     order.status,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       color: statusColor,
                       fontWeight: FontWeight.w500,
                     ),
@@ -475,26 +481,26 @@ class _OrderRow extends StatelessWidget {
 
           // Actions
           SizedBox(
-            width: 50,
+            width: 36,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
                 // View Button
                 InkWell(
                   onTap: onView,
                   child: Icon(
                     Icons.visibility_outlined,
-                    size: 18,
+                    size: 14,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 // Cancel Button
                 InkWell(
                   onTap: onCancel,
                   child: const Icon(
                     Icons.close,
-                    size: 18,
+                    size: 14,
                     color: Colors.red,
                   ),
                 ),

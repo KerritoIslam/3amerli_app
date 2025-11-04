@@ -11,6 +11,7 @@ import 'package:amerli_app/features/auth/app/bloc/auth_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/auth_state.dart';
 import 'package:amerli_app/widgets/icon_circle.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/top_products_chart.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -311,73 +312,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget _buildTopProductsSection(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 8,
-            offset: Offset(4, 4),
-          ),
-          BoxShadow(
-            color: Color(0x1A000000),
-            blurRadius: 8,
-            offset: Offset(-4, -4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Top produits',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Container(
-            height: 60,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              borderRadius: BorderRadius.circular(40),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavIcon(Icons.home, true),
-                _buildNavIcon(Icons.grid_view_rounded, false),
-                _buildNavIcon(Icons.receipt_long, false),
-                _buildNavIcon(Icons.people_alt_rounded, false),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavIcon(IconData icon, bool isActive) {
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isActive ? const Color(0xFF0E2C2C) : Colors.transparent,
-      ),
-      child: Icon(
-        icon,
-        color: isActive ? Colors.white : const Color(0xFF0E2C2C),
-        size: 24,
-      ),
-    );
+    return TopProductsChart();
   }
 }
 

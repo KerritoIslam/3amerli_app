@@ -16,6 +16,31 @@ class AdminProductsPage extends StatefulWidget {
   State<AdminProductsPage> createState() => _AdminProductsPageState();
 }
 
+class _CategoryOption extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryOption({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      title: Text(label),
+      leading: Icon(
+        isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
+      ),
+      onTap: onTap,
+      dense: true,
+    );
+  }
+}
+
 class _AdminProductsPageState extends State<AdminProductsPage> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedProductIds = {};
@@ -308,7 +333,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                       }
 
                       return Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        margin: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: const BorderRadius.only(
@@ -326,8 +351,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                             // Table Header
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 12,
+                                horizontal: 6,
+                                vertical: 6,
                               ),
                               decoration: BoxDecoration(
                                 color: Colors.grey.shade50,
@@ -340,8 +365,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                 children: [
                                   // Select All Checkbox
                                   SizedBox(
-                                    width: 24,
-                                    height: 24,
+                                    width: 20,
+                                    height: 20,
                                     child: Checkbox(
                                       value: _selectedProductIds.length ==
                                           state.products.length,
@@ -360,14 +385,14 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                       activeColor: AppColors.brandDeep,
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 6),
                                   const Expanded(
                                     flex: 4,
                                     child: Text(
                                       'Produit',
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
-                                        fontSize: 11,
+                                        fontSize: 10,
                                       ),
                                     ),
                                   ),
@@ -613,13 +638,13 @@ class _ProductRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
         children: [
           // Checkbox
           SizedBox(
-            width: 24,
-            height: 24,
+            width: 20,
+            height: 20,
             child: Checkbox(
               value: isSelected,
               onChanged: onSelectChanged,
@@ -627,7 +652,7 @@ class _ProductRow extends StatelessWidget {
               activeColor: AppColors.brandDeep,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 6),
 
           // Product Info
           Expanded(
@@ -636,33 +661,32 @@ class _ProductRow extends StatelessWidget {
               children: [
                 // Product Image
                 Container(
-                  width: 40,
-                  height: 40,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade200,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: product.images.isNotEmpty
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(6),
                           child: Image.network(
                             product.images[product.mainImageIndex],
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                Icon(
+                            errorBuilder: (context, error, stackTrace) => Icon(
                               Icons.image_not_supported,
                               color: Colors.grey.shade400,
-                              size: 20,
+                              size: 16,
                             ),
                           ),
                         )
                       : Icon(
                           Icons.inventory_2_outlined,
                           color: Colors.grey.shade400,
-                          size: 20,
+                          size: 16,
                         ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 6),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,7 +695,7 @@ class _ProductRow extends StatelessWidget {
                         product.name,
                         style: const TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 12,
+                          fontSize: 11,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -680,7 +704,7 @@ class _ProductRow extends StatelessWidget {
                       Text(
                         'ID: ${product.id}',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 9,
                           color: Colors.grey.shade600,
                         ),
                       ),
@@ -697,7 +721,7 @@ class _ProductRow extends StatelessWidget {
             child: Text(
               '${product.pricePerLot.toStringAsFixed(2)} DZD',
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 10,
                 fontWeight: FontWeight.w500,
               ),
               textAlign: TextAlign.center,
@@ -706,6 +730,8 @@ class _ProductRow extends StatelessWidget {
             ),
           ),
 
+          
+
           // Stock Status
           Expanded(
             flex: 2,
@@ -713,23 +739,17 @@ class _ProductRow extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  product.stockStatus == 'En stock'
-                      ? Icons.check_circle
-                      : Icons.warning,
-                  size: 14,
-                  color: product.stockStatus == 'En stock'
-                      ? Colors.green
-                      : Colors.red,
+                  product.stockStatus == 'En stock' ? Icons.check_circle : Icons.warning,
+                  size: 12,
+                  color: product.stockStatus == 'En stock' ? Colors.green : Colors.red,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 3),
                 Flexible(
                   child: Text(
                     product.stockStatus,
                     style: TextStyle(
-                      fontSize: 11,
-                      color: product.stockStatus == 'En stock'
-                          ? Colors.green
-                          : Colors.red,
+                      fontSize: 10,
+                      color: product.stockStatus == 'En stock' ? Colors.green : Colors.red,
                       fontWeight: FontWeight.w500,
                     ),
                     maxLines: 1,
@@ -739,10 +759,9 @@ class _ProductRow extends StatelessWidget {
               ],
             ),
           ),
-
           // Actions
           SizedBox(
-            width: 50,
+            width: 40,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -751,17 +770,17 @@ class _ProductRow extends StatelessWidget {
                   onTap: onEdit,
                   child: Icon(
                     Icons.edit_outlined,
-                    size: 18,
+                    size: 16,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 // Delete Button
                 InkWell(
                   onTap: onDelete,
                   child: const Icon(
                     Icons.delete_outline,
-                    size: 18,
+                    size: 16,
                     color: Colors.red,
                   ),
                 ),
@@ -770,31 +789,6 @@ class _ProductRow extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _CategoryOption extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const _CategoryOption({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(label),
-      leading: Icon(
-        isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
-      ),
-      onTap: onTap,
-      dense: true,
     );
   }
 }
