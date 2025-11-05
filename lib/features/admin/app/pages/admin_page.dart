@@ -53,7 +53,10 @@ class _AdminPageState extends State<AdminPage> {
       providers: [
         BlocProvider(create: (_) => sl<DashboardBloc>()),
         BlocProvider(create: (_) => sl<AdminOrdersBloc>()),
-        BlocProvider(create: (_) => sl<AdminProductsBloc>()),
+        // AdminProductsBloc is registered as a lazySingleton in DI. Provide it with
+        // BlocProvider.value so the provider won't close the singleton instance when
+        // the widget tree disposes (which would cause "Cannot add new events after calling close").
+        BlocProvider.value(value: sl<AdminProductsBloc>()),
         BlocProvider(create: (_) => sl<AdminUsersBloc>()),
       ],
       child: Scaffold(

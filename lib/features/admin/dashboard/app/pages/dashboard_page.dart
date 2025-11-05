@@ -178,8 +178,11 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildStatsGrid(DashboardLoaded state) {
     return Padding(
+      // Reduce the vertical padding so the performance section sits closer
       padding: const EdgeInsets.all(16),
       child: GridView.count(
+        // remove any internal grid padding (was causing extra sliver padding)
+        padding: EdgeInsets.zero,
         crossAxisCount: 2,
         crossAxisSpacing: 8,
         mainAxisSpacing: 8,
@@ -227,7 +230,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Widget _buildPerformanceSection(DashboardLoaded state) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

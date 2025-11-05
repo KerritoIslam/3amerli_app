@@ -8,6 +8,7 @@ import '../../domain/entities/admin_user.dart';
 import '../bloc/admin_users_bloc.dart';
 import '../bloc/admin_users_event.dart';
 import '../bloc/admin_users_state.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -96,65 +97,70 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Header
+          // Header (centered title)
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Utilisateurs',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+              children: const [
+                SizedBox(width: 40),
+                Expanded(
+                  child: Center(
+                    child: Text(
+                      'Utilisateurs',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-                Row(
-                  children: [
-                    if (_selectedUserIds.isNotEmpty) ...[
-                      ElevatedButton(
-                        onPressed: _onDeleteSelected,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                        ),
-                        child: Text(
-                          'Supprimer (${_selectedUserIds.length})',
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    ElevatedButton(
-                      onPressed: () {
-                        // TODO: Implement export to CSV
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.lightPrimary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                      ),
-                      child: const Text('Exporter CVS'),
-                    ),
-                  ],
-                ),
+                SizedBox(width: 40),
               ],
             ),
           ),
 
-          // Search Bar
+          // Compact Search + Export row (match products: 40px height)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: AppSearchbar(
-              onChanged: _onSearchChanged,
+            child: SizedBox(
+              height: 40,
+              child: Row(
+                children: [
+                  Expanded(child: SizedBox(height: 40, child: AppSearchbar(onChanged: _onSearchChanged))),
+                  const SizedBox(width: 8),
+                  if (_selectedUserIds.isNotEmpty) ...[
+                    ElevatedButton(
+                      onPressed: _onDeleteSelected,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        minimumSize: const Size(0, 40),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      ),
+                      child: Text('Supprimer (${_selectedUserIds.length})', style: const TextStyle(fontSize: 13)),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                  ElevatedButton(
+                    onPressed: () {
+                      // TODO: Implement export to CSV
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      minimumSize: const Size(0, 40),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                    ),
+                    child: const Text('Exporter CSV', style: TextStyle(fontSize: 13)),
+                  ),
+                ],
+              ),
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
 
           // Tabs
           Padding(
@@ -176,7 +182,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
 
           // Users Table
           Expanded(
@@ -201,6 +207,12 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   Widget _buildUsersTable(List<AdminUser> users) {
+    // Filter out delivery/livreur roles entirely from the admin users table
+    final filteredUsers = users.where((u) {
+      final rk = u.role.toLowerCase();
+      return !(rk.contains('livreur') || rk.contains('delivery'));
+    }).toList();
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Container(
@@ -214,9 +226,9 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Table Header
+            // Table Header (reduced vertical padding for denser rows)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
               decoration: const BoxDecoration(
                 color: Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.only(
@@ -230,11 +242,11 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   SizedBox(
                     width: 24,
                     child: Checkbox(
-                      value: _selectedUserIds.length == users.length && users.isNotEmpty,
+                      value: _selectedUserIds.length == filteredUsers.length && filteredUsers.isNotEmpty,
                       onChanged: (value) {
                         setState(() {
                           if (value == true) {
-                            _selectedUserIds.addAll(users.map((u) => u.id));
+                            _selectedUserIds.addAll(filteredUsers.map((u) => u.id));
                           } else {
                             _selectedUserIds.clear();
                           }
@@ -242,6 +254,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       },
                       shape: const CircleBorder(),
                       activeColor: AppColors.brandDeep,
+                      visualDensity: VisualDensity.compact,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                   ),
                   const SizedBox(width: 6),
@@ -251,7 +265,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       'Nom',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ),
@@ -262,7 +276,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       'Tél',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ),
@@ -273,18 +287,18 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       'Rôle',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ),
                   const SizedBox(width: 4),
                   const SizedBox(
-                    width: 40,
+                    width: 80,
                     child: Text(
                       'Action',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                       textAlign: TextAlign.right,
                     ),
@@ -293,28 +307,33 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ),
             ),
 
-            // Table Body
+            // Table Body (use filtered users)
             Flexible(
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: users.length,
-                separatorBuilder: (context, index) => const Divider(height: 1),
+                itemCount: filteredUsers.length,
+                separatorBuilder: (context, index) => Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                ),
                 itemBuilder: (context, index) {
+                  final u = filteredUsers[index];
                   return _UserRow(
-                    user: users[index],
-                    isSelected: _selectedUserIds.contains(users[index].id),
+                    user: u,
+                    isSelected: _selectedUserIds.contains(u.id),
                     onSelectionChanged: (selected) {
                       setState(() {
                         if (selected) {
-                          _selectedUserIds.add(users[index].id);
+                          _selectedUserIds.add(u.id);
                         } else {
-                          _selectedUserIds.remove(users[index].id);
+                          _selectedUserIds.remove(u.id);
                         }
                       });
                     },
                     onView: () {
-                      context.push('/admin/users/${users[index].id}');
+                      context.push('/admin/users/${u.id}');
                     },
                     onDelete: () {
                       showDialog(
@@ -323,7 +342,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           return AlertDialog(
                             title: const Text('Confirmer la suppression'),
                             content: Text(
-                              'Voulez-vous vraiment supprimer ${users[index].name} ?',
+                              'Voulez-vous vraiment supprimer ${u.name} ?',
                             ),
                             actions: [
                               TextButton(
@@ -334,7 +353,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                 onPressed: () {
                                   context.read<AdminUsersBloc>().add(
                                         AdminUsersDeleteEvent(
-                                          userId: users[index].id,
+                                          userId: u.id,
                                         ),
                                       );
                                   Navigator.of(dialogContext).pop();
@@ -377,7 +396,7 @@ class _TabButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected ? AppColors.lightPrimary : Colors.grey[200],
           borderRadius: BorderRadius.circular(20),
@@ -412,7 +431,7 @@ class _UserRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
       child: Row(
         children: [
           // Checkbox
@@ -435,7 +454,7 @@ class _UserRow extends StatelessWidget {
               user.name,
               style: const TextStyle(
                 fontWeight: FontWeight.w500,
-                fontSize: 12,
+                fontSize: 11,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -449,7 +468,7 @@ class _UserRow extends StatelessWidget {
             flex: 3,
             child: Text(
               user.phone,
-              style: const TextStyle(fontSize: 11),
+              style: const TextStyle(fontSize: 10),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -457,34 +476,45 @@ class _UserRow extends StatelessWidget {
 
           const SizedBox(width: 4),
 
-          // Role Badge
+          // Role Badge with role-specific colors
           Expanded(
             flex: 3,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: AppColors.lightPrimary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                user.role,
-                style: TextStyle(
-                  color: AppColors.lightPrimary,
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
+            child: Builder(builder: (context) {
+              final roleKey = user.role.toLowerCase();
+              Color textColor = AppColors.lightPrimary;
+              Color bgColor = AppColors.lightPrimary.withOpacity(0.1);
+              if (roleKey.contains('supermarket') || roleKey.contains('supérette')) {
+                textColor = const Color(0xFF4AA785);
+                bgColor = const Color(0xFFDEF8EE);
+              } else if (roleKey.contains('gros') || roleKey.contains('gross') || roleKey.contains('grosist')) {
+                // grosist: text -> #FFFBD4 / background -> #FFC555
+                bgColor = const Color(0xFFFFFBD4);
+                textColor = const Color(0xFFFFC555);
+              } else if (roleKey.contains('admin')) {
+                // admin: text -> #EDEDFF / background -> #8A8CD9
+                bgColor = const Color(0xFFEDEDFF);
+                textColor = const Color(0xFF8A8CD9);
+              }
+
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(8)),
+                child: Text(
+                  user.role,
+                  style: TextStyle(color: textColor, fontSize: 9, fontWeight: FontWeight.w500),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-              ),
-            ),
+              );
+            }),
           ),
 
           const SizedBox(width: 4),
 
-          // Actions
+          // Actions (view, suspend, delete) - all brandDeep (compact spacing)
           SizedBox(
-            width: 40,
+            width: 80,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -492,17 +522,25 @@ class _UserRow extends StatelessWidget {
                   onTap: onView,
                   child: Icon(
                     Icons.visibility_outlined,
-                    size: 16,
-                    color: AppColors.lightPrimary,
+                    size: 14,
+                    color: AppColors.brandDeep,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () {
+                    // TODO: suspend action handler (dispatch event)
+                  },
+                  child: SvgPicture.asset('assets/icons/suspend.svg', width: 14, height: 14, color: AppColors.brandDeep, semanticsLabel: 'suspend'),
+                ),
+                const SizedBox(width: 4),
                 GestureDetector(
                   onTap: onDelete,
-                  child: const Icon(
-                    Icons.close,
-                    size: 16,
-                    color: Colors.red,
+                  child: SvgPicture.asset(
+                    'assets/icons/delete.svg',
+                    width: 14,
+                    height: 14,
+                    color: AppColors.brandDeep,
                   ),
                 ),
               ],

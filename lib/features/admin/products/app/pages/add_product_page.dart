@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/product.dart';
@@ -7,8 +8,7 @@ import '../bloc/admin_products_bloc.dart';
 import '../bloc/admin_products_event.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
-import 'package:amerli_app/widgets/app_text_feild.dart';
-import 'package:amerli_app/utils/constants/app_colors.dart';
+// import 'package:amerli_app/utils/constants/app_colors.dart';
 
 class AddProductPage extends StatefulWidget {
   final String? productId; // null for add, non-null for edit
@@ -23,19 +23,36 @@ class _AddProductPageState extends State<AddProductPage> {
   int _currentStep = 0;
   final _formKey1 = GlobalKey<FormState>();
   final _formKey2 = GlobalKey<FormState>();
+  // keys for individual form fields so we can read/show their errorText
+  final GlobalKey<FormFieldState<String>> _nameFieldKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _quantityFieldKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _priceFieldKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _availableQuantityFieldKey = GlobalKey<FormFieldState<String>>();
+  // key to measure the form content height so the stepper can match it
+  final GlobalKey _formContentKey = GlobalKey();
+  double _formContentHeight = 0.0;
+  // keys to measure the step labels inside the form so we can align circles
+  final GlobalKey _step1LabelKey = GlobalKey();
+  final GlobalKey _step2LabelKey = GlobalKey();
+  double _labelCenterDistance = 0.0;
 
   // Step 1 fields
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _brandController = TextEditingController();
+  String? _selectedBrand;
   final TextEditingController _quantityController = TextEditingController();
   String? _selectedCategory;
+  final List<String> _brands = [
+    'Marque A',
+    'Marque B',
+    'Marque C',
+  ];
   final List<String> _specifications = [];
   final TextEditingController _specController = TextEditingController();
   DateTime? _expirationDate;
 
   // Step 2 fields
   final TextEditingController _priceController = TextEditingController();
-  String _stockStatus = 'En stock';
+  // stock status is derived from available quantity; removed manual status field
   final TextEditingController _availableQuantityController =
       TextEditingController();
   final List<String> _images = [];
@@ -53,7 +70,6 @@ class _AddProductPageState extends State<AddProductPage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _brandController.dispose();
     _quantityController.dispose();
     _specController.dispose();
     _priceController.dispose();
@@ -71,13 +87,7 @@ class _AddProductPageState extends State<AddProductPage> {
     }
   }
 
-  void _previousStep() {
-    if (_currentStep > 0) {
-      setState(() {
-        _currentStep = _currentStep - 1;
-      });
-    }
-  }
+  // previous-step helper removed (not used)
 
   Future<void> _pickImages() async {
     final ImagePicker picker = ImagePicker();
@@ -132,13 +142,13 @@ class _AddProductPageState extends State<AddProductPage> {
         id: productId,
         name: _nameController.text,
         category: _selectedCategory ?? '',
-        brand: _brandController.text,
-        quantityPerLot: int.parse(_quantityController.text),
+        brand: _selectedBrand ?? '',
+        quantityPerLot: int.tryParse(_quantityController.text) ?? 0,
         specifications: _specifications,
         expirationDate: _expirationDate,
-        pricePerLot: double.parse(_priceController.text),
-        stockStatus: _stockStatus,
-        availableQuantity: int.parse(_availableQuantityController.text),
+        pricePerLot: double.tryParse(_priceController.text) ?? 0.0,
+        stockStatus: (int.tryParse(_availableQuantityController.text) ?? 0) > 0 ? 'En stock' : 'Rupture',
+        availableQuantity: int.tryParse(_availableQuantityController.text) ?? 0,
         images: _images,
         mainImageIndex: _mainImageIndex,
       );
@@ -158,6 +168,10 @@ class _AddProductPageState extends State<AddProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // allow the scaffold to resize when the keyboard appears so available
+      // constraints reflect the reduced viewport and children with Expanded
+      // receive finite height constraints
+      resizeToAvoidBottomInset: true,
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
@@ -167,32 +181,47 @@ class _AddProductPageState extends State<AddProductPage> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
+                  // App-standard back button (SVG) to match product details page
                   InkWell(
                     onTap: () => context.pop(),
+                    borderRadius: BorderRadius.circular(24),
                     child: Container(
                       width: 40,
                       height: 40,
                       decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
                         shape: BoxShape.circle,
-                        color: Colors.grey.shade200,
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 20,
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(
+                        'assets/icons/back_arrow.svg',
+                        width: 16,
+                        height: 16,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                        placeholderBuilder: (context) => Icon(
+                          Icons.arrow_back,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        ),
                       ),
                     ),
                   ),
+
                   const SizedBox(width: 12),
+
+                  // Centered title
                   Expanded(
-                    child: Text(
-                      widget.productId == null ? 'Ajouter' : 'Modifier',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
+                    child: Center(
+                      child: Text(
+                        widget.productId == null ? 'Ajouter' : 'Modifier',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -201,26 +230,57 @@ class _AddProductPageState extends State<AddProductPage> {
 
             // Content with side indicator
             Expanded(
-              child: Row(
-                children: [
-                  // Vertical Step Indicator on the left
-                  Container(
-                    width: 40,
-                    padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
-                    child: _VerticalStepIndicator(
-                      currentStep: _currentStep,
-                      totalSteps: 2,
-                    ),
-                  ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // bottom padding so focused fields are visible above the keyboard
+                  final bottomInset = MediaQuery.of(context).viewInsets.bottom + 24.0;
+                  // Schedule a post-frame measurement of the form content height
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _measureFormHeight();
+                  });
 
-                  // Form Content
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: _currentStep == 0 ? _buildStep1() : _buildStep2(),
+                  // Use a vertical scroll view that contains a Row with two children
+                  // so both stepper and form are part of the same scrollable area.
+                  // Avoid Expanded inside the scroll (no vertical flex) to prevent
+                  // unbounded constraints.
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      left: 12.0,
+                      right: 16.0,
+                      bottom: bottomInset,
+                      top: 0,
                     ),
-                  ),
-                ],
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Vertical Step Indicator on the left — fixed width
+                        Container(
+                          width: 40,
+                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+                          // build a column where the connector height matches the
+                          // measured form content height (so it visually aligns)
+                          child: _MeasuredStepper(
+                            currentStep: _currentStep,
+                            totalSteps: 2,
+                            connectorHeight: _computedConnectorHeight(),
+                          ),
+                        ),
+
+                        // small spacing between indicator and form column
+                        const SizedBox(width: 6),
+
+                        // Form Content container — give it the remaining width
+                        SizedBox(
+                          width: constraints.maxWidth - 40 - 6 - 28, // account for paddings
+                          child: Container(
+                            key: _formContentKey,
+                            child: _currentStep == 0 ? _buildStep1() : _buildStep2(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
 
@@ -263,12 +323,76 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
+  void _measureFormHeight() {
+    try {
+      final ctx = _formContentKey.currentContext;
+      if (ctx == null) return;
+      final renderBox = ctx.findRenderObject() as RenderBox?;
+      if (renderBox == null) return;
+      final h = renderBox.size.height;
+      if (h > 0 && (h - _formContentHeight).abs() > 0.5) {
+        setState(() {
+          _formContentHeight = h;
+        });
+      }
+      // measure label centers distance if available
+      final ctx1 = _step1LabelKey.currentContext;
+      final ctx2 = _step2LabelKey.currentContext;
+      if (ctx1 != null && ctx2 != null) {
+        final rb1 = ctx1.findRenderObject() as RenderBox?;
+        final rb2 = ctx2.findRenderObject() as RenderBox?;
+        if (rb1 != null && rb2 != null) {
+          final p1 = rb1.localToGlobal(Offset.zero);
+          final p2 = rb2.localToGlobal(Offset.zero);
+          final center1 = p1.dy + rb1.size.height / 2;
+          final center2 = p2.dy + rb2.size.height / 2;
+          final dist = (center2 - center1).abs();
+          if (dist > 0 && (dist - _labelCenterDistance).abs() > 0.5) {
+            setState(() {
+              _labelCenterDistance = dist;
+            });
+          }
+        }
+      }
+    } catch (_) {
+      // ignore measurement errors
+    }
+  }
+
+  double _computedConnectorHeight() {
+    const double circleDiameter = 12.0;
+    // Prefer label-measured center distance when available: connector is
+    // centerDistance minus one circle diameter (distance between circle edges).
+    if (_labelCenterDistance > 0.5) {
+      final h = (_labelCenterDistance - circleDiameter).clamp(0.0, double.infinity);
+      return h;
+    }
+
+    // fallback: use form height based heuristic
+    final subtract = circleDiameter + 6.0 + 6.0 + circleDiameter; // circles + spacings
+    final h = (_formContentHeight - subtract).clamp(0.0, double.infinity);
+    return h;
+  }
+
   Widget _buildStep1() {
     return Form(
       key: _formKey1,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Step label aligned with the first circle of the stepper
+          const SizedBox(height: 24),
+          Container(
+            key: _step1LabelKey,
+            child: Text(
+              'etap 1',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           const Text(
             'Informations générales',
             style: TextStyle(
@@ -280,12 +404,13 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 20),
 
           // Product Name
-          AppTextField(
+          _buildTextField(
+            label: 'Nom du produit',
+            required: true,
             controller: _nameController,
-            hintText: 'Ex: Coca-Cola 1.5L',
-            labelText: 'Nom du produit *',
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Ce champ est requis' : null,
+            keyboardType: TextInputType.text,
+            inputFormatters: null,
+            fieldKey: _nameFieldKey,
           ),
           const SizedBox(height: 16),
 
@@ -329,37 +454,83 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 16),
 
-          // Brand
-          AppTextField(
-            controller: _brandController,
-            hintText: 'Ex: Coca-Cola',
-            labelText: 'Marque *',
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Ce champ est requis' : null,
+          // Brand (selection)
+          _buildLabel('Marque', required: true),
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            child: DropdownButtonFormField<String>(
+              value: _selectedBrand,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                hintText: 'Sélectionner une marque',
+                hintStyle: TextStyle(color: Colors.grey.shade500),
+              ),
+              validator: (value) => value == null ? 'Marque requise' : null,
+              items: _brands
+                  .map((b) => DropdownMenuItem(
+                        value: b,
+                        child: Text(b),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  _selectedBrand = value;
+                });
+              },
+            ),
           ),
           const SizedBox(height: 16),
 
           // Quantity per lot
-          AppTextField(
+          _buildTextField(
+            label: 'Quantité par lot',
+            required: true,
             controller: _quantityController,
-            hintText: 'Ex: 12',
-            labelText: 'Quantité par lot *',
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Ce champ est requis' : null,
+            fieldKey: _quantityFieldKey,
           ),
           const SizedBox(height: 16),
 
           // Specifications
           _buildLabel('Spécifications'),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: AppTextField(
-                  controller: _specController,
-                  hintText: 'Ex: 1.5L',
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 40,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                  child: TextFormField(
+                    controller: _specController,
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                      ),
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontSize: 14),
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
@@ -402,7 +573,7 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 16),
 
           // Expiration Date
-          _buildLabel('Date d\'expiration'),
+          _buildLabel('Date d\'expiration', hint: 'JJ/MM/YYYY'),
           const SizedBox(height: 8),
           InkWell(
             onTap: () async {
@@ -420,7 +591,7 @@ class _AddProductPageState extends State<AddProductPage> {
             },
             child: Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(24),
@@ -433,7 +604,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 children: [
                   Text(
                     _expirationDate == null
-                        ? 'Sélectionner une date'
+                        ? 'JJ/MM/YYYY'
                         : '${_expirationDate!.day}/${_expirationDate!.month}/${_expirationDate!.year}',
                     style: TextStyle(
                       color: _expirationDate == null
@@ -459,6 +630,19 @@ class _AddProductPageState extends State<AddProductPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Step label aligned visually with the second circle of the stepper
+          const SizedBox(height: 72),
+          Container(
+            key: _step2LabelKey,
+            child: Text(
+              'etap 2',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           const Text(
             'Détails du prix',
             style: TextStyle(
@@ -470,14 +654,13 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 20),
 
           // Price per lot
-          AppTextField(
+          _buildTextField(
+            label: 'Prix par lot',
+            required: true,
             controller: _priceController,
-            hintText: 'Ex: 1800.00',
-            labelText: 'Prix par lot *',
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            suffixText: ' DZD',
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Ce champ est requis' : null,
+            suffix: ' DZD',
+            fieldKey: _priceFieldKey,
           ),
           const SizedBox(height: 24),
 
@@ -491,49 +674,16 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 20),
 
-          // Stock Status
-          _buildLabel('Statut du stock', required: true),
-          const SizedBox(height: 8),
-          Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            child: DropdownButtonFormField<String>(
-              value: _stockStatus,
-              decoration: const InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-              items: const [
-                DropdownMenuItem(value: 'En stock', child: Text('En stock')),
-                DropdownMenuItem(value: 'Rupture', child: Text('Rupture')),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  _stockStatus = value!;
-                });
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
+          // Stock status removed; derived from available quantity
 
           // Available Quantity
-          AppTextField(
+          _buildTextField(
+            label: 'Quantité disponible',
+            required: true,
             controller: _availableQuantityController,
-            hintText: 'Ex: 150',
-            labelText: 'Quantité disponible *',
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            validator: (value) =>
-                value == null || value.isEmpty ? 'Ce champ est requis' : null,
+            fieldKey: _availableQuantityFieldKey,
           ),
           const SizedBox(height: 24),
 
@@ -728,232 +878,186 @@ class _AddProductPageState extends State<AddProductPage> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     String? suffix,
+    GlobalKey<FormFieldState<String>>? fieldKey,
   }) {
+    // If a FormField key was provided, prefer showing its error text in the
+    // hint area above the input (so the input box doesn't change size).
+    final String? fieldError = fieldKey?.currentState?.errorText;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(label, required: required),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          keyboardType: keyboardType,
-          inputFormatters: inputFormatters,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey.shade500),
-            suffixText: suffix,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.primary,
+        // show hint or error in the label area
+        _buildLabel(label, required: required, hint: fieldError ?? hint, hintIsError: fieldError != null),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: 40,
+          child: TextFormField(
+            key: fieldKey,
+            controller: controller,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            onChanged: (_) {
+              // rebuild parent so the label/hint can update when validation changes
+              if (fieldKey != null) setState(() {});
+            },
+            decoration: InputDecoration(
+              // hide the default error text (we render it in the hint area)
+              errorStyle: const TextStyle(height: 0, fontSize: 0, color: Colors.transparent),
+              suffixText: suffix,
+              isDense: true,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
               ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(24),
-              borderSide: BorderSide(
-                color: Theme.of(context).colorScheme.primary,
-              ),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 16,
-            ),
-          ),
-          validator: required
-              ? (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ce champ est requis';
+            style: const TextStyle(fontSize: 14),
+            validator: required
+                ? (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Ce champ est requis';
+                    }
+                    return null;
                   }
-                  return null;
-                }
-              : null,
+                : null,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildLabel(String label, {bool required = false}) {
-    return Row(
+  Widget _buildLabel(String label, {bool required = false, String? hint, bool hintIsError = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black,
-          ),
-        ),
-        if (required)
-          const Text(
-            ' *',
-            style: TextStyle(
-              color: Colors.red,
-              fontSize: 14,
+        Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black,
+              ),
             ),
+            if (required)
+              const Text(
+                ' *',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 14,
+                ),
+              ),
+          ],
+        ),
+        if (hint != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            hint,
+            style: hintIsError
+                ? const TextStyle(color: Colors.red, fontSize: 12)
+                : TextStyle(color: Colors.grey.shade500, fontSize: 12),
           ),
+        ],
       ],
     );
   }
 }
 
-class _VerticalStepIndicator extends StatefulWidget {
+class _MeasuredStepper extends StatelessWidget {
   final int currentStep;
   final int totalSteps;
+  final double connectorHeight;
 
-  const _VerticalStepIndicator({
-    required this.currentStep,
-    required this.totalSteps,
-  });
-
-  @override
-  State<_VerticalStepIndicator> createState() => _VerticalStepIndicatorState();
-}
-
-class _VerticalStepIndicatorState extends State<_VerticalStepIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _positionAnimation;
-  late Animation<Color?> _colorAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _animationController = AnimationController(
-      duration: const Duration(milliseconds: 400),
-      vsync: this,
-    );
-
-    _positionAnimation = Tween<double>(
-      begin: 1.0, // Full height
-      end: 200.0, // 200px from first circle
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-
-    _colorAnimation = ColorTween(
-      begin: Colors.grey.shade300,
-      end: const Color(0xFFA3C335), // Primary color
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOut,
-    ));
-
-    if (widget.currentStep >= 1) {
-      _animationController.value = 1.0;
-    }
-  }
-
-  @override
-  void didUpdateWidget(_VerticalStepIndicator oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.currentStep >= 1 && oldWidget.currentStep < 1) {
-      _animationController.forward();
-    } else if (widget.currentStep < 1 && oldWidget.currentStep >= 1) {
-      _animationController.reverse();
-    }
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
+  const _MeasuredStepper({required this.currentStep, required this.totalSteps, required this.connectorHeight});
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _animationController,
-      builder: (context, child) {
-        final isCompleted = widget.currentStep >= 1;
-        final lineHeight = isCompleted ? _positionAnimation.value : null;
-        final lineColor = isCompleted
-            ? _colorAnimation.value ?? Theme.of(context).colorScheme.primary
-            : Colors.grey.shade300;
+    final primary = Theme.of(context).colorScheme.primary;
+    final isCompleted = currentStep >= 1;
+    final lineColor = isCompleted ? primary : Colors.grey.shade300;
 
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            return Stack(
-              children: [
-                // First circle (always at top)
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _buildCircle(
-                      context,
-                      index: 0,
-                      currentStep: widget.currentStep,
-                    ),
-                  ),
-                ),
-
-                // Connecting line
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  top: 12,
-                  child: Center(
-                    child: Container(
-                      width: 2,
-                      height: lineHeight ?? (constraints.maxHeight - 24),
-                      color: lineColor,
-                    ),
-                  ),
-                ),
-
-                // Second circle (animated position)
-                AnimatedPositioned(
-                  duration: const Duration(milliseconds: 400),
-                  curve: Curves.easeOut,
-                  top: isCompleted ? lineHeight! + 12 : constraints.maxHeight - 12,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: _buildCircle(
-                      context,
-                      index: 1,
-                      currentStep: widget.currentStep,
-                    ),
-                  ),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildCircle(BuildContext context, {required int index, required int currentStep}) {
-    final isActive = index == currentStep;
-    final isCircleCompleted = index < currentStep;
-    final color = isActive || isCircleCompleted
-        ? Theme.of(context).colorScheme.primary
-        : Colors.grey.shade300;
-
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 300),
-      tween: Tween<double>(
-        begin: isActive || isCircleCompleted ? 0.8 : 1.0,
-        end: 1.0,
-      ),
-      curve: Curves.easeOut,
-      builder: (context, scale, child) {
-        return Transform.scale(
-          scale: scale,
-          child: Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isActive || isCircleCompleted ? color : Colors.white,
-              border: Border.all(color: color, width: 2),
+    Widget circle(int index) {
+      final isActive = index == currentStep;
+      final isDone = index < currentStep;
+      final color = isActive || isDone ? primary : Colors.grey.shade300;
+      return TweenAnimationBuilder<double>(
+        duration: const Duration(milliseconds: 250),
+        tween: Tween<double>(begin: isActive || isDone ? 0.85 : 1.0, end: 1.0),
+        builder: (context, scale, child) {
+          return Transform.scale(
+            scale: scale,
+            child: Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isActive || isDone ? color : Colors.white,
+                border: Border.all(color: color, width: 2),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      );
+    }
+
+  // If the user is on the second step (currentStep == 1) we set the desired
+  // center-to-center distance between the two circles to 50 pixels so the
+  // second circle rises. Convert that to the connector height (center
+  // distance minus circle diameter). Otherwise use the measured connector
+  // height passed in.
+  const double desiredCenterDistanceOnStep2 = 50.0;
+  final double circleDiameter = 12.0; // must match circle() size
+  final double totalConnector = (currentStep == 1)
+    ? (desiredCenterDistanceOnStep2 - circleDiameter).clamp(0.0, double.infinity)
+    : connectorHeight.clamp(0.0, double.infinity);
+
+  // We'll render the full connector (no artificial spare gaps) so the circles
+  // move to satisfy the totalConnector height. AnimatedContainer will smooth
+  // the transition when the step changes.
+  final double displayedConnector = totalConnector;
+  final double spareAbove = 0.0;
+  final double spareBelow = 0.0;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Center(child: circle(0)),
+        // spacer above the visible connector (animated for smoothness)
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          height: spareAbove,
+        ),
+        // visible connector segment — directly adjacent to the circles
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          width: 2,
+          height: displayedConnector,
+          color: lineColor,
+        ),
+        // spacer below the visible connector
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut,
+          height: spareBelow,
+        ),
+        Center(child: circle(1)),
+      ],
     );
   }
 }
+

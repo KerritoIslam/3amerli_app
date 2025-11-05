@@ -77,17 +77,20 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
+      // pending -> #FFC555
       case 'en attente':
-        return Colors.orange;
-      case 'en cours':
+        return const Color(0xFFFFC555);
+      // preparing -> #59A8D4
       case 'en préparation':
-        return Colors.blue;
+        return const Color(0xFF59A8D4);
+      // delivered -> #4AA785
       case 'livrée':
       case 'livré':
-        return Colors.green;
+        return const Color(0xFF4AA785);
+      // canceled -> #F34141
       case 'annulée':
       case 'annulé':
-        return Colors.red;
+        return const Color(0xFFF34141);
       default:
         return Colors.grey;
     }
@@ -332,7 +335,8 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                                 itemCount: state.orders.length,
                                 separatorBuilder: (context, index) => Divider(
                                   height: 1,
-                                  color: Colors.grey.shade200,
+                                  thickness: 1,
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
                                 ),
                                 itemBuilder: (context, index) {
                                   final order = state.orders[index];
@@ -489,10 +493,10 @@ class _OrderRow extends StatelessWidget {
                 InkWell(
                   onTap: onView,
                   child: Icon(
-                    Icons.visibility_outlined,
-                    size: 14,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                      Icons.visibility_outlined,
+                      size: 14,
+                      color: AppColors.brandDeep,
+                    ),
                 ),
                 const SizedBox(width: 4),
                 // Cancel Button

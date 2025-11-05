@@ -7,6 +7,7 @@ import '../bloc/admin_products_state.dart';
 import '../../domain/entities/product.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 
 class AdminProductsPage extends StatefulWidget {
@@ -16,30 +17,7 @@ class AdminProductsPage extends StatefulWidget {
   State<AdminProductsPage> createState() => _AdminProductsPageState();
 }
 
-class _CategoryOption extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
 
-  const _CategoryOption({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(label),
-      leading: Icon(
-        isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-        color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey,
-      ),
-      onTap: onTap,
-      dense: true,
-    );
-  }
-}
 
 class _AdminProductsPageState extends State<AdminProductsPage> {
   final TextEditingController _searchController = TextEditingController();
@@ -67,17 +45,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
         );
   }
 
-  void _onCategoryFilter(String? category) {
-    setState(() {
-      _selectedCategory = category;
-    });
-    context.read<AdminProductsBloc>().add(
-          AdminProductsLoadEvent(
-            query: _searchController.text,
-            category: category,
-          ),
-        );
-  }
+  
 
   void _onDeleteProduct(String id) {
     showDialog(
@@ -178,23 +146,26 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                         ),
                       ),
                     ),
-                    Builder(
-                      builder: (buttonContext) => InkWell(
-                        onTap: () => _showOptionsMenu(buttonContext),
-                        child: Container(
-                          width: 18.5,
-                          height: 18.5,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(24),
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 1.5,
+                    Padding(
+                      padding: const EdgeInsets.only(right: 24.0),
+                      child: Builder(
+                        builder: (buttonContext) => InkWell(
+                          onTap: () => _showOptionsMenu(buttonContext),
+                          child: Container(
+                            width: 20,
+                            height: 20,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: Theme.of(context).colorScheme.primary,
+                                width: 1.5,
+                              ),
                             ),
-                          ),
-                          child: Icon(
-                            Icons.more_horiz,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 20,
+                            child: Icon(
+                              Icons.more_horiz,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 14,
+                            ),
                           ),
                         ),
                       ),
@@ -219,32 +190,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                     ),
                     const SizedBox(width: 8),
 
-                    // Filter Button
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Colors.grey.shade300,
-                        ),
-                      ),
-                      child: IconButton(
-                        icon: Icon(
-                          Icons.filter_list,
-                          color: Colors.grey.shade700,
-                          size: 20,
-                        ),
-                        onPressed: () {
-                          // Show category filter dialog
-                          _showCategoryFilter();
-                        },
-                        padding: EdgeInsets.zero,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
+                   
                     // Add Button
                     ElevatedButton.icon(
                       onPressed: () {
@@ -441,7 +387,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                 itemCount: state.products.length,
                                 separatorBuilder: (context, index) => Divider(
                                   height: 1,
-                                  color: Colors.grey.shade200,
+                                  thickness: 1,
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
                                 ),
                                 itemBuilder: (context, index) {
                                   final product = state.products[index];
@@ -490,59 +437,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
     );
   }
 
-  void _showCategoryFilter() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Filtrer par catégorie'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _CategoryOption(
-              label: 'Toutes les catégories',
-              isSelected: _selectedCategory == null,
-              onTap: () {
-                _onCategoryFilter(null);
-                Navigator.pop(context);
-              },
-            ),
-            _CategoryOption(
-              label: 'Boissons',
-              isSelected: _selectedCategory == 'Boissons',
-              onTap: () {
-                _onCategoryFilter('Boissons');
-                Navigator.pop(context);
-              },
-            ),
-            _CategoryOption(
-              label: 'Boulangerie',
-              isSelected: _selectedCategory == 'Boulangerie',
-              onTap: () {
-                _onCategoryFilter('Boulangerie');
-                Navigator.pop(context);
-              },
-            ),
-            _CategoryOption(
-              label: 'Produits Laitiers',
-              isSelected: _selectedCategory == 'Produits Laitiers',
-              onTap: () {
-                _onCategoryFilter('Produits Laitiers');
-                Navigator.pop(context);
-              },
-            ),
-            _CategoryOption(
-              label: 'Épicerie',
-              isSelected: _selectedCategory == 'Épicerie',
-              onTap: () {
-                _onCategoryFilter('Épicerie');
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  
 
   void _showOptionsMenu(BuildContext context) {
     final RenderBox button = context.findRenderObject() as RenderBox;
@@ -738,24 +633,48 @@ class _ProductRow extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  product.stockStatus == 'En stock' ? Icons.check_circle : Icons.warning,
-                  size: 12,
-                  color: product.stockStatus == 'En stock' ? Colors.green : Colors.red,
-                ),
-                const SizedBox(width: 3),
-                Flexible(
-                  child: Text(
-                    product.stockStatus,
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: product.stockStatus == 'En stock' ? Colors.green : Colors.red,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                // Status icon and colored text (use svg icons and brand color for "En stock")
+                if (product.stockStatus.toLowerCase() == 'en stock') ...[
+                  SvgPicture.asset(
+                    'assets/icons/bag.svg',
+                    width: 12,
+                    height: 12,
+                    color: const Color(0xFFA1E3CB),
                   ),
-                ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      product.stockStatus,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Color(0xFFA1E3CB),
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ] else ...[
+                  SvgPicture.asset(
+                    'assets/icons/ruptur.svg',
+                    width: 12,
+                    height: 12,
+                    color: Colors.red,
+                  ),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      product.stockStatus,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.red,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -768,19 +687,21 @@ class _ProductRow extends StatelessWidget {
                 // Edit Button
                 InkWell(
                   onTap: onEdit,
-                  child: Icon(
-                    Icons.edit_outlined,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
+                  child: SvgPicture.asset(
+                      'assets/icons/small_edit.svg',
+                      width: 16,
+                      height: 16,
+                      color: AppColors.brandDeep,
+                    ),
                 ),
                 const SizedBox(width: 4),
                 // Delete Button
                 InkWell(
                   onTap: onDelete,
-                  child: const Icon(
-                    Icons.delete_outline,
-                    size: 16,
+                  child: SvgPicture.asset(
+                    'assets/icons/delete.svg',
+                    width: 16,
+                    height: 16,
                     color: Colors.red,
                   ),
                 ),
