@@ -50,7 +50,12 @@ class FiltersPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Text('Filtrer', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                      const Expanded(
+                        child: Center(
+                          child: Text('Filtrer', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                      const SizedBox(width: 40),
                     ],
                   ),
                 const SizedBox(height: 24),

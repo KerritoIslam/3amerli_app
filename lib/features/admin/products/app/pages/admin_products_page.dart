@@ -9,6 +9,7 @@ import 'package:amerli_app/core/error/error_handler.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import '../../../brands/app/pages/admin_brands_page.dart';
 
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
@@ -462,8 +463,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
       constraints: const BoxConstraints(
         minWidth: 183,
         maxWidth: 183,
-        minHeight: 115,
-        maxHeight: 115,
+        minHeight: 152,
+        maxHeight: 152,
       ),
       items: [
         PopupMenuItem(
@@ -476,6 +477,22 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           },
           child: const Text(
             'Gérer les catégories',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+        ),
+        PopupMenuItem(
+          height: 37,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          onTap: () {
+            Future.delayed(Duration.zero, () {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminBrandsPage()));
+            });
+          },
+          child: const Text(
+            'Gérer les marques',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,

@@ -32,6 +32,8 @@ import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
 import '../../features/catalog/app/pages/filters_page.dart';
 import '../../features/catalog/app/pages/categories_page.dart';
 import '../../features/catalog/app/pages/brands_page.dart';
+import '../../features/admin/users/app/pages/admin_users_filters_categories.dart';
+import '../../features/admin/users/app/pages/admin_users_filters_brands.dart';
 import '../../features/catalog/app/bloc/categories_bloc.dart';
 import '../../features/catalog/app/bloc/brands_bloc.dart';
 import '../config/injection.dart';
@@ -311,6 +313,14 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
             child: UserDetailPage(userId: id),
           );
         },
+      ),
+      GoRoute(
+        path: '/admin/users/filters/categories',
+        builder: (context, state) => const AdminUsersFiltersCategoriesPage(),
+      ),
+      GoRoute(
+        path: '/admin/users/filters/brands',
+        builder: (context, state) => const AdminUsersFiltersBrandsPage(),
       ),
       
       // Deep link routes for payment success/failure (HTTPS format)
