@@ -158,15 +158,15 @@ Future<void> init() async {
   sl.registerLazySingleton<OffersBloc>(() => OffersBloc(repository: sl<OffersRepository>()));
   sl.registerFactory(() => AdminBloc());
   // Admin features
-  sl.registerLazySingleton<DashboardRepository>(() => DashboardRepositoryImpl());
+  sl.registerLazySingleton<DashboardRepository>(() => DashboardRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerFactory(() => DashboardBloc(sl<DashboardRepository>()));
-  sl.registerLazySingleton<AdminOrdersRepository>(() => AdminOrdersRepositoryImpl());
+  sl.registerLazySingleton<AdminOrdersRepository>(() => AdminOrdersRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerFactory(() => AdminOrdersBloc(sl<AdminOrdersRepository>()));
-  sl.registerLazySingleton<AdminUsersRepository>(() => AdminUsersRepositoryImpl());
+  sl.registerLazySingleton<AdminUsersRepository>(() => AdminUsersRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerFactory(() => AdminUsersBloc(repository: sl<AdminUsersRepository>()));
-  sl.registerLazySingleton<AdminProductsRepository>(() => AdminProductsRepositoryImpl());
+  sl.registerLazySingleton<AdminProductsRepository>(() => AdminProductsRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerLazySingleton<AdminProductsBloc>(() => AdminProductsBloc(sl<AdminProductsRepository>()));
-  sl.registerLazySingleton<AdminCategoriesRepository>(() => AdminCategoriesRepositoryImpl());
+  sl.registerLazySingleton<AdminCategoriesRepository>(() => AdminCategoriesRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerFactory(() => AdminCategoriesBloc(sl<AdminCategoriesRepository>()));
   // Brands feature
   sl.registerFactory(() => BrandsBloc(repository: sl<BrandsRepository>()));

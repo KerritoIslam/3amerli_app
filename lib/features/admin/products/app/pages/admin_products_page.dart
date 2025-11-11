@@ -136,15 +136,21 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Expanded(
-                      child: Text(
-                        'Produits',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
+                    Expanded(
+                      child: BlocBuilder<AdminProductsBloc, AdminProductsState>(
+                        builder: (context, state) {
+                          var countText = '';
+                          if (state is AdminProductsLoaded) countText = ' (${state.products.length})';
+                          return Text(
+                            'Produits$countText',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
+                            ),
+                          );
+                        },
                       ),
                     ),
                     Padding(

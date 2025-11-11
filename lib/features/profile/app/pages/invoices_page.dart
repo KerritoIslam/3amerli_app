@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:amerli_app/core/config/injection.dart' as di;
+import 'package:amerli_app/core/dio/api_service.dart';
+import 'package:amerli_app/features/auth/domain/repositories/profile_repository.dart';
+import 'package:amerli_app/utils/constants/app_constants.dart';
 import 'dart:math' as math;
 
 import 'invoice_detail_page.dart';
@@ -16,12 +20,51 @@ class _InvoicesPageState extends State<InvoicesPage> {
   static const Color _darkGreen = Color(0xFF083B2E);
   static const Color _primary = Color(0xFFA7C957);
 
-  // Mock invoice data
-  final List<Map<String, String?>> _items = [
-    {'id': 'CMD-2025-001', 'date': '2025-01-02', 'pdf': 'https://www.example.com/invoice1.pdf'},
-    {'id': 'CMD-2025-002', 'date': '2025-02-10', 'pdf': 'https://www.example.com/invoice2.pdf'},
-    {'id': 'CMD-2025-003', 'date': '2025-03-18', 'pdf': null},
-  ];
+  // Real invoice data (populated from backend)
+  final List<Map<String, String?>> _items = [];
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchInvoices();
+  }
+
+  Future<void> _fetchInvoices() async {
+    setState(() => _isLoading = true);
+    try {
+      // Fetch current user id from ProfileRepository
+      final profileRepo = di.sl<ProfileRepository>();
+      final user = await profileRepo.fetchProfile();
+      final userId = user.id;
+
+      // Call backend to get invoices for current user
+      final api = di.sl<ApiService>();
+      final resp = await api.get('/invoices/user/$userId');
+      if (resp.statusCode != null && resp.statusCode! >= 200 && resp.statusCode! < 300 && resp.data != null) {
+        final list = resp.data as List<dynamic>;
+        final host = AppConstants.apiBaseUrl.replaceFirst('/api/v1', '');
+        final parsed = list.map((e) {
+          final m = Map<String, dynamic>.from(e as Map);
+          final id = m['id']?.toString() ?? m['invoiceNumber']?.toString() ?? '';
+          final created = m['createdAt']?.toString() ?? m['created_at']?.toString() ?? m['date']?.toString() ?? '';
+          final pdf = m['pdfUrl']?.toString() ?? '$host/api/v1/invoices/${m['id']}/download';
+          return {'id': id, 'date': created, 'pdf': pdf};
+        }).toList();
+        setState(() {
+          _items.clear();
+          _items.addAll(parsed.cast<Map<String, String?>>());
+        });
+      } else {
+        // leave empty or show message
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to load invoices: ${e.toString()}')));
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   final Set<String> _selected = {};
 
@@ -199,78 +242,80 @@ class _InvoicesPageState extends State<InvoicesPage> {
                           constraints: BoxConstraints(maxHeight: maxListHeight),
                           child: Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
-                            child: ListView.separated(
-                              shrinkWrap: true,
-                              itemCount: _items.length,
-                              separatorBuilder: (_, __) => const SizedBox(height: 6),
-                              itemBuilder: (context, index) {
-                                final item = _items[index];
-                                final id = item['id']!;
-                                return SizedBox(
-                                  height: 56,
-                                  child: Row(
-                                    children: [
-                                      // checkbox column (narrow)
-                                      SizedBox(width: 44, child: Center(child: _buildCheckbox(
-                                        value: _selected.contains(id),
-                                        onChanged: (v) => setState(() => v! ? _selected.add(id) : _selected.remove(id)),
-                                      ))),
-
-                                      // ID column (expandable)
-                                      Expanded(
-                                        child: Text(id, style: tableBodyIdStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                      ),
-
-                                      // Date column (fixed)
-                                      SizedBox(width: 120, child: Text(item['date']!, style: tableBodyDateStyle)),
-
-                                      // Actions (narrow with reduced spacing)
-                                      SizedBox(
-                                        width: 72,
+                            child: _isLoading
+                                ? const Center(child: CircularProgressIndicator())
+                                : ListView.separated(
+                                    shrinkWrap: true,
+                                    itemCount: _items.length,
+                                    separatorBuilder: (_, __) => const SizedBox(height: 6),
+                                    itemBuilder: (context, index) {
+                                      final item = _items[index];
+                                      final id = item['id']!;
+                                      return SizedBox(
+                                        height: 56,
                                         child: Row(
-                                          mainAxisAlignment: MainAxisAlignment.end,
                                           children: [
-                                            InkWell(
-                                              onTap: () => _openPdf(context, item['pdf']),
-                                              borderRadius: BorderRadius.circular(20),
-                                              child: Container(
-                                                width: 32,
-                                                height: 32,
-                                                alignment: Alignment.center,
-                                                child: SvgPicture.asset(
-                                                  'assets/icons/download.svg',
-                                                  width: 18,
-                                                  height: 18,
-                                                  color: _darkGreen,
-                                                  placeholderBuilder: (_) => const Icon(Icons.download, color: _darkGreen, size: 18),
-                                                ),
-                                              ),
+                                            // checkbox column (narrow)
+                                            SizedBox(width: 44, child: Center(child: _buildCheckbox(
+                                              value: _selected.contains(id),
+                                              onChanged: (v) => setState(() => v! ? _selected.add(id) : _selected.remove(id)),
+                                            ))),
+
+                                            // ID column (expandable)
+                                            Expanded(
+                                              child: Text(id, style: tableBodyIdStyle, maxLines: 1, overflow: TextOverflow.ellipsis),
                                             ),
-                                            const SizedBox(width: 2),
-                                            InkWell(
-                                              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceDetailPage(invoiceId: id, pdfUrl: item['pdf']))),
-                                              borderRadius: BorderRadius.circular(20),
-                                              child: Container(
-                                                width: 32,
-                                                height: 32,
-                                                alignment: Alignment.center,
-                                                child: SvgPicture.asset(
-                                                  'assets/icons/visible.svg',
-                                                  width: 18,
-                                                  height: 18,
-                                                  color: _darkGreen,
-                                                  placeholderBuilder: (_) => const Icon(Icons.remove_red_eye, color: _darkGreen, size: 18),
-                                                ),
+
+                                            // Date column (fixed)
+                                            SizedBox(width: 120, child: Text(item['date'] ?? '-', style: tableBodyDateStyle)),
+
+                                            // Actions (narrow with reduced spacing)
+                                            SizedBox(
+                                              width: 72,
+                                              child: Row(
+                                                mainAxisAlignment: MainAxisAlignment.end,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () => _openPdf(context, item['pdf']),
+                                                    borderRadius: BorderRadius.circular(20),
+                                                    child: Container(
+                                                      width: 32,
+                                                      height: 32,
+                                                      alignment: Alignment.center,
+                                                      child: SvgPicture.asset(
+                                                        'assets/icons/download.svg',
+                                                        width: 18,
+                                                        height: 18,
+                                                        color: _darkGreen,
+                                                        placeholderBuilder: (_) => const Icon(Icons.download, color: _darkGreen, size: 18),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 2),
+                                                  InkWell(
+                                                    onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => InvoiceDetailPage(invoiceId: id, pdfUrl: item['pdf']))),
+                                                    borderRadius: BorderRadius.circular(20),
+                                                    child: Container(
+                                                      width: 32,
+                                                      height: 32,
+                                                      alignment: Alignment.center,
+                                                      child: SvgPicture.asset(
+                                                        'assets/icons/visible.svg',
+                                                        width: 18,
+                                                        height: 18,
+                                                        color: _darkGreen,
+                                                        placeholderBuilder: (_) => const Icon(Icons.remove_red_eye, color: _darkGreen, size: 18),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ),
+                                            )
                                           ],
                                         ),
-                                      )
-                                    ],
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
                           ),
                         );
                       },

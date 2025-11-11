@@ -33,4 +33,20 @@ extension OrderStatusX on OrderStatus {
         return OrderStatus.confirmed;
     }
   }
+
+  /// Human-friendly label for display in the UI (French)
+  String get displayLabel {
+    switch (this) {
+      case OrderStatus.confirmed:
+        return 'En attente';
+      case OrderStatus.preparing:
+        return 'En préparation';
+      case OrderStatus.delivering:
+        return 'En livraison';
+      case OrderStatus.delivered:
+        return 'Livrée';
+      case OrderStatus.canceled:
+        return 'Annulée';
+    }
+  }
 }

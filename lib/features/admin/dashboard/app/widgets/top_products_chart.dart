@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../domain/entities/dashboard_stats.dart';
 
 class TopProductsChart extends StatefulWidget {
-  const TopProductsChart({super.key});
+  final List<TopProduct> products;
+
+  const TopProductsChart({super.key, this.products = const []});
 
   @override
   State<TopProductsChart> createState() => _TopProductsChartState();
@@ -12,50 +15,33 @@ class _TopProductsChartState extends State<TopProductsChart> with SingleTickerPr
   late AnimationController _animationController;
   late List<Animation<double>> _heightAnimations;
 
-  // Mock data for top 5 products
-  final List<ProductData> _products = [
-    ProductData(
-      name: 'Coca-Cola',
-      soldCount: 1234,
-      imageUrl: 'https://via.placeholder.com/60',
-    ),
-    ProductData(
-      name: 'Pain',
-      soldCount: 2431,
-      imageUrl: 'https://via.placeholder.com/60',
-    ),
-    ProductData(
-      name: 'Lait',
-      soldCount: 1876,
-      imageUrl: 'https://via.placeholder.com/60',
-    ),
-    ProductData(
-      name: 'Huile',
-      soldCount: 1543,
-      imageUrl: 'https://via.placeholder.com/60',
-    ),
-    ProductData(
-      name: 'Riz',
-      soldCount: 1092,
-      imageUrl: 'https://via.placeholder.com/60',
-    ),
-  ];
+  late final List<ProductData> _products;
 
   @override
   void initState() {
     super.initState();
-    _selectedIndex = 1; // Default to highest selling product
+    _selectedIndex = 0; // Default to first product
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
+
+    // Initialize products from widget (map domain entity to view model)
+    final input = widget.products;
+    _products = input.isNotEmpty
+        ? input
+            .map((p) => ProductData(name: p.name, soldCount: p.soldCount, imageUrl: p.imageUrl))
+            .toList()
+        : [
+            ProductData(name: '—', soldCount: 0, imageUrl: ''),
+          ];
 
     // Calculate relative heights (0.0 to 1.0)
     final maxSold = _products.map((p) => p.soldCount).reduce((a, b) => a > b ? a : b);
     _heightAnimations = _products.map((product) {
       return Tween<double>(
         begin: 0.0,
-        end: product.soldCount / maxSold,
+        end: product.soldCount / (maxSold == 0 ? 1 : maxSold),
       ).animate(
         CurvedAnimation(
           parent: _animationController,
@@ -144,7 +130,7 @@ class _TopProductsChartState extends State<TopProductsChart> with SingleTickerPr
     final isSelected = index == _selectedIndex;
     final product = _products[index];
     final heightFactor = _heightAnimations[index].value;
-    
+
     // Calculate bar height (minimum 20% to show small values)
     final barHeight = 120 * (0.2 + (heightFactor * 0.8));
 

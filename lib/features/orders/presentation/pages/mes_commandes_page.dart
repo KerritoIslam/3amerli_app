@@ -244,17 +244,7 @@ class _OrderCard extends StatelessWidget {
   }
 
   String _labelForStatus(OrderStatus s) {
-    switch (s) {
-      case OrderStatus.confirmed:
-        return 'Commande confirmée';
-      case OrderStatus.canceled:
-        return 'Annulée';
-      case OrderStatus.preparing:
-        return 'En préparation';
-      case OrderStatus.delivering:
-        return 'En cours de livraison';
-      case OrderStatus.delivered:
-        return 'Livrée';
-    }
+    // Use the centralized French display labels
+    return s.displayLabel;
   }
 }

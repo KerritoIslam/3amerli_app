@@ -30,19 +30,28 @@ class AdminUserModel {
   });
 
   factory AdminUserModel.fromJson(Map<String, dynamic> json) {
+  final idRaw = json['id'] ?? json['userId'] ?? json['user_id'];
+  final id = idRaw != null ? idRaw.toString() : '';
+  // coerce phone to string safely
+  final phoneRaw = json['phone'] ?? json['phoneNumber'] ?? json['phone_number'] ?? '';
+  final phone = phoneRaw != null ? phoneRaw.toString() : '';
+  // registration / last activity may be missing or in different formats
+  final registrationDateRaw = json['registrationDate'] ?? json['createdAt'] ?? json['created_at'];
+  final lastActivity = json['lastActivityDate'] ?? json['last_activity_date'] ?? json['lastActivity'];
+
     return AdminUserModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
+      id: id,
+      name: json['name'] ?? json['fullName'] ?? '',
       email: json['email'] ?? '',
-      phone: json['phone'] ?? '',
+      phone: phone,
       role: json['role'] ?? '',
       status: json['status'] ?? '',
-      storeName: json['storeName'],
-      representativeName: json['representativeName'],
-      address: json['address'],
-      registrationDate: json['registrationDate'] ?? '',
-      lastActivityDate: json['lastActivityDate'],
-      avatarUrl: json['avatarUrl'],
+      storeName: json['storeName'] ?? json['store_name'],
+      representativeName: json['representativeName'] ?? json['representative_name'],
+      address: json['address'] ?? json['location'] ?? json['addressLine'],
+      registrationDate: registrationDateRaw?.toString() ?? '',
+      lastActivityDate: lastActivity?.toString(),
+      avatarUrl: json['avatarUrl'] ?? json['avatar_url'],
     );
   }
 
@@ -57,10 +66,27 @@ class AdminUserModel {
       storeName: storeName,
       representativeName: representativeName,
       address: address,
-      registrationDate: DateTime.parse(registrationDate),
-      lastActivityDate: lastActivityDate != null ? DateTime.parse(lastActivityDate!) : null,
+      // Parse registrationDate defensively; backend may omit it or use unexpected formats
+      registrationDate: _parseDateSafe(registrationDate) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      lastActivityDate: lastActivityDate != null ? _parseDateSafe(lastActivityDate!) : null,
       avatarUrl: avatarUrl,
     );
+  }
+
+  static DateTime? _parseDateSafe(String? raw) {
+    if (raw == null) return null;
+    if (raw.isEmpty) return null;
+    // try ISO parse
+    final iso = DateTime.tryParse(raw);
+    if (iso != null) return iso;
+    // try parsing as int (epoch millis / seconds)
+    final asInt = int.tryParse(raw);
+    if (asInt != null) {
+      // Heuristic: if value looks like seconds (10 digits) convert to ms
+      if (raw.length <= 10) return DateTime.fromMillisecondsSinceEpoch(asInt * 1000);
+      return DateTime.fromMillisecondsSinceEpoch(asInt);
+    }
+    return null;
   }
 }
 

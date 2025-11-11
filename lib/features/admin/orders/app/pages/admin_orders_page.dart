@@ -76,24 +76,22 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      // pending -> #FFC555
-      case 'en attente':
-        return const Color(0xFFFFC555);
-      // preparing -> #59A8D4
-      case 'en préparation':
-        return const Color(0xFF59A8D4);
-      // delivered -> #4AA785
-      case 'livrée':
-      case 'livré':
-        return const Color(0xFF4AA785);
-      // canceled -> #F34141
-      case 'annulée':
-      case 'annulé':
-        return const Color(0xFFF34141);
-      default:
-        return Colors.grey;
+    final s = status.toLowerCase();
+    // handle multiple languages and uppercase codes from backend
+    if (s.contains('en attente') || s.contains('pending') || s.contains('confirmation') || s.contains('confirm')) {
+      return const Color(0xFFFFC555);
     }
+    if (s.contains('préparation') || s.contains('preparation') || s.contains('preparing')) {
+      return const Color(0xFF59A8D4);
+    }
+    if (s.contains('livré') || s.contains('livree') || s.contains('deliv') || s.contains('delivered')) {
+      return const Color(0xFF4AA785);
+    }
+    if (s.contains('annul') || s.contains('canceled') || s.contains('cancel')) {
+      return const Color(0xFFF34141);
+    }
+
+    return Colors.grey;
   }
 
   @override

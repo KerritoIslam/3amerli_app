@@ -10,7 +10,21 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<User> fetchProfile() async {
-    final UserModel model = await remoteDataSource.fetchProfile();
-    return model.toEntity();
+    print("[profile_repo] fetchProfile start");
+    try {
+      final UserModel model = await remoteDataSource.fetchProfile();
+      print("[profile_repo] fetchProfile remote returned model");
+      // Log profilePic for debugging
+      // ignore: avoid_print
+      print('[profile_repo] profilePic: ${model.profilePic}');
+      return model.toEntity();
+    } catch (e, st) {
+      // Log the full error and rethrow so callers can handle it
+      // ignore: avoid_print
+      print('[profile_repo] fetchProfile error: $e');
+      // ignore: avoid_print
+      print(st);
+      rethrow;
+    }
   }
 }

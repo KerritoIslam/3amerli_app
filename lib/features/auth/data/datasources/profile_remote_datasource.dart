@@ -25,8 +25,21 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
   @override
   Future<UserModel> fetchProfile() async {
     try {
+      // Debug: log that we're starting the request
+      // ignore: avoid_print
+      print('[profile_remote] fetchProfile -> GET /user/me');
       final resp = await apiService.get('/user/me');
+      // Debug: log response status and (small) payload indicator
+      // ignore: avoid_print
+      print('[profile_remote] resp status: ${resp.statusCode}, dataType: ${resp.data.runtimeType}');
       if (_isSuccess(resp.statusCode) && resp.data != null) {
+        // Debug: log the returned JSON keys (avoid dumping large payloads)
+        try {
+          if (resp.data is Map) {
+            // ignore: avoid_print
+            print('[profile_remote] resp keys: ${(resp.data as Map).keys.toList()}');
+          }
+        } catch (_) {}
         return UserModel.fromJson(Map<String, dynamic>.from(resp.data as Map));
       }
       final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to fetch profile';
@@ -37,6 +50,9 @@ class ProfileRemoteDataSourceImpl implements ProfileRemoteDataSource {
       final baseMsg = e.message ?? 'Network error while fetching profile';
       final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
       developer.log('Dio error fetchProfile - status: $status, serverResponse: $serverResp', name: 'ProfileRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      // Also print for quick debugging in dev
+      // ignore: avoid_print
+      print('[profile_remote] DioException: $detailed');
       throw ApiException(detailed, statusCode: status, isNetworkError: true);
     }
   }

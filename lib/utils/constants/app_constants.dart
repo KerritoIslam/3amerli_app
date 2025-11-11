@@ -8,5 +8,8 @@ class AppConstants {
   // - iOS simulator:              http://localhost
   // - Physical device on same Wi‑Fi: use your PC IPv4, e.g., http://192.168.15.181
   // CURRENT: Targeting a physical Android device on your Wi‑Fi
-  static const String apiBaseUrl = 'https://3e1c46c9737d.ngrok-free.app/api/v1';
+  // Updated to the endpoint used by the recent automated tests
+  // Keep the API base URL to the host/origin only; repository code uses '/api/v1/...' paths.
+  // This prevents the accidental double prefix when concatenating paths.
+  static const String apiBaseUrl = 'https://d4e9b934977d.ngrok-free.app/api/v1/';
 }

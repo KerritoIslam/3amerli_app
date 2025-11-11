@@ -1,4 +1,3 @@
-import 'package:amerli_app/features/catalog/domain/entities/brand.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,9 +8,21 @@ import '../../domain/entities/dashboard_stats.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
 import 'package:amerli_app/features/auth/app/bloc/auth_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/auth_state.dart';
+import 'package:amerli_app/features/auth/app/bloc/profile_bloc.dart';
+import 'package:amerli_app/features/auth/app/bloc/profile_event.dart';
+import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
+import 'package:amerli_app/features/profile/app/pages/admin_profile_page.dart';
 import 'package:amerli_app/widgets/icon_circle.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/top_products_chart.dart';
+import 'package:amerli_app/core/config/injection.dart' as di;
+
+// Small helper to carry display values without importing User entity here
+class UserDisplay {
+  final String name;
+  final String? profilePic;
+  UserDisplay({required this.name, this.profilePic});
+}
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -23,102 +34,230 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
+    
     super.initState();
     context.read<DashboardBloc>().add(DashboardLoadEvent());
+    // Request latest profile from server; fallback to cached auth on error/offline
+    // NOTE: We no longer dispatch LoadProfileEvent here. The Dashboard's
+    // build() wraps the subtree in a local BlocProvider<ProfileBloc>, but
+    // that provider is a child of this widget's context, so calling
+    // context.read<ProfileBloc>() here cannot find it. The event is instead
+    // dispatched when the Bloc is created in the BlocProvider.create callback
+    // below.
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<DashboardBloc, DashboardState>(
-      listener: (context, state) {
-        if (state is DashboardError) {
-          ErrorHandler.showError(context, state.message);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: const Color(0xFFFFFEFB),
-        body: BlocBuilder<DashboardBloc, DashboardState>(
-          builder: (context, state) {
-            if (state is DashboardLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+    // Ensure a ProfileBloc is available for children (use DI factory). If a
+    // parent already provides ProfileBloc, this will shadow it harmlessly.
+    return BlocProvider<ProfileBloc>(
+      create: (_) => di.sl<ProfileBloc>()..add(LoadProfileEvent()),
+      child: BlocListener<DashboardBloc, DashboardState>(
+        listener: (context, state) {
+          if (state is DashboardError) {
+            ErrorHandler.showError(context, state.message);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFFFFEFB),
+          body: BlocBuilder<DashboardBloc, DashboardState>(
+            builder: (context, state) {
+              if (state is DashboardLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-            if (state is DashboardLoaded) {
-              return RefreshIndicator(
-                onRefresh: () async {
-                  context.read<DashboardBloc>().add(DashboardLoadEvent());
-                },
-                child: SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Profile Header
-                      _buildProfileHeader(context),
+              if (state is DashboardLoaded) {
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<DashboardBloc>().add(DashboardLoadEvent());
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Profile Header
+                        _buildProfileHeader(context),
 
-                      // Welcome Banner
-                      _buildWelcomeBanner(context),
+                        // Welcome Banner
+                        _buildWelcomeBanner(context),
 
-                      // Stats Grid (2x2)
-                      _buildStatsGrid(state),
+                        // Stats Grid (2x2)
+                        _buildStatsGrid(state),
 
-                      // Performance Section
-                      _buildPerformanceSection(state),
+                        // Performance Section
+                        _buildPerformanceSection(state),
 
-                      // Top Products Section
-                      _buildTopProductsSection(context),
+                        // Top Products Section
+                        _buildTopProductsSection(context, state),
 
-                      const SizedBox(height: 100), // Bottom nav padding
-                    ],
+                        const SizedBox(height: 100), // Bottom nav padding
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }
+                );
+              }
 
-            if (state is DashboardError) {
-              return const Center(
-                child: Text('Aucune donnée disponible'),
-              );
-            }
+              if (state is DashboardError) {
+                return const Center(
+                  child: Text('Aucune donnée disponible'),
+                );
+              }
 
-            return const SizedBox.shrink();
-          },
+              return const SizedBox.shrink();
+            },
+          ),
         ),
       ),
     );
   }
 
   Widget _buildProfileHeader(BuildContext context) {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, authState) {
-        String userName = 'Admin';
-        String? profilePic;
+    // Try to show the freshest profile via ProfileBloc. If profile load fails or
+    // the bloc is not present, fall back to AuthBloc cached user.
+    ProfileBloc? profileBloc;
+    try {
+      profileBloc = BlocProvider.of<ProfileBloc>(context);
+    } catch (_) {
+      profileBloc = null;
+    }
 
-        if (authState is Authenticated) {
-          userName = authState.user.name;
-          profilePic = authState.user.profilePic;
-        }
+    AuthBloc? authBloc;
+    try {
+      authBloc = BlocProvider.of<AuthBloc>(context);
+    } catch (_) {
+      authBloc = null;
+    }
 
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundImage: profilePic != null && profilePic.isNotEmpty
-                    ? NetworkImage(profilePic)
-                    : null,
-                child: profilePic == null || profilePic.isEmpty
-                    ? const Icon(Icons.person, size: 24)
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      child: Row(
+        children: [
+          // Avatar + navigation to admin profile
+          Builder(builder: (ctx) {
+            Widget avatar(UserDisplay userDisplay) {
+              // Validate the URL before using it to avoid passing invalid URIs to NetworkImage
+              final pic = userDisplay.profilePic;
+              final bool hasValidNetworkUrl = pic != null && pic.isNotEmpty && (Uri.tryParse(pic)?.hasScheme ?? false);
+              if (!hasValidNetworkUrl && pic != null && pic.isNotEmpty) {
+                // Debug log: in dev builds this helps track down where filenames slip through
+                // ignore: avoid_print
+                print('[dashboard] profilePic is non-empty but not an absolute URL: $pic');
+              }
+
+              return GestureDetector(
+                onTap: () {
+                  try {
+                    Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AdminProfilePage()));
+                  } catch (_) {}
+                },
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: hasValidNetworkUrl ? NetworkImage(pic) : null,
+                  child: !hasValidNetworkUrl ? const Icon(Icons.person, size: 24) : null,
+                ),
+              );
+            }
+
+            // Use ProfileBloc stream when available
+            if (profileBloc != null) {
+              return StreamBuilder<ProfileState>(
+                stream: profileBloc.stream,
+                initialData: profileBloc.state,
+                builder: (c, s) {
+                  final st = s.data;
+                  if (st is ProfileLoaded) {
+                    return avatar(UserDisplay(name: st.user.name, profilePic: st.user.profilePic));
+                  }
+                  if (st is ProfileLoading) return const SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 2));
+                  // on error/fallback show cached auth if available
+                  if (authBloc != null && authBloc.state is Authenticated) {
+                    final u = (authBloc.state as Authenticated).user;
+                    return avatar(UserDisplay(name: u.name, profilePic: u.profilePic));
+                  }
+                  return avatar(UserDisplay(name: 'Admin', profilePic: null));
+                },
+              );
+            }
+
+            // No ProfileBloc: try AuthBloc directly
+            if (authBloc != null && authBloc.state is Authenticated) {
+              final u = (authBloc.state as Authenticated).user;
+              final pic = u.profilePic;
+              final bool hasValidNetworkUrl = pic != null && pic.isNotEmpty && (Uri.tryParse(pic)?.hasScheme ?? false);
+              if (!hasValidNetworkUrl && pic != null && pic.isNotEmpty) {
+                // ignore: avoid_print
+                print('[dashboard] AuthBloc user profilePic is non-empty but not an absolute URL: $pic');
+              }
+              return GestureDetector(
+                onTap: () {
+                  try {
+                    Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AdminProfilePage()));
+                  } catch (_) {}
+                },
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundImage: hasValidNetworkUrl ? NetworkImage(pic) : null,
+                  child: !hasValidNetworkUrl ? const Icon(Icons.person, size: 24) : null,
+                ),
+              );
+            }
+
+            return GestureDetector(
+              onTap: () {
+                try {
+                  Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AdminProfilePage()));
+                } catch (_) {}
+              },
+              child: const CircleAvatar(radius: 20, child: Icon(Icons.person, size: 24)),
+            );
+          }),
+
+          const SizedBox(width: 12),
+          Expanded(
+            child: Builder(builder: (ctx) {
+              // Name + role: use ProfileBloc then fallback to AuthBloc
+              if (profileBloc != null) {
+                return StreamBuilder<ProfileState>(
+                  stream: profileBloc.stream,
+                  initialData: profileBloc.state,
+                  builder: (c, s) {
+                    final st = s.data;
+                    String name = 'Admin';
+                    if (st is ProfileLoaded) name = st.user.name;
+                    else if (authBloc != null && authBloc.state is Authenticated) name = (authBloc.state as Authenticated).user.name;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          'Admin',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              }
+
+              if (authBloc != null && authBloc.state is Authenticated) {
+                final u = (authBloc.state as Authenticated).user;
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      userName,
+                      u.name,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -134,22 +273,45 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                   ],
-                ),
-              ),
-              InkWell(
-                onTap: () => context.push('/notifications'),
-                borderRadius: BorderRadius.circular(20),
-                child: IconCircle(
-                  asset: 'assets/icons/notifications.svg',
-                  isSelected: false,
-                  size: 40,
-                  keepIconColor: true,
-                ),
-              ),
-            ],
+                );
+              }
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Admin',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    'Admin',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w400,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              );
+            }),
           ),
-        );
-      },
+
+          InkWell(
+            onTap: () => context.push('/notifications'),
+            borderRadius: BorderRadius.circular(20),
+            child: IconCircle(
+              asset: 'assets/icons/notifications.svg',
+              isSelected: false,
+              size: 40,
+              keepIconColor: true,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -190,36 +352,51 @@ class _DashboardPageState extends State<DashboardPage> {
         physics: const NeverScrollableScrollPhysics(),
         childAspectRatio: 156 / 100,
         children: [
+          // Orders today (count + percent)
           _StatCard(
             title: 'Commandes\ndu jour',
             value: '${state.stats.totalOrders}',
-            percentage: '+11.01%',
-            isPositive: true,
+            percentage: state.stats.ordersPercentageChange != 0
+                ? '${state.stats.ordersPercentageChange > 0 ? '+' : ''}${state.stats.ordersPercentageChange.toStringAsFixed(2)}%'
+                : null,
+            isPositive: state.stats.ordersPercentageChange == 0 ? null : state.stats.ordersPercentageChange > 0,
             backgroundColor: Theme.of(context).colorScheme.primary,
             textColor: Colors.white,
           ),
+
+          // Turnover
           _StatCard(
             title: 'Chiffre\nd\'affaires',
             value: '${state.stats.totalRevenue.toStringAsFixed(0)},00',
             subValue: 'DZD',
-            percentage: null,
-            isPositive: null,
+            percentage: state.stats.revenuePercentageChange != null
+                ? '${state.stats.revenuePercentageChange! > 0 ? '+' : ''}${state.stats.revenuePercentageChange!.toStringAsFixed(2)}%'
+                : null,
+            isPositive: state.stats.revenuePercentageChange == null ? null : state.stats.revenuePercentageChange! > 0,
             backgroundColor: Theme.of(context).extension<BrandColors>()?.brandDeep ?? Theme.of(context).colorScheme.primary,
             textColor: Colors.white,
           ),
+
+          // Active supermarkets
           _StatCard(
             title: 'Supérettes\nactives',
-            value: '${state.stats.totalUsers}',
-            percentage: '+6.74%',
-            isPositive: true,
-           backgroundColor: Theme.of(context).extension<BrandColors>()?.brandDeep ?? Theme.of(context).colorScheme.primary,
+            value: '${state.stats.supermarketsActiveToday}',
+            percentage: state.stats.supermarketsPercentageChange != 0
+                ? '${state.stats.supermarketsPercentageChange > 0 ? '+' : ''}${state.stats.supermarketsPercentageChange.toStringAsFixed(2)}%'
+                : null,
+            isPositive: state.stats.supermarketsPercentageChange == 0 ? null : state.stats.supermarketsPercentageChange > 0,
+            backgroundColor: Theme.of(context).extension<BrandColors>()?.brandDeep ?? Theme.of(context).colorScheme.primary,
             textColor: Colors.white,
           ),
+
+          // Deliveries (delivered orders count)
           _StatCard(
             title: 'Livraisons\nen cours',
-            value: '${state.stats.pendingOrders}',
-            percentage: '+3.06%',
-            isPositive: true,
+            value: '${state.stats.deliveredOrdersCount}',
+            percentage: state.stats.deliveredOrdersPercentageChange != 0
+                ? '${state.stats.deliveredOrdersPercentageChange > 0 ? '+' : ''}${state.stats.deliveredOrdersPercentageChange.toStringAsFixed(2)}%'
+                : null,
+            isPositive: state.stats.deliveredOrdersPercentageChange == 0 ? null : state.stats.deliveredOrdersPercentageChange > 0,
             backgroundColor: Theme.of(context).colorScheme.primary,
             textColor: Theme.of(context).colorScheme.onPrimary,
           ),
@@ -300,22 +477,50 @@ class _DashboardPageState extends State<DashboardPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
-              Text('Jan', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              Text('Fév', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              Text('Mar', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              Text('Avr', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              Text('May', style: TextStyle(fontSize: 12, color: Colors.grey)),
-              Text('Jun', style: TextStyle(fontSize: 12, color: Colors.grey)),
-            ],
+            children: state.stats.recentSales.isNotEmpty
+                ? state.stats.recentSales
+                    .map((d) => Text(
+                          _shortMonth(d.date.month),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        ))
+                    .toList()
+                : const [
+                    Text('Jan', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text('Fév', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text('Mar', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text('Avr', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text('Mai', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text('Juin', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTopProductsSection(BuildContext context) {
-    return TopProductsChart();
+  // Short French month abbreviations
+  String _shortMonth(int month) {
+    const months = [
+      'Jan',
+      'Fév',
+      'Mar',
+      'Avr',
+      'Mai',
+      'Juin',
+      'Juil',
+      'Aoû',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Déc'
+    ];
+
+    if (month < 1 || month > 12) return '';
+    return months[month - 1];
+  }
+
+  Widget _buildTopProductsSection(BuildContext context, DashboardLoaded state) {
+    return TopProductsChart(products: state.stats.topProducts);
   }
 }
 
@@ -453,18 +658,21 @@ class _SalesChartPainter extends CustomPainter {
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
-    // Find max value for scaling
-    final maxAmount = sales.map((s) => s.amount).reduce((a, b) => a > b ? a : b);
-    final chartHeight = size.height - 30; // Leave space for labels
-    final chartWidth = size.width;
-    final spacing = chartWidth / (sales.length - 1);
+  // Find max value for scaling
+  double maxAmount = sales.map((s) => s.amount).reduce((a, b) => a > b ? a : b).toDouble();
+  // avoid divide-by-zero when all amounts are zero
+  if (maxAmount == 0) maxAmount = 1;
+  final chartHeight = size.height - 30; // Leave space for labels
+  final chartWidth = size.width;
+  // spacing: if there is only one point, avoid division by zero
+  final spacing = sales.length > 1 ? chartWidth / (sales.length - 1) : chartWidth;
 
     // Create path for line
     final path = Path();
     final points = <Offset>[];
 
     for (int i = 0; i < sales.length; i++) {
-      final x = i * spacing;
+      final x = sales.length > 1 ? i * spacing : chartWidth / 2;
       final y = chartHeight - (sales[i].amount / maxAmount * chartHeight);
       points.add(Offset(x, y));
 
@@ -492,10 +700,12 @@ class _SalesChartPainter extends CustomPainter {
       }
     }
 
-    // Draw line
-    canvas.drawPath(path, paint);
+    // Draw line if there is more than one point
+    if (points.length > 1) {
+      canvas.drawPath(path, paint);
+    }
 
-    // Draw dots
+    // Draw dots (for single or multiple points)
     for (final point in points) {
       canvas.drawCircle(point, 6, dotBorderPaint);
       canvas.drawCircle(point, 4, dotPaint);

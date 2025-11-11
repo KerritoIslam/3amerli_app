@@ -1,5 +1,6 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/profile_repository.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 import '../../domain/entities/user.dart';
 import 'profile_event.dart';
 import 'profile_state.dart';
@@ -9,9 +10,12 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
 
   ProfileBloc({required this.repository}) : super(ProfileInitial()) {
     on<LoadProfileEvent>((event, emit) async {
+      print("ProfileBloc received LoadProfileEvent");
       emit(ProfileLoading());
       try {
+        print("ProfileBloc loading profile");
         final user = await repository.fetchProfile();
+        print("ProfileBloc fetched user: $user");
         emit(ProfileLoaded(user: user));
       } catch (e) {
         emit(ProfileError(message: e.toString()));

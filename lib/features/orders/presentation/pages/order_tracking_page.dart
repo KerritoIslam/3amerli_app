@@ -152,13 +152,13 @@ class OrderTrackingPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
                 child: Column(
                   children: [
-                    _buildStep(active: true, icon: Icons.check, title: 'Commande confirmée', date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.confirmed, showTopConnector: false, showBottomConnector: true),
+                    _buildStep(active: true, icon: Icons.check, title: OrderStatus.confirmed.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.confirmed, showTopConnector: false, showBottomConnector: true),
                     const SizedBox(height: 0),
-                    _buildStep(active: order.status == OrderStatus.preparing || order.status == OrderStatus.delivering || order.status == OrderStatus.delivered, icon: Icons.inventory_2_outlined, title: 'En préparation', date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.preparing, showTopConnector: true, showBottomConnector: true),
+                    _buildStep(active: order.status == OrderStatus.preparing || order.status == OrderStatus.delivering || order.status == OrderStatus.delivered, icon: Icons.inventory_2_outlined, title: OrderStatus.preparing.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.preparing, showTopConnector: true, showBottomConnector: true),
                     const SizedBox(height: 0),
-                    _buildStep(active: order.status == OrderStatus.delivering || order.status == OrderStatus.delivered, icon: Icons.local_shipping, title: 'En cours de livraison', date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.delivering, showTopConnector: true, showBottomConnector: true),
+                    _buildStep(active: order.status == OrderStatus.delivering || order.status == OrderStatus.delivered, icon: Icons.local_shipping, title: OrderStatus.delivering.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.delivering, showTopConnector: true, showBottomConnector: true),
                     const SizedBox(height: 0),
-                    _buildStep(active: order.status == OrderStatus.delivered, icon: Icons.mark_email_read, title: 'Livrée', date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.delivered, showTopConnector: true, showBottomConnector: false),
+                    _buildStep(active: order.status == OrderStatus.delivered, icon: Icons.mark_email_read, title: OrderStatus.delivered.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.delivered, showTopConnector: true, showBottomConnector: false),
                     const SizedBox(height: 12),
                   ],
                 ),
