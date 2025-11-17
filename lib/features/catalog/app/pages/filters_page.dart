@@ -2,12 +2,90 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:go_router/go_router.dart';
-// Removed unused imports
-// import 'categories_page.dart';
-// import 'brands_page.dart';
+import '../bloc/catalog_bloc.dart';
+import '../bloc/catalog_event.dart';
+import '../bloc/catalog_state.dart';
+import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/features/admin/products/app/bloc/admin_products_bloc.dart';
+import 'package:amerli_app/features/admin/products/app/bloc/admin_products_event.dart';
+import 'package:amerli_app/features/admin/products/app/bloc/admin_products_state.dart';
 
-class FiltersPage extends StatelessWidget {
-  const FiltersPage({super.key});
+class FiltersPage extends StatefulWidget {
+  final bool isAdminMode;
+  
+  const FiltersPage({super.key, this.isAdminMode = false});
+
+  @override
+  State<FiltersPage> createState() => _FiltersPageState();
+}
+
+class _FiltersPageState extends State<FiltersPage> {
+  final Set<int> _selectedCategoryIds = <int>{};
+  final Set<int> _selectedBrandIds = <int>{};
+  bool _isApplying = false;
+
+  Future<void> _applyFilters() async {
+    // Show loading state
+    setState(() {
+      _isApplying = true;
+    });
+
+    if (widget.isAdminMode) {
+      // Admin mode: use AdminProductsBloc
+      final adminBloc = sl<AdminProductsBloc>();
+      
+      // Debug: Log the filters being applied
+      // ignore: avoid_print
+      print('🔍 [FiltersPage:Admin] Applying filters - categoryIds: ${_selectedCategoryIds.isEmpty ? 'none' : _selectedCategoryIds}, brandIds: ${_selectedBrandIds.isEmpty ? 'none' : _selectedBrandIds}');
+      
+      // Apply filters with selected IDs
+      adminBloc.add(AdminProductsLoadEvent(
+        categoryIds: _selectedCategoryIds.isEmpty ? null : _selectedCategoryIds.toList(),
+        brandIds: _selectedBrandIds.isEmpty ? null : _selectedBrandIds.toList(),
+      ));
+      
+      // Wait for the bloc to emit loaded or error state
+      await adminBloc.stream.firstWhere(
+        (state) => state is AdminProductsLoaded || state is AdminProductsError,
+        orElse: () => adminBloc.state,
+      );
+      
+      // Debug: Log bloc state
+      // ignore: avoid_print
+      print('🔍 [FiltersPage:Admin] Filters applied, state: ${adminBloc.state.runtimeType}');
+    } else {
+      // Catalog mode: use CatalogBloc
+      final catalogBloc = sl<CatalogBloc>();
+      
+      // Debug: Log the filters being applied
+      // ignore: avoid_print
+      print('🔍 [FiltersPage:Catalog] Applying filters - categoryIds: ${_selectedCategoryIds.isEmpty ? 'none' : _selectedCategoryIds}, brandIds: ${_selectedBrandIds.isEmpty ? 'none' : _selectedBrandIds}');
+      
+      // Apply filters with selected IDs
+      catalogBloc.add(CatalogLoadEvent(
+        categoryIds: _selectedCategoryIds.isEmpty ? null : _selectedCategoryIds.toList(),
+        brandIds: _selectedBrandIds.isEmpty ? null : _selectedBrandIds.toList(),
+      ));
+      
+      // Wait for the bloc to emit CatalogLoaded or CatalogError state
+      await catalogBloc.stream.firstWhere(
+        (state) => state is CatalogLoaded || state is CatalogError,
+        orElse: () => catalogBloc.state,
+      );
+      
+      // Debug: Log bloc state
+      // ignore: avoid_print
+      print('🔍 [FiltersPage:Catalog] Filters applied, state: ${catalogBloc.state.runtimeType}');
+    }
+    
+    // Hide loading and pop
+    if (mounted) {
+      setState(() {
+        _isApplying = false;
+      });
+      Navigator.of(context).pop();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,24 +138,69 @@ class FiltersPage extends StatelessWidget {
                   ),
                 const SizedBox(height: 24),
                 ListTile(
-                  title: const Text('Categorie'),
+                  title: Text(
+                    'Categorie',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  subtitle: _selectedCategoryIds.isNotEmpty 
+                      ? Text(
+                          '${_selectedCategoryIds.length} sélectionnée(s)',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+                        )
+                      : null,
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/filters/categories'),
+                  enabled: !_isApplying,
+                  onTap: () async {
+                    // Navigate to categories page and wait for result
+                    final result = await context.push<Set<int>>('/filters/categories');
+                    if (result != null) {
+                      setState(() {
+                        _selectedCategoryIds.clear();
+                        _selectedCategoryIds.addAll(result);
+                      });
+                    }
+                  },
                 ),
                 ListTile(
-                  title: const Text('Marque'),
+                  title: Text(
+                    'Marque',
+                    style: Theme.of(context).textTheme.bodyLarge,
+                  ),
+                  subtitle: _selectedBrandIds.isNotEmpty 
+                      ? Text(
+                          '${_selectedBrandIds.length} sélectionnée(s)',
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.primary),
+                        )
+                      : null,
                   trailing: const Icon(Icons.chevron_right),
-                  onTap: () => context.push('/filters/brands'),
+                  enabled: !_isApplying,
+                  onTap: () async {
+                    // Navigate to brands page and wait for result
+                    final result = await context.push<Set<int>>('/filters/brands');
+                    if (result != null) {
+                      setState(() {
+                        _selectedBrandIds.clear();
+                        _selectedBrandIds.addAll(result);
+                      });
+                    }
+                  },
                 ),
                 const Spacer(),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {},
+                    onPressed: _isApplying ? null : _applyFilters,
                     style: OutlinedButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(vertical: 14)),
-                    child: const Text('Appliquer les filtres'),
+                    child: _isApplying
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Appliquer les filtres'),
                   ),
-                )
+                ),
+                const SizedBox(height: 80), // Add spacing to raise button above bottom nav bar
               ],
             ),
           ),

@@ -17,18 +17,20 @@ class AppColors {
 
   // Light theme additional tokens
   static const Color lightPrimaryContainer = Color(0xFFE0E0E0);
-  
+
   static const Color lightOnPrimaryContainer = Colors.black;
   static const Color lightSecondary = Color(0xFFF8F9EB);
-  static const Color lightOnSecondary = Colors.black; // maintain readable text on light secondary
+  static const Color lightOnSecondary =
+      Colors.black; // maintain readable text on light secondary
   static const Color lightSecondaryContainer = Color(0xFFF5F5F5);
   static const Color lightOnSecondaryContainer = Colors.black;
   static const Color lightTertiary = Color(0xFFB00020);
   static const Color lightOnTertiary = Colors.white;
- static const Color lightTertiaryContainer = Color(0xFF04272D);
+  static const Color lightTertiaryContainer = Color(0xFF04272D);
   static const Color lightOnTertiaryContainer = Colors.white;
   static const Color lightErrorContainer = Color(0xFFFFDAD6);
   static const Color lightOnErrorContainer = Color(0xFF410001);
+  // Surface variant colors for Material 3
   static const Color lightSurfaceVariant = Color(0xFFF2F2F4);
   static const Color lightOnSurfaceVariant = Colors.black87;
   static const Color lightOutline = Color(0xFFBDBDBD);
@@ -51,7 +53,8 @@ class AppColors {
   static const Color darkPrimaryContainer = Color(0xFF2A2A2A);
   static const Color darkOnPrimaryContainer = Colors.white;
   static const Color darkSecondary = Color(0xFFF8F9EB);
-  static const Color darkOnSecondary = Colors.black; // readable on light secondary in dark mode
+  static const Color darkOnSecondary =
+      Colors.black; // readable on light secondary in dark mode
   static const Color darkSecondaryContainer = Color(0xFF1E1E1E);
   static const Color darkOnSecondaryContainer = Colors.white;
   static const Color darkTertiary = Color(0xFFCF6679);
@@ -60,6 +63,7 @@ class AppColors {
   static const Color darkOnTertiaryContainer = Colors.white;
   static const Color darkErrorContainer = Color(0xFF8B1D1D);
   static const Color darkOnErrorContainer = Colors.white;
+  // Surface variant colors for Material 3
   static const Color darkSurfaceVariant = Color(0xFF2C2C2E);
   static const Color darkOnSurfaceVariant = Colors.white70;
   static const Color darkOutline = Color(0xFF3F3F3F);
@@ -104,11 +108,9 @@ class AppColors {
     onError: Colors.white,
     errorContainer: lightErrorContainer,
     onErrorContainer: lightOnErrorContainer,
-    background: lightBackground,
-    onBackground: lightOnBackground,
     surface: lightSurface,
     onSurface: lightOnSurface,
-    surfaceVariant: lightSurfaceVariant,
+    surfaceContainerHighest: lightSurfaceVariant,
     onSurfaceVariant: lightOnSurfaceVariant,
     outline: lightOutline,
     shadow: lightShadow,
@@ -132,15 +134,13 @@ class AppColors {
     onTertiary: darkOnTertiary,
     tertiaryContainer: darkTertiaryContainer,
     onTertiaryContainer: darkOnTertiaryContainer,
-  error: darkError,
-  onError: Colors.black,
+    error: darkError,
+    onError: Colors.black,
     errorContainer: darkErrorContainer,
     onErrorContainer: darkOnErrorContainer,
-    background: darkBackground,
-    onBackground: darkOnBackground,
     surface: darkSurface,
     onSurface: darkOnSurface,
-    surfaceVariant: darkSurfaceVariant,
+    surfaceContainerHighest: darkSurfaceVariant,
     onSurfaceVariant: darkOnSurfaceVariant,
     outline: darkOutline,
     shadow: darkShadow,
@@ -157,13 +157,17 @@ class AppColors {
     return LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
-      colors: [scheme.primary.withOpacity(0.36), scheme.onPrimary.withOpacity(0.0)],
+      colors: [
+        scheme.primary.withOpacity(0.36),
+        scheme.onPrimary.withOpacity(0.0)
+      ],
       stops: const [0.0, 1.0],
     );
   }
 
   // Convenience constants for light/dark gradients
-  static LinearGradient lightBackgroundGradient = gradientFromScheme(lightScheme);
+  static LinearGradient lightBackgroundGradient =
+      gradientFromScheme(lightScheme);
   static LinearGradient darkBackgroundGradient = gradientFromScheme(darkScheme);
 
   // Theme extension to expose extra brand colors through Theme.of(context).extension<BrandColors>()
@@ -175,16 +179,21 @@ class BrandColors extends ThemeExtension<BrandColors> {
 
   const BrandColors({required this.brandTeal, required this.brandDeep});
 
-  static const BrandColors light = BrandColors(brandTeal: AppColors.brandTeal, brandDeep: AppColors.brandDeep);
-  static const BrandColors dark = BrandColors(brandTeal: AppColors.brandTeal, brandDeep: AppColors.brandDeep);
+  static const BrandColors light = BrandColors(
+      brandTeal: AppColors.brandTeal, brandDeep: AppColors.brandDeep);
+  static const BrandColors dark = BrandColors(
+      brandTeal: AppColors.brandTeal, brandDeep: AppColors.brandDeep);
 
   @override
   BrandColors copyWith({Color? brandTeal, Color? brandDeep}) {
-    return BrandColors(brandTeal: brandTeal ?? this.brandTeal, brandDeep: brandDeep ?? this.brandDeep);
+    return BrandColors(
+        brandTeal: brandTeal ?? this.brandTeal,
+        brandDeep: brandDeep ?? this.brandDeep);
   }
 
   @override
-  ThemeExtension<BrandColors> lerp(ThemeExtension<BrandColors>? other, double t) {
+  ThemeExtension<BrandColors> lerp(
+      ThemeExtension<BrandColors>? other, double t) {
     if (other is! BrandColors) return this;
     return BrandColors(
       brandTeal: Color.lerp(brandTeal, other.brandTeal, t) ?? brandTeal,

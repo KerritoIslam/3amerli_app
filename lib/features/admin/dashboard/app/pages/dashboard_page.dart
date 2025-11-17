@@ -224,8 +224,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   builder: (c, s) {
                     final st = s.data;
                     String name = 'Admin';
-                    if (st is ProfileLoaded) name = st.user.name;
-                    else if (authBloc != null && authBloc.state is Authenticated) name = (authBloc.state as Authenticated).user.name;
+                    if (st is ProfileLoaded) {
+                      name = st.user.name;
+                    } else if (authBloc != null && authBloc.state is Authenticated) name = (authBloc.state as Authenticated).user.name;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

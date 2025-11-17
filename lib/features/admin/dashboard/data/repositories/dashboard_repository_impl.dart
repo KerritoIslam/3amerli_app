@@ -43,44 +43,52 @@ class DashboardRepositoryImpl implements DashboardRepository {
             final orders = body['orders'];
             if (orders is Map) {
               final rawCount = orders['count'] ?? orders['ordersCount'] ?? orders['value'];
-              if (rawCount is num) totalOrders = rawCount.toInt();
-              else if (rawCount is String) totalOrders = int.tryParse(rawCount) ?? totalOrders;
+              if (rawCount is num) {
+                totalOrders = rawCount.toInt();
+              } else if (rawCount is String) totalOrders = int.tryParse(rawCount) ?? totalOrders;
 
               final rawPct = orders['percentageChange'] ?? orders['percentChange'] ?? orders['change'];
-              if (rawPct is num) ordersPercentageChange = rawPct.toDouble();
-              else if (rawPct is String) ordersPercentageChange = double.tryParse(rawPct) ?? ordersPercentageChange;
+              if (rawPct is num) {
+                ordersPercentageChange = rawPct.toDouble();
+              } else if (rawPct is String) ordersPercentageChange = double.tryParse(rawPct) ?? ordersPercentageChange;
             }
 
             final revenue = body['revenue'];
             if (revenue is Map) {
               final rawTurn = revenue['turnover'] ?? revenue['total'] ?? revenue['value'];
-              if (rawTurn is num) totalRevenue = rawTurn.toDouble();
-              else if (rawTurn is String) totalRevenue = double.tryParse(rawTurn.replaceAll(',', '')) ?? totalRevenue;
+              if (rawTurn is num) {
+                totalRevenue = rawTurn.toDouble();
+              } else if (rawTurn is String) totalRevenue = double.tryParse(rawTurn.replaceAll(',', '')) ?? totalRevenue;
 
               final rawRevPct = revenue['percentageChange'] ?? revenue['percentChange'];
-              if (rawRevPct is num) revenuePercentageChange = rawRevPct.toDouble();
-              else if (rawRevPct is String) revenuePercentageChange = double.tryParse(rawRevPct);
+              if (rawRevPct is num) {
+                revenuePercentageChange = rawRevPct.toDouble();
+              } else if (rawRevPct is String) revenuePercentageChange = double.tryParse(rawRevPct);
             }
 
             final supermarkets = body['supermarkets'];
             if (supermarkets is Map) {
               final rawActive = supermarkets['todayActiveSuperMarkets'] ?? supermarkets['active'] ?? supermarkets['count'];
-              if (rawActive is num) supermarketsActiveToday = rawActive.toInt();
-              else if (rawActive is String) supermarketsActiveToday = int.tryParse(rawActive) ?? supermarketsActiveToday;
+              if (rawActive is num) {
+                supermarketsActiveToday = rawActive.toInt();
+              } else if (rawActive is String) supermarketsActiveToday = int.tryParse(rawActive) ?? supermarketsActiveToday;
 
               final rawSuperPct = supermarkets['percentageChange'] ?? supermarkets['percentChange'];
-              if (rawSuperPct is num) supermarketsPercentageChange = rawSuperPct.toDouble();
-              else if (rawSuperPct is String) supermarketsPercentageChange = double.tryParse(rawSuperPct) ?? supermarketsPercentageChange;
+              if (rawSuperPct is num) {
+                supermarketsPercentageChange = rawSuperPct.toDouble();
+              } else if (rawSuperPct is String) supermarketsPercentageChange = double.tryParse(rawSuperPct) ?? supermarketsPercentageChange;
             }
 
             final delivered = body['deliveredOrders'];
             if (delivered is Map) {
               final rawDelPct = delivered['percentageChange'] ?? delivered['percentChange'];
-              if (rawDelPct is num) deliveredOrdersPercentageChange = rawDelPct.toDouble();
-              else if (rawDelPct is String) deliveredOrdersPercentageChange = double.tryParse(rawDelPct) ?? deliveredOrdersPercentageChange;
+              if (rawDelPct is num) {
+                deliveredOrdersPercentageChange = rawDelPct.toDouble();
+              } else if (rawDelPct is String) deliveredOrdersPercentageChange = double.tryParse(rawDelPct) ?? deliveredOrdersPercentageChange;
               final rawDelCount = delivered['count'] ?? delivered['value'];
-              if (rawDelCount is num) deliveredOrdersCount = rawDelCount.toInt();
-              else if (rawDelCount is String) deliveredOrdersCount = int.tryParse(rawDelCount) ?? deliveredOrdersCount;
+              if (rawDelCount is num) {
+                deliveredOrdersCount = rawDelCount.toInt();
+              } else if (rawDelCount is String) deliveredOrdersCount = int.tryParse(rawDelCount) ?? deliveredOrdersCount;
             }
           } catch (_) {}
         }
@@ -128,8 +136,9 @@ class DashboardRepositoryImpl implements DashboardRepository {
       final tb = topResp.data;
       if (tb != null) {
         List<dynamic>? list;
-        if (tb is List) list = tb;
-        else if (tb is Map) list = (tb['data'] as List?) ?? (tb['result'] as List?) ?? (tb['items'] as List?) ?? (tb['topProducts'] as List?);
+        if (tb is List) {
+          list = tb;
+        } else if (tb is Map) list = (tb['data'] as List?) ?? (tb['result'] as List?) ?? (tb['items'] as List?) ?? (tb['topProducts'] as List?);
 
         if (list != null) {
           for (final e in list) {
@@ -182,8 +191,9 @@ class DashboardRepositoryImpl implements DashboardRepository {
               final rawMonth = (m['month'] ?? m['label'] ?? m['monthName'] ?? '').toString();
               final rawTurn = m['turnover'] ?? m['value'] ?? m['total'] ?? 0;
               double turn = 0;
-              if (rawTurn is num) turn = rawTurn.toDouble();
-              else if (rawTurn is String) turn = double.tryParse(rawTurn.replaceAll(',', '')) ?? 0.0;
+              if (rawTurn is num) {
+                turn = rawTurn.toDouble();
+              } else if (rawTurn is String) turn = double.tryParse(rawTurn.replaceAll(',', '')) ?? 0.0;
 
               if (rawMonth.isNotEmpty) {
                 // normalize to 3-letter english month (first 3 chars)
@@ -220,20 +230,23 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
         final rawTotalOrders = b['totalOrders'] ?? b['ordersCount'];
         if (rawTotalOrders != null) {
-          if (rawTotalOrders is num) totalOrders = rawTotalOrders.toInt();
-          else if (rawTotalOrders is String) totalOrders = int.tryParse(rawTotalOrders) ?? totalOrders;
+          if (rawTotalOrders is num) {
+            totalOrders = rawTotalOrders.toInt();
+          } else if (rawTotalOrders is String) totalOrders = int.tryParse(rawTotalOrders) ?? totalOrders;
         }
 
         final rawPending = b['pendingOrders'] ?? b['pending'];
         if (rawPending != null) {
-          if (rawPending is num) pendingOrders = rawPending.toInt();
-          else if (rawPending is String) pendingOrders = int.tryParse(rawPending) ?? pendingOrders;
+          if (rawPending is num) {
+            pendingOrders = rawPending.toInt();
+          } else if (rawPending is String) pendingOrders = int.tryParse(rawPending) ?? pendingOrders;
         }
 
         final rawCompleted = b['completedOrders'] ?? b['delivered'];
         if (rawCompleted != null) {
-          if (rawCompleted is num) completedOrders = rawCompleted.toInt();
-          else if (rawCompleted is String) completedOrders = int.tryParse(rawCompleted) ?? completedOrders;
+          if (rawCompleted is num) {
+            completedOrders = rawCompleted.toInt();
+          } else if (rawCompleted is String) completedOrders = int.tryParse(rawCompleted) ?? completedOrders;
         }
       }
     } catch (e) {

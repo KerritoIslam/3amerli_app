@@ -10,6 +10,7 @@ import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import '../../../brands/app/pages/admin_brands_page.dart';
+import 'package:amerli_app/features/catalog/app/pages/filters_page.dart';
 
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
@@ -24,11 +25,18 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedProductIds = {};
   String? _selectedCategory;
+  
+  // Track selected filters
+  final Set<int> _selectedCategoryIds = {};
+  final Set<int> _selectedBrandIds = {};
+  
+  late final AdminProductsBloc _productsBloc;
 
   @override
   void initState() {
     super.initState();
-    context.read<AdminProductsBloc>().add(AdminProductsLoadEvent());
+    _productsBloc = context.read<AdminProductsBloc>();
+    _productsBloc.add(AdminProductsLoadEvent());
   }
 
   @override
@@ -38,15 +46,23 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
   }
 
   void _onSearch(String query) {
-    context.read<AdminProductsBloc>().add(
+    _productsBloc.add(
           AdminProductsLoadEvent(
             query: query,
             category: _selectedCategory,
+            categoryIds: _selectedCategoryIds.isEmpty ? null : _selectedCategoryIds.toList(),
+            brandIds: _selectedBrandIds.isEmpty ? null : _selectedBrandIds.toList(),
           ),
         );
   }
-
   
+  void _openFilters() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const FiltersPage(isAdminMode: true),
+      ),
+    );
+  }
 
   void _onDeleteProduct(String id) {
     showDialog(
@@ -138,6 +154,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                   children: [
                     Expanded(
                       child: BlocBuilder<AdminProductsBloc, AdminProductsState>(
+                        bloc: _productsBloc,
                         builder: (context, state) {
                           var countText = '';
                           if (state is AdminProductsLoaded) countText = ' (${state.products.length})';
@@ -192,11 +209,11 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                         height: 40,
                         child: AppSearchbar(
                           onChanged: _onSearch,
+                          onFilterTap: _openFilters,
                         ),
                       ),
                     ),
                     const SizedBox(width: 8),
-
                    
                     // Add Button
                     ElevatedButton.icon(
@@ -256,12 +273,18 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
               Expanded(
                 child: SingleChildScrollView(
                   child: BlocBuilder<AdminProductsBloc, AdminProductsState>(
+                    bloc: _productsBloc,
                     builder: (context, state) {
+                      // Debug logging
+                      print('🖼️ [AdminProductsPage] BlocBuilder rebuild - state: ${state.runtimeType}');
+                      
                       if (state is AdminProductsLoading) {
                         return const Center(child: CircularProgressIndicator());
                       }
 
                       if (state is AdminProductsLoaded) {
+                        print('🖼️ [AdminProductsPage] Displaying ${state.products.length} products');
+                        
                         if (state.products.isEmpty) {
                           return Center(
                             child: Column(

@@ -17,4 +17,19 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   Future<void> markRead(int id) async {
     await remoteDataSource.markRead(id);
   }
+
+  @override
+  Future<void> markMultipleRead(List<int> ids) async {
+    await remoteDataSource.markMultipleRead(ids);
+  }
+
+  @override
+  Future<void> deleteNotification(int id) async {
+    await remoteDataSource.deleteNotification(id.toString());
+  }
+
+  @override
+  Future<void> registerFcmToken(String token, String os) async {
+    await remoteDataSource.registerFcmToken(token, os);
+  }
 }

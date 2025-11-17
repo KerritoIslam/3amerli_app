@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kDebugMode;
 // import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
 import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
 import 'package:amerli_app/features/home/app/pages/home_page.dart';
@@ -14,13 +15,13 @@ import '../../features/auth/app/bloc/auth_bloc.dart';
 import '../../features/auth/app/bloc/auth_state.dart';
 import '../storage/local_storage.dart';
 
-
 import '../../features/catalog/app/pages/catalog_page.dart';
 import '../../features/onboarding/app/pages/onboarding_flow.dart';
 import '../../features/delivery/app/pages/delivery_page.dart';
 import '../../features/notifications/app/pages/notifications_page.dart';
 import '../../features/admin/app/pages/admin_page.dart';
 import '../../features/admin/products/app/pages/add_product_page.dart';
+import '../../features/admin/products/app/bloc/admin_products_bloc.dart';
 import '../../features/admin/categories/app/pages/admin_categories_page.dart';
 import '../../features/admin/categories/app/pages/add_category_page.dart';
 import '../../features/admin/categories/app/bloc/admin_categories_bloc.dart';
@@ -36,9 +37,11 @@ import '../../features/admin/users/app/pages/admin_users_filters_categories.dart
 import '../../features/admin/users/app/pages/admin_users_filters_brands.dart';
 import '../../features/catalog/app/bloc/categories_bloc.dart';
 import '../../features/catalog/app/bloc/brands_bloc.dart';
+import '../../features/catalog/app/bloc/catalog_bloc.dart';
 import '../config/injection.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart' as fav_feature;
+import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart'
+    as fav_feature;
 import 'package:amerli_app/features/auth/sign_up/sign_up_cubit.dart';
 
 // Use GoRouter's built-in GoRouterRefreshStream helper which converts a Stream
@@ -59,7 +62,8 @@ class _StreamChangeNotifier extends ChangeNotifier {
   }
 }
 
-GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localStorage}) {
+GoRouter createRouter(
+    {required AuthBloc authBloc, required LocalStorage localStorage}) {
   // Convert the authBloc stream into a ChangeNotifier GoRouter can listen to
   final refresh = _StreamChangeNotifier(authBloc.stream);
 
@@ -75,39 +79,42 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       final fullUri = state.uri.toString();
       final scheme = state.uri.scheme;
       final host = state.uri.host;
-      
+
       // Debug: Log all navigation attempts
       // ignore: avoid_print
-      print('🔗 Router redirect check: path=$loc, fullUri=$fullUri, scheme=$scheme, host=$host');
-      
+
       // Check if this is a deep link with custom scheme (amerli://success or amerli://failure)
       if (scheme == 'amerli' && (host == 'success' || host == 'failure')) {
-        // ignore: avoid_print
-        print('🔗 Deep link detected, allowing navigation');
+        if (kDebugMode) {
+          print('🔗 Deep link detected, allowing navigation');
+        }
         return null; // Allow the deep link to proceed
       }
-      
+
       // Define which paths are non-protected (allowed when unauthenticated).
       final nonProtected = <String>{
-        '/', 
-        '/auth', 
+        '/',
+        '/auth',
         '/complete-profile',
-        '/payment/success',  // Allow deep link access
-        '/payment/failure',  // Allow deep link access
-        '/success',  // Allow custom scheme deep link (amerli://success)
-        '/failure',  // Allow custom scheme deep link (amerli://failure)
+        '/payment/success', // Allow deep link access
+        '/payment/failure', // Allow deep link access
+        '/success', // Allow custom scheme deep link (amerli://success)
+        '/failure', // Allow custom scheme deep link (amerli://failure)
       };
       final loggedIn = authBloc.state is Authenticated;
 
-      final isNonProtected = nonProtected.contains(loc) || nonProtected.any((p) => loc.startsWith(p));
+      final isNonProtected = nonProtected.contains(loc) ||
+          nonProtected.any((p) => loc.startsWith(p));
 
-      // ignore: avoid_print
-      print('🔗 loggedIn=$loggedIn, isNonProtected=$isNonProtected');
+      if (kDebugMode) {
+        print('🔗 loggedIn=$loggedIn, isNonProtected=$isNonProtected');
+      }
 
       // If not logged in and trying to access a protected route, send to /auth
       if (!loggedIn && !isNonProtected) {
-        // ignore: avoid_print
-        print('🔗 Redirecting to /auth (not logged in)');
+        if (kDebugMode) {
+          print('🔗 Redirecting to /auth (not logged in)');
+        }
         return '/auth';
       }
 
@@ -116,16 +123,22 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
         final authState = authBloc.state;
         if (authState is Authenticated) {
           final userRole = authState.user.role;
-          
+
           // If admin tries to access regular home, redirect to admin
           if (userRole == 'ADMIN' && loc == '/home') {
-            print('🔗 Admin user trying to access /home, redirecting to /admin');
+            if (kDebugMode) {
+              print(
+                  '🔗 Admin user trying to access /home, redirecting to /admin');
+            }
             return '/admin';
           }
-          
+
           // If regular user tries to access admin, redirect to home
           if (userRole != 'ADMIN' && loc == '/admin') {
-            print('🔗 Non-admin user trying to access /admin, redirecting to /home');
+            if (kDebugMode) {
+              print(
+                  '🔗 Non-admin user trying to access /admin, redirecting to /home');
+            }
             return '/home';
           }
         }
@@ -133,19 +146,22 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
 
       // If logged in but at auth path, send to home or admin based on role
       if (loggedIn && (loc == '/auth' || (loc == '/' && scheme != 'amerli'))) {
-        // ignore: avoid_print
-        print('🔗 Redirecting to home/admin (logged in at auth)');
-        
+        if (kDebugMode) {
+          print('🔗 Redirecting to home/admin (logged in at auth)');
+        }
+
         // Check if user is admin
         final authState = authBloc.state;
         if (authState is Authenticated) {
           final userRole = authState.user.role;
           if (userRole == 'ADMIN') {
-            print('🔗 User is ADMIN, redirecting to /admin');
+            if (kDebugMode) {
+              print('🔗 User is ADMIN, redirecting to /admin');
+            }
             return '/admin';
           }
         }
-        
+
         return '/home';
       }
 
@@ -161,8 +177,9 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
           // Check if this is a deep link with custom scheme
           final uri = state.uri;
           // ignore: avoid_print
-          print('🏠 Root path accessed: scheme=${uri.scheme}, host=${uri.host}, fullUri=$uri');
-          
+          print(
+              '🏠 Root path accessed: scheme=${uri.scheme}, host=${uri.host}, fullUri=$uri');
+
           if (uri.scheme == 'amerli' && uri.host == 'success') {
             final params = uri.queryParameters;
             // ignore: avoid_print
@@ -183,10 +200,11 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
               date: params['date'],
               paymentMethod: params['paymentMethod'] ?? params['payementWay'],
               amount: params['amount'] ?? params['total'],
-              failureReason: params['reason'] ?? params['error'] ?? 'Erreur inconnue',
+              failureReason:
+                  params['reason'] ?? params['error'] ?? 'Erreur inconnue',
             );
           }
-          
+
           // Default: return empty container, will be redirected by redirect logic
           return const SizedBox.shrink();
         },
@@ -208,7 +226,8 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
         builder: (context, state) {
           final extra = state.extra;
           if (extra is SignUpCubit) {
-            return BlocProvider.value(value: extra, child: const CompleteProfilePage());
+            return BlocProvider.value(
+                value: extra, child: const CompleteProfilePage());
           }
           return const CompleteProfilePage();
         },
@@ -220,13 +239,25 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       // Filters and related pages
       GoRoute(
         path: '/filters',
-        builder: (context, state) => const FiltersPage(),
+        builder: (context, state) {
+          return BlocProvider.value(
+            value: sl<CatalogBloc>(),
+            child: const FiltersPage(),
+          );
+        },
       ),
       GoRoute(
         path: '/filters/categories',
         builder: (context, state) {
-          return BlocProvider<CategoriesBloc>(
-            create: (_) => sl<CategoriesBloc>(),
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<CategoriesBloc>(
+                create: (_) => sl<CategoriesBloc>(),
+              ),
+              BlocProvider.value(
+                value: sl<CatalogBloc>(),
+              ),
+            ],
             child: const CategoriesPage(),
           );
         },
@@ -234,8 +265,15 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
       GoRoute(
         path: '/filters/brands',
         builder: (context, state) {
-          return BlocProvider<BrandsBloc>(
-            create: (_) => sl<BrandsBloc>(),
+          return MultiBlocProvider(
+            providers: [
+              BlocProvider<BrandsBloc>(
+                create: (_) => sl<BrandsBloc>(),
+              ),
+              BlocProvider.value(
+                value: sl<CatalogBloc>(),
+              ),
+            ],
             child: const BrandsPage(),
           );
         },
@@ -250,20 +288,32 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
           );
         },
       ),
-      
-      GoRoute(path: '/delivery', builder: (context, state) => const DeliveryPage()),
-      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsPage()),
-      GoRoute(path: '/profile', builder: (context, state) => const ProfilePage() ),
+
+      GoRoute(
+          path: '/delivery', builder: (context, state) => const DeliveryPage()),
+      GoRoute(
+          path: '/notifications',
+          builder: (context, state) => const NotificationsPage()),
+      GoRoute(
+          path: '/profile', builder: (context, state) => const ProfilePage()),
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
       GoRoute(
         path: '/admin/products/add',
-        builder: (context, state) => const AddProductPage(),
+        builder: (context, state) {
+          return BlocProvider.value(
+            value: sl<AdminProductsBloc>(),
+            child: const AddProductPage(),
+          );
+        },
       ),
       GoRoute(
         path: '/admin/products/edit/:id',
         builder: (context, state) {
           final id = state.pathParameters['id'];
-          return AddProductPage(productId: id);
+          return BlocProvider.value(
+            value: sl<AdminProductsBloc>(),
+            child: AddProductPage(productId: id),
+          );
         },
       ),
       GoRoute(
@@ -322,7 +372,7 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
         path: '/admin/users/filters/brands',
         builder: (context, state) => const AdminUsersFiltersBrandsPage(),
       ),
-      
+
       // Deep link routes for payment success/failure (HTTPS format)
       GoRoute(
         path: '/payment/success',
@@ -346,11 +396,12 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
             date: params['date'],
             paymentMethod: params['paymentMethod'] ?? params['payementWay'],
             amount: params['amount'] ?? params['total'],
-            failureReason: params['reason'] ?? params['error'] ?? 'Erreur inconnue',
+            failureReason:
+                params['reason'] ?? params['error'] ?? 'Erreur inconnue',
           );
         },
       ),
-      
+
       // Deep link routes for custom scheme (amerli://success and amerli://failure)
       // Note: For custom scheme amerli://success, go_router sees path as "/" with host="success"
       // So we need a special handler that checks the URI scheme and host
@@ -380,7 +431,8 @@ GoRouter createRouter({required AuthBloc authBloc, required LocalStorage localSt
             date: params['date'],
             paymentMethod: params['paymentMethod'] ?? params['payementWay'],
             amount: params['amount'] ?? params['total'],
-            failureReason: params['reason'] ?? params['error'] ?? 'Erreur inconnue',
+            failureReason:
+                params['reason'] ?? params['error'] ?? 'Erreur inconnue',
           );
         },
       ),

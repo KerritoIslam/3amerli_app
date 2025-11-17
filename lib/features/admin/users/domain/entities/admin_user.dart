@@ -5,9 +5,12 @@ class AdminUser {
   final String phone;
   final String role;
   final String status; // 'Actif' or 'Suspendu'
+  final bool isActive; // Suspension status from backend
   final String? storeName;
   final String? representativeName;
   final String? address;
+  final String? supermarketName; // New field for supermarket name
+  final List<UserAddress>? addresses; // New field for addresses list
   final DateTime registrationDate;
   final DateTime? lastActivityDate;
   final String? avatarUrl;
@@ -19,12 +22,31 @@ class AdminUser {
     required this.phone,
     required this.role,
     required this.status,
+    required this.isActive,
     this.storeName,
     this.representativeName,
     this.address,
+    this.supermarketName,
+    this.addresses,
     required this.registrationDate,
     this.lastActivityDate,
     this.avatarUrl,
+  });
+}
+
+class UserAddress {
+  final String id;
+  final String street;
+  final String city;
+  final String district;
+  final DateTime createdAt;
+
+  UserAddress({
+    required this.id,
+    required this.street,
+    required this.city,
+    required this.district,
+    required this.createdAt,
   });
 }
 

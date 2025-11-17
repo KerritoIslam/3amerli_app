@@ -28,6 +28,15 @@ class AdminUsersLoaded extends AdminUsersState {
   List<Object?> get props => [users, currentQuery, currentStatusFilter];
 }
 
+class AdminUsersBlacklistLoaded extends AdminUsersState {
+  final List<AdminUser> blacklistedUsers;
+
+  const AdminUsersBlacklistLoaded({required this.blacklistedUsers});
+
+  @override
+  List<Object?> get props => [blacklistedUsers];
+}
+
 class AdminUserDetailLoaded extends AdminUsersState {
   final AdminUser user;
 

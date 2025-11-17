@@ -37,7 +37,7 @@ class _ThirdIntroState extends State<ThirdIntro>
               AppLanguage.oneClickOrder,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 24,
                   ),
               textAlign: TextAlign.center,
@@ -46,7 +46,7 @@ class _ThirdIntroState extends State<ThirdIntro>
             Text(
               AppLanguage.exploreCatalogDeliveryPayments,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                   ),
               textAlign: TextAlign.center,

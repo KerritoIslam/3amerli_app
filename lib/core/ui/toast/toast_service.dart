@@ -16,7 +16,9 @@ class ToastService {
     _entry = null;
   }
 
-  void showToast(BuildContext context, String message, {ToastType type = ToastType.info, Duration duration = const Duration(seconds: 3)}) {
+  void showToast(BuildContext context, String message,
+      {ToastType type = ToastType.info,
+      Duration duration = const Duration(seconds: 3)}) {
     _removeCurrent();
 
     final color = _colorForType(type, Theme.of(context));
@@ -37,7 +39,7 @@ class ToastService {
       );
     });
 
-  Overlay.of(context).insert(_entry!);
+    Overlay.of(context).insert(_entry!);
 
     Future.delayed(duration, () {
       _removeCurrent();
@@ -56,7 +58,7 @@ class _ToastWidget extends StatelessWidget {
   final String message;
   final Color background;
 
-  const _ToastWidget({Key? key, required this.message, required this.background}) : super(key: key);
+  const _ToastWidget({required this.message, required this.background});
 
   @override
   Widget build(BuildContext context) {
@@ -67,11 +69,17 @@ class _ToastWidget extends StatelessWidget {
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black26, blurRadius: 8, offset: Offset(0, 2))
+          ],
         ),
         child: Text(
           message,
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white),
+          style: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.copyWith(color: Colors.white),
         ),
       ),
     );

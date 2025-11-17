@@ -64,7 +64,7 @@ class _CartView extends StatelessWidget {
                   price: ci.price,
                   stock: 0,
                   pics: ci.imageUrl != null && ci.imageUrl!.isNotEmpty ? [ci.imageUrl!] : const [],
-                  brand: ci.brand ?? null,
+                  brand: ci.brand,
                   soldBy: ci.soldBy,
                 ),
               );

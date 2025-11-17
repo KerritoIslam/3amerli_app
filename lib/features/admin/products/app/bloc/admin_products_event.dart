@@ -5,8 +5,15 @@ abstract class AdminProductsEvent {}
 class AdminProductsLoadEvent extends AdminProductsEvent {
   final String? query;
   final String? category;
+  final List<int>? categoryIds;
+  final List<int>? brandIds;
 
-  AdminProductsLoadEvent({this.query, this.category});
+  AdminProductsLoadEvent({
+    this.query,
+    this.category,
+    this.categoryIds,
+    this.brandIds,
+  });
 }
 
 class AdminProductsAddEvent extends AdminProductsEvent {

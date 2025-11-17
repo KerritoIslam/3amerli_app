@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 
 class AppSearchbar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
-  const AppSearchbar({super.key, this.onChanged});
+  final VoidCallback? onFilterTap;
+  
+  const AppSearchbar({super.key, this.onChanged, this.onFilterTap});
 
   @override
   State<AppSearchbar> createState() => _AppSearchbarState();
@@ -32,7 +34,7 @@ class _AppSearchbarState extends State<AppSearchbar>
     return AppTextField(
       
       trailing: InkWell(
-        onTap: () => context.push('/filters'),
+        onTap: widget.onFilterTap ?? () => context.push('/filters'),
         child: SvgPicture.asset("assets/icons/filter_icon.svg",color: Theme.of(context).colorScheme.primary),
       ),
       prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg",color: Theme.of(context).colorScheme.primary),

@@ -37,7 +37,7 @@ class _SecondIntroState extends State<SecondIntro>
               AppLanguage.saveTimeMoney,
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 24,
                   ),
               textAlign: TextAlign.center,
@@ -46,7 +46,7 @@ class _SecondIntroState extends State<SecondIntro>
             Text(
               AppLanguage.wholesaleBenefits,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                   ),
               textAlign: TextAlign.center,

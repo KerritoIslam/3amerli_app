@@ -141,8 +141,8 @@ class _UserInformationPageState extends State<UserInformationPage> {
         latestUser!.profilePic!.isNotEmpty && 
         (latestUser.profilePic!.startsWith('http://') || latestUser.profilePic!.startsWith('https://'))) {
       _imageUrl = latestUser.profilePic;
-    } else if (_imageUrl == null) {
-      _imageUrl = '';
+    } else {
+      _imageUrl ??= '';
     }
     
     final hasValidImage = _imageUrl != null && _imageUrl!.isNotEmpty;

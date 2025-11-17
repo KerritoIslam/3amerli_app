@@ -11,5 +11,5 @@ class AppConstants {
   // Updated to the endpoint used by the recent automated tests
   // Keep the API base URL to the host/origin only; repository code uses '/api/v1/...' paths.
   // This prevents the accidental double prefix when concatenating paths.
-  static const String apiBaseUrl = 'https://d4e9b934977d.ngrok-free.app/api/v1/';
+  static const String apiBaseUrl = 'https://a548bcd52d60.ngrok-free.app/api/v1/';
 }

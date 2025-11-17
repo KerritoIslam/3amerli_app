@@ -3,8 +3,7 @@ import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 /// Payment methods supported by the API
 enum PaymentMethod {
   cash('CASH'),
-  edahabia('EDAHABIA'),
-  cib('CIB');
+  epayment('EPAYMENT');
 
   final String value;
   const PaymentMethod(this.value);
@@ -40,7 +39,7 @@ class OrderPayloadBuilder {
     // Build payload
     final payload = <String, dynamic>{
       'items': items,
-      'payementWay': paymentMethod.value,
+      'paymentWay': paymentMethod.value,
     };
 
     // Add either addressId or address

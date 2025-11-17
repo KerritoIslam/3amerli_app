@@ -1,8 +1,7 @@
 import '../../domain/entities/order.dart';
 
 class OrderProductModel extends OrderProduct {
-  OrderProductModel({required String productId, required String name, required int quantity, required double price})
-      : super(productId: productId, name: name, quantity: quantity, price: price);
+  OrderProductModel({required super.productId, required super.name, required super.quantity, required super.price});
 
   factory OrderProductModel.fromJson(Map<String, dynamic> json) => OrderProductModel(
         productId: json['productId']?.toString() ?? '',

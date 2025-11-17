@@ -263,7 +263,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
               ),
               Divider(height: 1, thickness: 1, color: Theme.of(context).colorScheme.primary.withOpacity(0.12)),
             ]);
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -367,7 +367,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
             ),
             Divider(height: 1, thickness: 1, color: Theme.of(context).colorScheme.primary.withOpacity(0.12)),
           ]);
-        }).toList(),
+        }),
       ]),
     );
   }

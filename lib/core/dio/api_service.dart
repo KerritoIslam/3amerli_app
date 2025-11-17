@@ -27,7 +27,7 @@ class ApiService {
             final method = options.method;
             final path = options.path;
             final qp = options.queryParameters.isNotEmpty ? options.queryParameters : null;
-            final data = options.data != null ? options.data : null;
+            final data = options.data;
             // ignore: avoid_print
             print('$yellow[HTTP REQUEST] $method $path | query:$qp | data:$data$reset');
           } catch (_) {}
@@ -43,7 +43,7 @@ class ApiService {
           const reset = '\x1B[0m';
           final bodyPreview = response.data is Map || response.data is List ? response.data : response.data?.toString();
           // ignore: avoid_print
-          print('$green[HTTP RESPONSE] $method $path -> $status${elapsedMs != null ? ' (${elapsedMs}ms)' : ''} | body: $bodyPreview$reset');
+          print('$green[HTTP RESPONSE] $method $path -> $status${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: $bodyPreview');
           return handler.next(response);
         },
         onError: (error, handler) {
@@ -61,7 +61,7 @@ class ApiService {
           // Request info (yellow)
           try {
             final qp = error.requestOptions.queryParameters.isNotEmpty ? error.requestOptions.queryParameters : null;
-            final reqData = error.requestOptions.data != null ? error.requestOptions.data : null;
+            final reqData = error.requestOptions.data;
             // ignore: avoid_print
             print('$yellow[HTTP ERROR - REQUEST] $method $path | query:$qp | data:$reqData$reset');
           } catch (_) {}
@@ -69,7 +69,7 @@ class ApiService {
           // Response info (green)
           try {
             // ignore: avoid_print
-            print('$green[HTTP ERROR - RESPONSE] status:${status ?? 'unknown'} | body: ${serverBody ?? 'null'}${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset');
+            print('$green[HTTP ERROR - RESPONSE] status:${status ?? 'unknown'}${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: ${serverBody ?? 'null'}');
           } catch (_) {}
 
           // Exception message (red)
@@ -114,6 +114,10 @@ class ApiService {
 
   Future<Response> delete(String path, {Map<String, dynamic>? queryParameters}) async {
     return _dio.delete(path, queryParameters: queryParameters);
+  }
+
+  Future<Response> patch(String path, {dynamic data}) async {
+    return _dio.patch(path, data: data);
   }
 }
 

@@ -9,7 +9,7 @@ import 'order_tracking_page.dart';
 import '../../../../core/error/error_handler.dart';
 
 class MesCommandesPage extends StatefulWidget {
-  const MesCommandesPage({Key? key}) : super(key: key);
+  const MesCommandesPage({super.key});
 
   @override
   State<MesCommandesPage> createState() => _MesCommandesPageState();
@@ -42,8 +42,8 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
 
   // Old single-index filter removed; use _filterForIndex instead
 
-  Color _primary = const Color(0xFFA7C957);
-  Color _dark = const Color(0xFF083B2E);
+  final Color _primary = const Color(0xFFA7C957);
+  final Color _dark = const Color(0xFF083B2E);
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +164,7 @@ class _OrderCard extends StatelessWidget {
   final Order order;
   final VoidCallback onFollow;
 
-  const _OrderCard({Key? key, required this.order, required this.onFollow}) : super(key: key);
+  const _OrderCard({required this.order, required this.onFollow});
 
   Color _statusColor(OrderStatus s) {
     switch (s) {

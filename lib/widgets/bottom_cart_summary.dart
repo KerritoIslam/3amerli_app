@@ -5,7 +5,7 @@ class BottomCartSummary extends StatelessWidget {
   final VoidCallback? onPay;
   final Widget? payButton;
 
-  const BottomCartSummary({Key? key, required this.total, this.onPay, this.payButton}) : super(key: key);
+  const BottomCartSummary({super.key, required this.total, this.onPay, this.payButton});
 
   @override
   Widget build(BuildContext context) {

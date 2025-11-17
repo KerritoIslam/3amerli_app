@@ -18,11 +18,11 @@ class FlagImage extends StatefulWidget {
 
   const FlagImage.asset(
     this.assetPath, {
-    Key? key,
+    super.key,
     this.width,
     this.height,
     this.fit = BoxFit.contain,
-  }) : super(key: key);
+  });
 
   @override
   State<FlagImage> createState() => _FlagImageState();

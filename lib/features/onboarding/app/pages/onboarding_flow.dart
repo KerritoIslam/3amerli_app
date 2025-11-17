@@ -9,7 +9,7 @@ import 'third_intro.dart' as third_intro;
 import '../../../auth/app/pages/sign_up_page.dart' as auth_sign_up;
 
 class OnboardingFlow extends StatefulWidget {
-  const OnboardingFlow({Key? key}) : super(key: key);
+  const OnboardingFlow({super.key});
 
   @override
   State<OnboardingFlow> createState() => _OnboardingFlowState();
@@ -20,7 +20,7 @@ class OnboardingScope extends InheritedWidget {
   final VoidCallback next;
   final VoidCallback last;
 
-  const OnboardingScope({Key? key, required Widget child, required this.next, required this.last}) : super(key: key, child: child);
+  const OnboardingScope({super.key, required super.child, required this.next, required this.last});
 
   static OnboardingScope? of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<OnboardingScope>();
 

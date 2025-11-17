@@ -32,6 +32,8 @@ import '../../features/admin/products/domain/repositories/admin_products_reposit
 import '../../features/admin/categories/app/bloc/admin_categories_bloc.dart';
 import '../../features/admin/categories/data/repositories/admin_categories_repository_impl.dart';
 import '../../features/admin/categories/domain/repositories/admin_categories_repository.dart';
+import '../../features/admin/brands/data/repositories/admin_brands_repository_impl.dart';
+import '../../features/admin/brands/domain/repositories/admin_brands_repository.dart';
 import '../../features/catalog/repository/catalog_repository_impl.dart';
 import '../../features/catalog/domain/repositories/catalog_repository.dart';
 import '../../features/catalog/data/datasources/favorites_remote_datasource.dart';
@@ -168,6 +170,7 @@ Future<void> init() async {
   sl.registerLazySingleton<AdminProductsBloc>(() => AdminProductsBloc(sl<AdminProductsRepository>()));
   sl.registerLazySingleton<AdminCategoriesRepository>(() => AdminCategoriesRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerFactory(() => AdminCategoriesBloc(sl<AdminCategoriesRepository>()));
+  sl.registerLazySingleton<AdminBrandsRepository>(() => AdminBrandsRepositoryImpl(apiService: sl<ApiService>()));
   // Brands feature
   sl.registerFactory(() => BrandsBloc(repository: sl<BrandsRepository>()));
 }

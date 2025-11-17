@@ -6,7 +6,7 @@ import 'package:amerli_app/features/catalog/app/pages/catalog_page.dart';
 import 'package:amerli_app/features/profile/app/pages/profile_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();

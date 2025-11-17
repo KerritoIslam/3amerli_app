@@ -65,7 +65,8 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
 
   @override
   Future<AdminUser> getUserById(String userId) async {
-    final resp = await apiService.get('/user/$userId');
+    // Use the admin-specific endpoint: /user/admin/{id}
+    final resp = await apiService.get('/user/admin/$userId');
     if (resp.data is Map) {
       final m = Map<String, dynamic>.from(resp.data as Map);
       return AdminUserModel.fromJson(m).toEntity();
@@ -89,7 +90,8 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
 
   @override
   Future<void> deleteUser(String userId) async {
-    await apiService.delete('/user/$userId');
+    // Use the admin-specific endpoint: /user/admin/{id}
+    await apiService.delete('/user/admin/$userId');
   }
 
   @override
@@ -102,5 +104,35 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
     final resp = await apiService.get('/user/roles');
     final list = _extractList(resp.data);
     return list.map<UserRole>((e) => UserRoleModel.fromJson(Map<String, dynamic>.from(e as Map)).toEntity()).toList();
+  }
+
+  @override
+  Future<List<AdminUser>> getBlacklistedUsers({int page = 1, int limit = 10}) async {
+    final resp = await apiService.get('/user/black-list', queryParameters: {'page': page, 'limit': limit});
+    final list = _extractList(resp.data);
+    
+    final results = <AdminUser>[];
+    for (final e in list) {
+      try {
+        if (e is Map) {
+          final m = Map<String, dynamic>.from(e);
+          results.add(AdminUserModel.fromJson(m).toEntity());
+        }
+      } catch (ex) {
+        // ignore: avoid_print
+        print('[ADMIN USERS] blacklist mapping error: $ex');
+      }
+    }
+    return results;
+  }
+
+  @override
+  Future<void> addToBlacklist(String userId) async {
+    await apiService.post('/user/black-list/$userId');
+  }
+
+  @override
+  Future<void> restoreFromBlacklist(String userId) async {
+    await apiService.post('/user/black-list/restore/$userId');
   }
 }

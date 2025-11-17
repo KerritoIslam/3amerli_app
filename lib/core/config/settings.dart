@@ -46,7 +46,7 @@ class Settings {
       // Try to read from platform locale. WidgetsBinding should be
       // initialized by the caller (main) before creating injection.
       try {
-        final code = WidgetsBinding.instance.window.locale.languageCode;
+        final code = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
         if (code == 'fr' || code == 'ar' || code == 'en') {
           language = code;
         } else {

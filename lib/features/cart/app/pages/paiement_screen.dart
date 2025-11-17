@@ -8,6 +8,7 @@ import 'package:amerli_app/features/success/app/pages/success_page.dart';
 import 'package:amerli_app/features/orders/app/bloc/orders_bloc.dart';
 import 'package:amerli_app/features/orders/app/bloc/orders_event.dart';
 import 'package:amerli_app/features/orders/app/bloc/orders_state.dart';
+import 'package:amerli_app/features/orders/domain/entities/order.dart';
 import 'package:amerli_app/features/orders/utils/order_payload_builder.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -19,7 +20,7 @@ import 'package:amerli_app/features/cart/app/pages/payment_webview_page.dart';
 
 
 class PaiementScreen extends StatefulWidget {
-  const PaiementScreen({Key? key}) : super(key: key);
+  const PaiementScreen({super.key});
 
   @override
   State<PaiementScreen> createState() => _PaiementScreenState();
@@ -30,6 +31,10 @@ class _PaiementScreenState extends State<PaiementScreen> {
   bool _animationComplete = false;
   String? _pendingCheckoutUrl; // Store checkout URL when order is created
   Map<String, dynamic>? _selectedAddress; // Store selected address
+  PaymentMethod _selectedPaymentMethod = PaymentMethod.cash; // Default to cash
+  bool _orderCreated = false; // Track if order was successfully created
+  String? _createdOrderId; // Store the created order ID
+  Order? _createdOrder; // Store the full created order
 
   @override
   void initState() {
@@ -39,10 +44,13 @@ class _PaiementScreenState extends State<PaiementScreen> {
       if (!mounted) return;
       
       if (state is OrderCreated) {
-        // Order created successfully - store the checkout URL
+        // Order created successfully - store the checkout URL and mark order as created
         _pendingCheckoutUrl = state.checkoutUrl;
+        _orderCreated = true;
+        _createdOrderId = state.order.id; // Store the order ID
+        _createdOrder = state.order; // Store the full order
         // ignore: avoid_print
-        print('✅ Order created! CheckoutUrl: $_pendingCheckoutUrl | Animation complete: $_animationComplete');
+        print('✅ Order created! Order ID: $_createdOrderId | CheckoutUrl: $_pendingCheckoutUrl | Payment Method: $_selectedPaymentMethod | Animation complete: $_animationComplete');
         
         // If animation already completed, navigate immediately
         if (_animationComplete) {
@@ -61,6 +69,9 @@ class _PaiementScreenState extends State<PaiementScreen> {
           _paying = false;
           _animationComplete = false;
           _pendingCheckoutUrl = null;
+          _orderCreated = false;
+          _createdOrderId = null;
+          _createdOrder = null;
         });
       }
     });
@@ -68,8 +79,32 @@ class _PaiementScreenState extends State<PaiementScreen> {
 
   void _navigateAfterOrder(String? checkoutUrl) {
     // ignore: avoid_print
-    print('🎯 _navigateAfterOrder called with URL: $checkoutUrl');
+    print('🎯 _navigateAfterOrder called with URL: $checkoutUrl | Payment Method: $_selectedPaymentMethod');
     
+    // For CASH payment, always go to success page regardless of checkoutUrl
+    if (_selectedPaymentMethod == PaymentMethod.cash) {
+      // ignore: avoid_print
+      print('💵 Cash payment detected, going to success page with order ID: $_createdOrderId');
+      
+      // Reset paying state
+      setState(() {
+        _paying = false;
+        _animationComplete = false;
+        _pendingCheckoutUrl = null;
+        _orderCreated = false;
+      });
+      
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => SuccessPage(
+          orderId: _createdOrderId,
+          paymentMethod: 'CASH',
+          order: _createdOrder,
+        )),
+      );
+      return;
+    }
+    
+    // For EPAYMENT, check if we have a checkout URL
     if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
       // Online payment - open in WebView
       // ignore: avoid_print
@@ -80,6 +115,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
         _paying = false;
         _animationComplete = false;
         _pendingCheckoutUrl = null;
+        _orderCreated = false;
       });
       
       // Navigate to WebView page
@@ -89,11 +125,14 @@ class _PaiementScreenState extends State<PaiementScreen> {
         ),
       );
     } else {
-      // Cash payment or no checkout URL - go directly to success
+      // No checkout URL for online payment - show error or go to success
       // ignore: avoid_print
-      print('💵 Cash payment, going to success page...');
+      print('⚠️ Online payment but no checkout URL, going to success page...');
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const SuccessPage()),
+        MaterialPageRoute(builder: (_) => SuccessPage(
+          orderId: _createdOrderId,
+          paymentMethod: 'EPAYMENT',
+        )),
       );
     }
   }
@@ -114,25 +153,34 @@ class _PaiementScreenState extends State<PaiementScreen> {
     setState(() => _paying = true);
 
     try {
-      // Hardcode payment method as CIB for now
-      // User will choose payment method after redirection to web
-      final paymentMethod = PaymentMethod.cib;
+      // Use selected payment method from UI
+      final paymentMethod = _selectedPaymentMethod;
 
-      // Use the selected address
-      final address = OrderPayloadBuilder.buildAddress(
-        street: _selectedAddress!['street'] ?? '',
-        city: _selectedAddress!['city'] ?? '',
-        district: _selectedAddress!['district'] ?? '',
-      );
-
-      // Build order payload according to API spec
-      final payload = OrderPayloadBuilder.build(
-        cartItems: cartItems,
-        paymentMethod: paymentMethod,
-        address: address,
-        // Or use addressId if user selected existing address:
-        // addressId: selectedAddressId,
-      );
+      // Build order payload
+      final Map<String, dynamic> payload;
+      
+      // Check if the selected address has an ID (existing address)
+      if (_selectedAddress!.containsKey('id') && _selectedAddress!['id'] != null) {
+        // Use addressId for existing address
+        payload = OrderPayloadBuilder.build(
+          cartItems: cartItems,
+          paymentMethod: paymentMethod,
+          addressId: _selectedAddress!['id'],
+        );
+      } else {
+        // Use address object for new address
+        final address = OrderPayloadBuilder.buildAddress(
+          street: _selectedAddress!['street'] ?? '',
+          city: _selectedAddress!['city'] ?? '',
+          district: _selectedAddress!['district'] ?? '',
+        );
+        
+        payload = OrderPayloadBuilder.build(
+          cartItems: cartItems,
+          paymentMethod: paymentMethod,
+          address: address,
+        );
+      }
 
       // Dispatch order creation event
       if (!mounted) return;
@@ -143,7 +191,13 @@ class _PaiementScreenState extends State<PaiementScreen> {
       // Print error instead of showing snackbar
       // ignore: avoid_print
       print('Error creating order: $e');
-      if (mounted) setState(() => _paying = false);
+      if (mounted) {
+        setState(() {
+          _paying = false;
+          _orderCreated = false;
+          _createdOrderId = null;
+        });
+      }
     }
   }
 
@@ -211,14 +265,20 @@ class _PaiementScreenState extends State<PaiementScreen> {
                   children: [
               const SizedBox(height: 8),
 
+              // Payment Method Selection (moved to top)
+              const SizedBox(height: 16),
+              const Text('Mode de paiement', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
+              const SizedBox(height: 8),
+              _paymentMethodSelection(),
+
               // Order preview
-              const SizedBox(height: 24),
-              const Text('Ma Commande', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
+              const SizedBox(height: 20),
+              const Text('Mes Produits', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
               const SizedBox(height: 8),
               _orderPreview(),
 
               // Adresse
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   const Expanded(child: Text('Adresse', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A)))),
@@ -277,7 +337,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
                                   price: ci.price,
                                   stock: 0,
                                   pics: ci.imageUrl != null && ci.imageUrl!.isNotEmpty ? [ci.imageUrl!] : const [],
-                                  brand: ci.brand ?? null,
+                                  brand: ci.brand,
                                   soldBy: ci.soldBy,
                                 ),
                               );
@@ -314,15 +374,14 @@ class _PaiementScreenState extends State<PaiementScreen> {
                                       height: h,
                                       onComplete: () {
                                         // ignore: avoid_print
-                                        print('🎬 Animation complete! Pending URL: $_pendingCheckoutUrl | Paying: $_paying');
+                                        print('🎬 Animation complete! Order Created: $_orderCreated | Payment Method: $_selectedPaymentMethod');
                                         setState(() => _animationComplete = true);
                                         // If order was created while animation was running, navigate now
-                                        // Check if we have a checkout URL (order was created) OR if we're still in paying state
-                                        if (_pendingCheckoutUrl != null) {
+                                        if (_orderCreated) {
                                           // ignore: avoid_print
                                           print('✨ Order already created, navigating now...');
                                           _navigateAfterOrder(_pendingCheckoutUrl);
-                                        } else if (_paying) {
+                                        } else {
                                           // ignore: avoid_print
                                           print('⏰ Still creating order, will navigate when done...');
                                         }
@@ -491,6 +550,132 @@ class _PaiementScreenState extends State<PaiementScreen> {
       ),
     );
   }
+
+  Widget _paymentMethodSelection() {
+    return Column(
+      children: [
+        // Cash option
+        _paymentMethodOption(
+          method: PaymentMethod.cash,
+          icon: Icons.money,
+          title: 'Paiement en espèces',
+          description: 'Payez à la livraison',
+        ),
+        const SizedBox(height: 8),
+        // Online payment option
+        _paymentMethodOption(
+          method: PaymentMethod.epayment,
+          icon: Icons.credit_card,
+          title: 'Paiement en ligne',
+          description: 'Carte bancaire (CIB/EDAHABIA)',
+        ),
+      ],
+    );
+  }
+
+  Widget _paymentMethodOption({
+    required PaymentMethod method,
+    required IconData icon,
+    required String title,
+    required String description,
+  }) {
+    final isSelected = _selectedPaymentMethod == method;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedPaymentMethod = method;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.05) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
+            width: isSelected ? 2 : 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                    : Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Theme.of(context).colorScheme.primary : const Color(0xFF1A1A1A),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected 
+                      ? Theme.of(context).colorScheme.primary 
+                      : Colors.grey.shade400,
+                  width: 2,
+                ),
+                color: isSelected 
+                    ? Theme.of(context).colorScheme.primary 
+                    : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(
+                      Icons.check,
+                      size: 16,
+                      color: Colors.white,
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 
@@ -499,7 +684,7 @@ class PaymentAnimationOverlay extends StatefulWidget {
   final double height;
   final VoidCallback onComplete;
 
-  const PaymentAnimationOverlay({Key? key, required this.width, required this.height, required this.onComplete}) : super(key: key);
+  const PaymentAnimationOverlay({super.key, required this.width, required this.height, required this.onComplete});
 
   @override
   State<PaymentAnimationOverlay> createState() => _PaymentAnimationOverlayState();

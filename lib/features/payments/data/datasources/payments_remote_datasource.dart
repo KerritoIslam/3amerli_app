@@ -25,12 +25,12 @@ class PaymentsRemoteDataSource {
 
   Future<TransactionModel> createTransaction(Map<String, dynamic> payload) async {
     // Call backend /order endpoint which may return an order object and checkoutUrl
-    bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
+    bool isSuccess(int? status) => status != null && status >= 200 && status < 300;
 
     try {
       developer.log('createTransaction payload: $payload', name: 'PaymentsRemoteDataSource');
       final resp = await apiService.post('/order', data: payload);
-      if (_isSuccess(resp.statusCode) && resp.data != null) {
+      if (isSuccess(resp.statusCode) && resp.data != null) {
         // TransactionModel.fromJson handles multiple shapes (checkoutUrl at top-level or inside 'order')
         final data = resp.data;
         developer.log('createTransaction response: $data', name: 'PaymentsRemoteDataSource');

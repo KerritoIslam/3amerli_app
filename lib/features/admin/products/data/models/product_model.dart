@@ -1,5 +1,4 @@
 import '../../domain/entities/product.dart';
-import '../../../../../utils/constants/app_constants.dart';
 import '../../../../../utils/image_resolver.dart';
 
 class ProductModel extends Product {
@@ -49,8 +48,9 @@ class ProductModel extends Product {
 
   int quantityPerLot = 0;
   final qtyRaw = json['quantity_per_lot'] ?? json['quantityPerBatch'] ?? json['quantityPerLot'] ?? json['quantity'] ?? 0;
-  if (qtyRaw is int) quantityPerLot = qtyRaw;
-  else if (qtyRaw is num) quantityPerLot = qtyRaw.toInt();
+  if (qtyRaw is int) {
+    quantityPerLot = qtyRaw;
+  } else if (qtyRaw is num) quantityPerLot = qtyRaw.toInt();
   else if (qtyRaw is String) quantityPerLot = int.tryParse(qtyRaw) ?? 0;
 
     List<String> specifications = [];
@@ -73,8 +73,9 @@ class ProductModel extends Product {
     double pricePerLot = 0.0;
     final priceRaw = json['price_per_lot'] ?? json['price'] ?? json['pricePerLot'];
     if (priceRaw != null) {
-      if (priceRaw is num) pricePerLot = priceRaw.toDouble();
-      else if (priceRaw is String) {
+      if (priceRaw is num) {
+        pricePerLot = priceRaw.toDouble();
+      } else if (priceRaw is String) {
         // try parsing string numbers (may contain commas or spaces)
         final cleaned = priceRaw.replaceAll(',', '').trim();
         pricePerLot = double.tryParse(cleaned) ?? (int.tryParse(cleaned)?.toDouble() ?? 0.0);
@@ -89,8 +90,9 @@ class ProductModel extends Product {
         stockStatus = disponibility ? 'En stock' : 'Rupture';
       } else if (disponibility is String) {
         final d = disponibility.toLowerCase();
-        if (d == 'true' || d == '1' || d == 'yes' || d == 'y') stockStatus = 'En stock';
-        else if (d == 'false' || d == '0' || d == 'no' || d == 'n') stockStatus = 'Rupture';
+        if (d == 'true' || d == '1' || d == 'yes' || d == 'y') {
+          stockStatus = 'En stock';
+        } else if (d == 'false' || d == '0' || d == 'no' || d == 'n') stockStatus = 'Rupture';
       } else if (disponibility is num) {
         stockStatus = disponibility > 0 ? 'En stock' : 'Rupture';
       }
@@ -102,8 +104,9 @@ class ProductModel extends Product {
     int availableQuantity = 0;
     final availRaw = json['available_quantity'] ?? json['availableQuantity'] ?? json['quantity'] ?? json['stock'] ?? json['qty'];
     if (availRaw != null) {
-      if (availRaw is int) availableQuantity = availRaw;
-      else if (availRaw is num) availableQuantity = availRaw.toInt();
+      if (availRaw is int) {
+        availableQuantity = availRaw;
+      } else if (availRaw is num) availableQuantity = availRaw.toInt();
       else if (availRaw is String) availableQuantity = int.tryParse(availRaw) ?? 0;
     }
 
@@ -125,8 +128,9 @@ class ProductModel extends Product {
 
   final mainImageIndexRaw = json['main_image_index'] ?? json['mainImageIndex'] ?? 0;
   int mainImageIndex = 0;
-  if (mainImageIndexRaw is int) mainImageIndex = mainImageIndexRaw;
-  else if (mainImageIndexRaw is num) mainImageIndex = mainImageIndexRaw.toInt();
+  if (mainImageIndexRaw is int) {
+    mainImageIndex = mainImageIndexRaw;
+  } else if (mainImageIndexRaw is num) mainImageIndex = mainImageIndexRaw.toInt();
   else if (mainImageIndexRaw is String) mainImageIndex = int.tryParse(mainImageIndexRaw) ?? 0;
 
     return ProductModel(

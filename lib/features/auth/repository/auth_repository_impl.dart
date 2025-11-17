@@ -2,17 +2,18 @@ import 'package:amerli_app/core/auth/auth_service.dart';
 import 'package:amerli_app/features/auth/data/datasources/auth_remote_datasource.dart';
 import 'package:amerli_app/features/auth/data/datasources/profile_local_datasource.dart';
 import 'package:amerli_app/features/auth/data/models/user_model.dart';
+import 'package:amerli_app/core/notifications/notification_service.dart';
 
 class AuthRepositoryImpl {
   final AuthRemoteDataSource remote;
   final AuthService authService;
   final ProfileLocalDataSource local;
 
-  AuthRepositoryImpl({required this.remote, required this.authService, required this.local});
+  AuthRepositoryImpl(
+      {required this.remote, required this.authService, required this.local});
 
   Future<void> sendOtp(String phone) => remote.sendOtp(phone);
 
-  
   Future<bool> validateOtp(String phone, String otp) async {
     final Map<String, dynamic> data = await remote.validateOtp(phone, otp);
 
@@ -32,7 +33,8 @@ class AuthRepositoryImpl {
     } else {
       // existing user: persist real access/refresh tokens
       if (access != null && refresh != null) {
-        await authService.saveTokens(accessToken: access, refreshToken: refresh);
+        await authService.saveTokens(
+            accessToken: access, refreshToken: refresh);
       }
     }
 
@@ -56,6 +58,15 @@ class AuthRepositoryImpl {
   }
 
   Future<void> signOut() async {
+    try {
+      // Attempt backend logout with current FCM token if available
+      final fcmToken = await NotificationService().getFcmToken();
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        await remote.logout(fcmToken);
+      }
+    } catch (_) {
+      // Ignore logout failures locally; proceed to clear auth state
+    }
     await authService.clear();
     await local.clear();
   }
@@ -70,7 +81,8 @@ class AuthRepositoryImpl {
       final refreshToken = data['refreshToken'] as String?;
       final userJson = data['user'] as Map<String, dynamic>?;
       if (access != null && refreshToken != null) {
-        await authService.saveTokens(accessToken: access, refreshToken: refreshToken);
+        await authService.saveTokens(
+            accessToken: access, refreshToken: refreshToken);
       }
       if (userJson != null) {
         await local.saveUserJson(userJson);

@@ -27,4 +27,24 @@ class ProfileRepositoryImpl implements ProfileRepository {
       rethrow;
     }
   }
+
+  @override
+  Future<List<Map<String, dynamic>>> getAddresses() async {
+    return await remoteDataSource.getAddresses();
+  }
+
+  @override
+  Future<Map<String, dynamic>> createAddress(Map<String, dynamic> addressData) async {
+    return await remoteDataSource.createAddress(addressData);
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateAddress(int id, Map<String, dynamic> addressData) async {
+    return await remoteDataSource.updateAddress(id, addressData);
+  }
+
+  @override
+  Future<void> deleteAddress(int id) async {
+    return await remoteDataSource.deleteAddress(id);
+  }
 }

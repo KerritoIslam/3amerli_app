@@ -39,32 +39,43 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
     final current = state;
     if (current is NotificationsLoaded) {
       try {
-        for (final n in current.items.where((e) => !e.read)) {
-          await repository.markRead(n.id);
+        final unreadIds = current.items.where((e) => !e.read).map((e) => e.id).toList();
+        if (unreadIds.isNotEmpty) {
+          await repository.markMultipleRead(unreadIds);
         }
         // refresh
         add(NotificationsLoadEvent());
       } catch (e) {
+        // ignore: avoid_print
+        print('NotificationsBloc: mark all read error: $e');
         emit(NotificationsError(e.toString()));
       }
     }
   }
 
   Future<void> _onToggleRead(NotificationsToggleReadEvent event, Emitter<NotificationsState> emit) async {
-    // For mock/demo we simply call markRead when toggled to read; no un-read API here
     final current = state;
     if (current is NotificationsLoaded) {
       try {
         await repository.markRead(event.notification.id);
         add(NotificationsLoadEvent());
       } catch (e) {
+        // ignore: avoid_print
+        print('NotificationsBloc: toggle read error: $e');
         emit(NotificationsError(e.toString()));
       }
     }
   }
 
   Future<void> _onDelete(NotificationsDeleteEvent event, Emitter<NotificationsState> emit) async {
-    // Not supported by backend in this simple mock - just reload for now
-    add(NotificationsLoadEvent());
+    try {
+      await repository.deleteNotification(event.id);
+      // Refresh the list after deletion
+      add(NotificationsLoadEvent());
+    } catch (e) {
+      // ignore: avoid_print
+      print('NotificationsBloc: delete error: $e');
+      emit(NotificationsError(e.toString()));
+    }
   }
 }

@@ -4,7 +4,7 @@ import '../../domain/entities/order.dart';
 class OrderTile extends StatelessWidget {
   final Order order;
 
-  const OrderTile({Key? key, required this.order}) : super(key: key);
+  const OrderTile({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {

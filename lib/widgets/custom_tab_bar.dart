@@ -19,7 +19,7 @@ class CustomTabBar extends StatefulWidget {
   final EdgeInsetsGeometry padding;
 
   const CustomTabBar({
-    Key? key,
+    super.key,
     required this.tabs,
     required this.currentIndex,
     required this.onTap,
@@ -31,8 +31,7 @@ class CustomTabBar extends StatefulWidget {
     this.inactiveTextStyle,
     this.padding = const EdgeInsets.symmetric(vertical: 8.0),
   })  : assert(tabs.length > 0),
-        assert(currentIndex >= 0 && currentIndex < tabs.length),
-        super(key: key);
+        assert(currentIndex >= 0 && currentIndex < tabs.length);
 
   @override
   State<CustomTabBar> createState() => _CustomTabBarState();

@@ -12,13 +12,13 @@ class AppTheme {
     colorScheme: AppColors.lightScheme,
     brightness: Brightness.light,
     useMaterial3: true,
-    scaffoldBackgroundColor: AppColors.lightScheme.background,
+    scaffoldBackgroundColor: AppColors.lightScheme.surface,
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.lightScheme.surface,
       foregroundColor: AppColors.lightScheme.onSurface,
-      
       elevation: 0,
-      titleTextStyle: AppTextStyles.title.copyWith(color: AppColors.lightScheme.onSurface),
+      titleTextStyle:
+          AppTextStyles.title.copyWith(color: AppColors.lightScheme.onSurface),
     ),
     textTheme: TextTheme(
       headlineLarge: AppTextStyles.headline1,
@@ -40,12 +40,13 @@ class AppTheme {
     colorScheme: AppColors.darkScheme,
     brightness: Brightness.dark,
     useMaterial3: true,
-    scaffoldBackgroundColor: AppColors.darkScheme.background,
+    scaffoldBackgroundColor: AppColors.darkScheme.surface,
     appBarTheme: AppBarTheme(
       backgroundColor: AppColors.darkScheme.surface,
       foregroundColor: AppColors.darkScheme.onSurface,
       elevation: 0,
-      titleTextStyle: AppTextStyles.title.copyWith(color: AppColors.darkScheme.onSurface),
+      titleTextStyle:
+          AppTextStyles.title.copyWith(color: AppColors.darkScheme.onSurface),
     ),
     textTheme: TextTheme(
       headlineLarge: AppTextStyles.headline1,

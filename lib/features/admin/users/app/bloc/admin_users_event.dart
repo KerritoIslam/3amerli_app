@@ -73,3 +73,31 @@ class AdminUsersDeleteMultipleEvent extends AdminUsersEvent {
 class AdminUsersLoadRolesEvent extends AdminUsersEvent {
   const AdminUsersLoadRolesEvent();
 }
+
+class AdminUsersLoadBlacklistEvent extends AdminUsersEvent {
+  final int page;
+  final int limit;
+
+  const AdminUsersLoadBlacklistEvent({this.page = 1, this.limit = 10});
+
+  @override
+  List<Object?> get props => [page, limit];
+}
+
+class AdminUsersAddToBlacklistEvent extends AdminUsersEvent {
+  final String userId;
+
+  const AdminUsersAddToBlacklistEvent({required this.userId});
+
+  @override
+  List<Object?> get props => [userId];
+}
+
+class AdminUsersRestoreFromBlacklistEvent extends AdminUsersEvent {
+  final String userId;
+
+  const AdminUsersRestoreFromBlacklistEvent({required this.userId});
+
+  @override
+  List<Object?> get props => [userId];
+}

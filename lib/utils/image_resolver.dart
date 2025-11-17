@@ -16,11 +16,11 @@ String resolveImageUrl(String input) {
 
   // internal host like minio:9000 or host:port -> try to make it reachable by adding https://
   if (s.contains('minio') || s.contains(':')) {
-    if (!s.startsWith('http')) return 'https://' + s;
+    if (!s.startsWith('http')) return 'https://$s';
     return s;
   }
   // protocol-relative URL like //host/path -> prefix https:
-  if (s.startsWith('//')) return 'https:' + s;
+  if (s.startsWith('//')) return 'https:$s';
 
   // If the path starts with '/', treat it as an absolute path on the API origin
   if (s.startsWith('/')) {

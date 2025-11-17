@@ -122,8 +122,9 @@ class TopProductModel {
     final name = (json['name'] ?? json['productName'] ?? json['title'] ?? '').toString();
     final sold = json['soldCount'] ?? json['totalQuantity'] ?? json['sold'] ?? 0;
     int soldCount = 0;
-    if (sold is int) soldCount = sold;
-    else if (sold is num) soldCount = sold.toInt();
+    if (sold is int) {
+      soldCount = sold;
+    } else if (sold is num) soldCount = sold.toInt();
     else if (sold is String) soldCount = int.tryParse(sold) ?? 0;
 
     final rawImage = (json['image'] ?? json['productImage'] ?? json['picture'] ?? json['mainpicture'] ?? '').toString();

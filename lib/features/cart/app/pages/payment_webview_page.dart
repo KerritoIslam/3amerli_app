@@ -7,7 +7,7 @@ import 'package:amerli_app/features/failure/app/pages/failure_page.dart';
 class PaymentWebViewPage extends StatefulWidget {
   final String checkoutUrl;
 
-  const PaymentWebViewPage({Key? key, required this.checkoutUrl}) : super(key: key);
+  const PaymentWebViewPage({super.key, required this.checkoutUrl});
 
   @override
   State<PaymentWebViewPage> createState() => _PaymentWebViewPageState();

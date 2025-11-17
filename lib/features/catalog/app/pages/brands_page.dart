@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/core/config/injection.dart';
 import '../bloc/brands_bloc.dart';
 import '../bloc/brands_event.dart';
 import '../bloc/brands_state.dart';
@@ -75,8 +76,11 @@ class _BrandsPageState extends State<BrandsPage> {
                         final state = context.read<BrandsBloc>().state;
                         if (state is BrandsLoaded) {
                           setState(() {
-                            if (_selected.length == state.items.length) _selected.clear();
-                            else _selected.addAll(state.items.map((e) => e.id));
+                            if (_selected.length == state.items.length) {
+                              _selected.clear();
+                            } else {
+                              _selected.addAll(state.items.map((e) => e.id));
+                            }
                           });
                           final names = state.items.where((e) => _selected.contains(e.id)).map((e) => e.name).join(',');
                           try {
@@ -114,8 +118,11 @@ class _BrandsPageState extends State<BrandsPage> {
                                       value: selected,
                                       onChanged: (_) {
                                         setState(() {
-                                          if (selected) _selected.remove(b.id);
-                                          else _selected.add(b.id);
+                                          if (selected) {
+                                            _selected.remove(b.id);
+                                          } else {
+                                            _selected.add(b.id);
+                                          }
                                         });
                                         try {
                                           context.read<CatalogBloc>().add(CatalogLoadEvent(query: b.name));
@@ -127,8 +134,11 @@ class _BrandsPageState extends State<BrandsPage> {
                                   ),
                                   onTap: () {
                                     setState(() {
-                                      if (selected) _selected.remove(b.id);
-                                      else _selected.add(b.id);
+                                      if (selected) {
+                                        _selected.remove(b.id);
+                                      } else {
+                                        _selected.add(b.id);
+                                      }
                                     });
                                   },
                                 );
@@ -143,14 +153,14 @@ class _BrandsPageState extends State<BrandsPage> {
                               width: double.infinity,
                               child: OutlinedButton(
                                 onPressed: () {
-                                  final state = context.read<BrandsBloc>().state;
-                                  if (state is BrandsLoaded) {
-                                    final names = state.items.where((e) => _selected.contains(e.id)).map((e) => e.name).join(',');
-                                    try {
-                                      context.read<CatalogBloc>().add(CatalogLoadEvent(query: names));
-                                    } catch (_) {}
-                                  }
-                                  Navigator.of(context).pop();
+                                  // Apply filters instantly using service locator
+                                  final catalogBloc = sl<CatalogBloc>();
+                                  catalogBloc.add(CatalogLoadEvent(
+                                    brandIds: _selected.isEmpty ? null : _selected.toList(),
+                                  ));
+                                  
+                                  // Pop with selected IDs
+                                  Navigator.of(context).pop(_selected);
                                 },
                                 style: OutlinedButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(vertical: 14)),
                                 child: const Text('Appliquer les filtres'),

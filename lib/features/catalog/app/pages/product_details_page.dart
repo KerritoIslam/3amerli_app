@@ -177,7 +177,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     Center(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: Container(
+                        child: SizedBox(
                           width: 220,
                           height: 260,
                           child: (imageUrl != null && imageUrl.isNotEmpty)

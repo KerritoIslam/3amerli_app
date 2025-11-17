@@ -9,7 +9,7 @@ import 'bottom_cart_summary.dart';
 class CartBottomOverlay extends StatelessWidget {
   final void Function()? onPay;
 
-  const CartBottomOverlay({Key? key, this.onPay}) : super(key: key);
+  const CartBottomOverlay({super.key, this.onPay});
 
   @override
   Widget build(BuildContext context) {

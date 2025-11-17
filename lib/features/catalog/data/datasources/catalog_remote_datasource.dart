@@ -11,12 +11,19 @@ class CatalogRemoteDataSource {
 
   bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
 
-  /// Calls GET /products/all?page=&limit=&search=&categoryIds=
-  Future<List<ProductModel>> fetchProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds}) async {
+  /// Calls GET /products/all?page=&limit=&search=&categoryIds=&brandIds=
+  Future<List<ProductModel>> fetchProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds, List<int>? brandIds}) async {
     try {
       final qp = <String, dynamic>{'page': page, 'limit': pageSize};
       if (query != null && query.isNotEmpty) qp['search'] = query;
-  if (categoryIds != null && categoryIds.isNotEmpty) qp['categoryIds'] = categoryIds;
+      // Format categoryIds as comma-separated string: "1,2,4"
+      if (categoryIds != null && categoryIds.isNotEmpty) {
+        qp['categoryIds'] = categoryIds.join(',');
+      }
+      // Format brandIds as comma-separated string: "1,2,4"
+      if (brandIds != null && brandIds.isNotEmpty) {
+        qp['brandIds'] = brandIds.join(',');
+      }
 
       final resp = await apiService.get('/products/all', queryParameters: qp);
       if (_isSuccess(resp.statusCode) && resp.data != null) {

@@ -8,4 +8,9 @@ abstract class AdminUsersRepository {
   Future<void> deleteUser(String userId);
   Future<void> deleteMultipleUsers(List<String> userIds);
   Future<List<UserRole>> getRoles();
+  
+  // Blacklist methods
+  Future<List<AdminUser>> getBlacklistedUsers({int page = 1, int limit = 10});
+  Future<void> addToBlacklist(String userId);
+  Future<void> restoreFromBlacklist(String userId);
 }

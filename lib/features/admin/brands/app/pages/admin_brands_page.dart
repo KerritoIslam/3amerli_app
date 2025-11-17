@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/core/config/injection.dart' as di;
 import '../../domain/entities/brand.dart';
+import '../../domain/repositories/admin_brands_repository.dart';
 import 'add_brand_page.dart';
 
 class AdminBrandsPage extends StatefulWidget {
@@ -16,6 +18,9 @@ class AdminBrandsPage extends StatefulWidget {
 class _AdminBrandsPageState extends State<AdminBrandsPage> {
   final TextEditingController _searchController = TextEditingController();
   final Map<String, bool> _selected = {};
+  late final AdminBrandsRepository _repository;
+  List<Brand> _brands = [];
+  bool _isLoading = false;
 
   bool get _allSelected => _filteredBrands.isNotEmpty && _filteredBrands.every((b) => _selected[b.id] == true);
 
@@ -27,16 +32,30 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
     });
   }
 
-  // initial sample brands (replace with real data source as needed)
-  final List<Brand> _brands = List<Brand>.from([
-    Brand(id: '1', name: 'Amor Benamor'),
-    Brand(id: '2', name: 'Jumbo'),
-    Brand(id: '3', name: 'Cevital'),
-    Brand(id: '4', name: 'Sup'),
-    Brand(id: '5', name: 'Guediila'),
-    Brand(id: '6', name: 'Moment'),
-    Brand(id: '7', name: 'Soumam'),
-  ]);
+  @override
+  void initState() {
+    super.initState();
+    _repository = di.sl<AdminBrandsRepository>();
+    _loadBrands();
+  }
+
+  Future<void> _loadBrands() async {
+    setState(() => _isLoading = true);
+    try {
+      final brands = await _repository.getAllBrands();
+      setState(() {
+        _brands = brands;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de chargement: $e')),
+        );
+      }
+    }
+  }
 
   String get _search => _searchController.text.trim().toLowerCase();
 
@@ -55,17 +74,38 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
     final result = await Navigator.of(context).push<Brand?>(
       MaterialPageRoute(builder: (_) => AddBrandPage(edit: edit)),
     );
-    if (result != null) {
-      setState(() {
+    if (result != null && mounted) {
+      try {
+        Brand savedBrand;
         if (edit != null) {
           // update existing
-          final idx = _brands.indexWhere((b) => b.id == edit.id);
-          if (idx != -1) _brands[idx] = result;
+          savedBrand = await _repository.updateBrand(edit.id, result.name);
+          setState(() {
+            final idx = _brands.indexWhere((b) => b.id == edit.id);
+            if (idx != -1) _brands[idx] = savedBrand;
+          });
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Marque mise à jour')),
+            );
+          }
         } else {
           // add new
-          _brands.insert(0, result);
+          savedBrand = await _repository.createBrand(result.name);
+          setState(() => _brands.insert(0, savedBrand));
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Marque ajoutée')),
+            );
+          }
         }
-      });
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -77,12 +117,29 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
         content: Text('Voulez-vous supprimer "${brand.name}" ?'),
         actions: [
           TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Annuler')),
-          TextButton(onPressed: () => Navigator.of(c).pop(true), child: const Text('Supprimer')),
+          TextButton(
+            onPressed: () => Navigator.of(c).pop(true),
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
-    if (ok == true) {
-      setState(() => _brands.removeWhere((b) => b.id == brand.id));
+    if (ok == true && mounted) {
+      try {
+        await _repository.deleteBrand(brand.id);
+        setState(() => _brands.removeWhere((b) => b.id == brand.id));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Marque supprimée')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur de suppression: $e')),
+          );
+        }
+      }
     }
   }
 
@@ -201,11 +258,15 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
 
                       // Brand List (use dividers between rows like products table)
                       Flexible(
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(12),
-                          itemCount: _filteredBrands.length,
+                        child: _isLoading
+                            ? const Center(child: CircularProgressIndicator())
+                            : _filteredBrands.isEmpty
+                                ? const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('Aucune marque trouvée')))
+                                : ListView.separated(
+                                    shrinkWrap: true,
+                                    physics: const NeverScrollableScrollPhysics(),
+                                    padding: const EdgeInsets.all(12),
+                                    itemCount: _filteredBrands.length,
                           separatorBuilder: (context, index) => Divider(
                             height: 1,
                             thickness: 1,
@@ -251,7 +312,7 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                               ),
                             );
                           },
-                        ),
+                                  ),
                       ),
                     ],
                   ),

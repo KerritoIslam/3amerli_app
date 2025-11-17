@@ -18,7 +18,7 @@ import 'package:amerli_app/features/auth/repository/auth_repository_impl.dart';
 import 'package:amerli_app/core/config/injection.dart' show sl;
 
 class SignUpPage extends StatelessWidget {
-  const SignUpPage({Key? key}) : super(key: key);
+  const SignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +69,7 @@ class _TopCurveClipper extends CustomClipper<Path> {
 }
 
 class _SignUpView extends StatefulWidget {
-  const _SignUpView({Key? key}) : super(key: key);
+  const _SignUpView();
 
   @override
   State<_SignUpView> createState() => _SignUpViewState();
@@ -175,7 +175,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
           // Clip the whole area to avoid any visual overflow when the panel
           // animates; paint the top area with the app background so the panel
           // surfaceVariant reads as a distinct layer.
-          final topBg = Theme.of(context).colorScheme.background;
+          final topBg = Theme.of(context).colorScheme.surface;
 
           // Allow stack children to paint outside bounds so the panel can
           // animate above the top (covering the status bar). Previously a
@@ -280,7 +280,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                       text: TextSpan(
                                         style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
                                         children: [
-                                          TextSpan(text: AppLanguage.codeSent + ' '),
+                                          TextSpan(text: '${AppLanguage.codeSent} '),
                                           WidgetSpan(
                                             alignment: PlaceholderAlignment.middle,
                                             child: GestureDetector(
@@ -474,12 +474,12 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                         text: TextSpan(
                                           style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
                                           children: [
-                                            TextSpan(text: AppLanguage.consentPrefix + ' '),
+                                            TextSpan(text: '${AppLanguage.consentPrefix} '),
                                             TextSpan(
                                               text: AppLanguage.termsOfUse,
                                               style: const TextStyle(decoration: TextDecoration.underline),
                                             ),
-                                            TextSpan(text: ' ' + AppLanguage.and + ' '),
+                                            TextSpan(text: ' ${AppLanguage.and} '),
                                             TextSpan(
                                               text: AppLanguage.privacyPolicy,
                                               style: const TextStyle(decoration: TextDecoration.underline),
@@ -529,12 +529,12 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                         text: TextSpan(
                                           style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
                                           children: [
-                                            TextSpan(text: AppLanguage.consentPrefix + ' '),
+                                            TextSpan(text: '${AppLanguage.consentPrefix} '),
                                             TextSpan(
                                               text: AppLanguage.termsOfUse,
                                               style: const TextStyle(decoration: TextDecoration.underline),
                                             ),
-                                            TextSpan(text: ' ' + AppLanguage.and + ' '),
+                                            TextSpan(text: ' ${AppLanguage.and} '),
                                             TextSpan(
                                               text: AppLanguage.privacyPolicy,
                                               style: const TextStyle(decoration: TextDecoration.underline),
@@ -566,7 +566,7 @@ class _CountryCodeSelector extends StatefulWidget {
   final String initial;
   final ValueChanged<String> onChanged;
 
-  const _CountryCodeSelector({Key? key, required this.initial, required this.onChanged}) : super(key: key);
+  const _CountryCodeSelector({required this.initial, required this.onChanged});
 
   @override
   State<_CountryCodeSelector> createState() => _CountryCodeSelectorState();
@@ -577,7 +577,7 @@ class _FlagButton extends StatefulWidget {
   final ValueChanged<String> onSelected;
   final FocusNode? preserveFocus;
 
-  const _FlagButton({Key? key, required this.currentAsset, required this.onSelected, this.preserveFocus}) : super(key: key);
+  const _FlagButton({required this.currentAsset, required this.onSelected, this.preserveFocus});
 
   @override
   State<_FlagButton> createState() => _FlagButtonState();

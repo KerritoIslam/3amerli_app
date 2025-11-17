@@ -113,10 +113,12 @@ class _FavoritsView extends StatelessWidget {
                 }
 
                 if (state is CategoriesError) return const Center(child: Text('Aucune catégorie trouvée'));
-                if (state is CategoriesLoaded) return CategoriesRow(categories: state.items, onTap: (cat) {
+                if (state is CategoriesLoaded) {
+                  return CategoriesRow(categories: state.items, onTap: (cat) {
                   // Reload favorites filtered by category
                   context.read<fav_feature.FavoritsBloc>().add(FavoritsLoadEvent());
                 });
+                }
                 return const SizedBox.shrink();
               }),
 

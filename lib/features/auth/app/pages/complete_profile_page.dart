@@ -12,7 +12,7 @@ import 'package:geocoding/geocoding.dart';
 import '../../../../utils/constants/app_dimensions.dart';
 
 class CompleteProfilePage extends StatefulWidget {
-  const CompleteProfilePage({Key? key}) : super(key: key);
+  const CompleteProfilePage({super.key});
 
   @override
   State<CompleteProfilePage> createState() => _CompleteProfilePageState();

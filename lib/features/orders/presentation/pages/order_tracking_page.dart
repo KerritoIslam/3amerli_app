@@ -5,7 +5,7 @@ import '../../domain/entities/order.dart';
 
 class OrderTrackingPage extends StatelessWidget {
   final Order order;
-  const OrderTrackingPage({Key? key, required this.order}) : super(key: key);
+  const OrderTrackingPage({super.key, required this.order});
 
   static const Color _primary = Color(0xFFA7C957);
   static const Color _dark = Color(0xFF083B2E);
@@ -29,7 +29,7 @@ class OrderTrackingPage extends StatelessWidget {
      const connectorBottomHeight = 24.0;
 
     // determine whether connectors should be shown as active (colored) based on current order.status
-    int _statusIndex(OrderStatus s) {
+    int statusIndex(OrderStatus s) {
       switch (s) {
         case OrderStatus.confirmed:
           return 0;
@@ -44,17 +44,17 @@ class OrderTrackingPage extends StatelessWidget {
       }
     }
 
-    final stepIdx = _statusIndex(stepStatus);
-    final currentIdx = _statusIndex(order.status);
+    final stepIdx = statusIndex(stepStatus);
+    final currentIdx = statusIndex(order.status);
 
-    Color _connectorColorTop() {
+    Color connectorColorTop() {
       if (!showTopConnector) return const Color(0xFFE5E7EB);
       // top connector (between stepIdx-1 and stepIdx) is active if we've reached at least this step
       if (currentIdx >= stepIdx) return AppColors.lightPrimary;
       return const Color(0xFFE5E7EB);
     }
 
-    Color _connectorColorBottom() {
+    Color connectorColorBottom() {
       if (!showBottomConnector) return const Color(0xFFE5E7EB);
       // bottom connector (between stepIdx and stepIdx+1) is active if we've reached the next step
       if (currentIdx >= stepIdx + 1) return AppColors.lightPrimary;
@@ -70,7 +70,7 @@ class OrderTrackingPage extends StatelessWidget {
           child: Column(
             children: [
               // top connector (touches circle)
-              if (showTopConnector) Container(width: connectorWidth, height: connectorTopHeight, color: _connectorColorTop()),
+              if (showTopConnector) Container(width: connectorWidth, height: connectorTopHeight, color: connectorColorTop()),
               Container(
                 width: circleSize,
                 height: circleSize,
@@ -78,7 +78,7 @@ class OrderTrackingPage extends StatelessWidget {
                 child: Icon(icon, size: 20, color: active ? Colors.white : Colors.grey.shade700),
               ),
               // bottom connector (touches circle)
-              if (showBottomConnector) Container(width: connectorWidth, height: connectorBottomHeight, color: _connectorColorBottom()),
+              if (showBottomConnector) Container(width: connectorWidth, height: connectorBottomHeight, color: connectorColorBottom()),
             ],
           ),
         ),

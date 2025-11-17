@@ -12,10 +12,19 @@ class CategoryGrid extends StatefulWidget {
   final CategorySelectionCallback? onSelectionChanged;
   final int crossAxisCount;
   final double itemHeight;
+  final bool showMoreIndicator;
 
   // crossAxisCount and itemHeight are kept for API compatibility but are
   // ignored in the wrap-based layout (chips size themselves).
-  const CategoryGrid({super.key, required this.categories, this.onTap, this.onSelectionChanged, this.crossAxisCount = 3, this.itemHeight = 90});
+  const CategoryGrid({
+    super.key, 
+    required this.categories, 
+    this.onTap, 
+    this.onSelectionChanged, 
+    this.crossAxisCount = 3, 
+    this.itemHeight = 90,
+    this.showMoreIndicator = false,
+  });
 
   @override
   State<CategoryGrid> createState() => _CategoryGridState();
@@ -38,36 +47,55 @@ class _CategoryGridState extends State<CategoryGrid> {
         child: Wrap(
           spacing: 12,
           runSpacing: 12,
-          children: categories.map((cat) {
-            final selected = _selectedIds.contains(cat.id);
-            return CategoryChip(
-              label: cat.name,
-              isSelected: selected,
-              onSelected: () {
-                setState(() {
-                  if (_selectedIds.contains(cat.id)) _selectedIds.remove(cat.id);
-                  else _selectedIds.add(cat.id);
-                });
-                // Notify parent with the updated selection array
-                if (widget.onSelectionChanged != null) {
-                  // ignore: avoid_print
-                  print('[CategoryGrid] Selection changed: ${_selectedIds.toList()}');
-                  widget.onSelectionChanged!(_selectedIds.toList());
-                }
-                // Keep backward compatibility with single-tap callback
-                if (widget.onTap != null) widget.onTap!(cat);
-              },
-              trailing: cat.image != null && cat.image!.isNotEmpty
-                  ? Image.network(
-                      cat.image!,
-                      width: 24,
-                      height: 24,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade200),
-                    )
-                  : null,
-            );
-          }).toList(),
+          children: [
+            ...categories.map((cat) {
+              final selected = _selectedIds.contains(cat.id);
+              return CategoryChip(
+                label: cat.name,
+                isSelected: selected,
+                onSelected: () {
+                  setState(() {
+                    if (_selectedIds.contains(cat.id)) {
+                      _selectedIds.remove(cat.id);
+                    } else {
+                      _selectedIds.add(cat.id);
+                    }
+                  });
+                  // Notify parent with the updated selection array
+                  if (widget.onSelectionChanged != null) {
+                    // ignore: avoid_print
+                    print('[CategoryGrid] Selection changed: ${_selectedIds.toList()}');
+                    widget.onSelectionChanged!(_selectedIds.toList());
+                  }
+                  // Keep backward compatibility with single-tap callback
+                  if (widget.onTap != null) widget.onTap!(cat);
+                },
+                trailing: cat.image != null && cat.image!.isNotEmpty
+                    ? Image.network(
+                        cat.image!,
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade200),
+                      )
+                    : null,
+              );
+            }).toList(),
+            // Add "..." as plain text in the 4th row if there are more categories
+            if (widget.showMoreIndicator)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Text(
+                  '...',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade600,
+                    letterSpacing: 3,
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );

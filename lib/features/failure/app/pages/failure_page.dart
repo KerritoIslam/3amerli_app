@@ -12,14 +12,14 @@ class FailurePage extends StatefulWidget {
   final VoidCallback? onRetryTap;
 
   const FailurePage({
-    Key? key,
+    super.key,
     this.orderId,
     this.date,
     this.paymentMethod,
     this.amount,
     this.failureReason,
     this.onRetryTap,
-  }) : super(key: key);
+  });
 
   @override
   State<FailurePage> createState() => _FailurePageState();
@@ -68,7 +68,7 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/cart', (route) => route.settings.name == '/'),
         ),
         title: Text('Échec du paiement', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
@@ -125,7 +125,7 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: widget.onRetryTap ?? () => Navigator.of(context).pop(),
+                          onPressed: widget.onRetryTap ?? () => Navigator.of(context).pushNamedAndRemoveUntil('/cart', (route) => route.settings.name == '/'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: errorColor,
                             shape: const StadiumBorder(),
@@ -140,7 +140,7 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                         width: double.infinity,
                         height: 44,
                         child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: errorColor),
                             shape: const StadiumBorder(),

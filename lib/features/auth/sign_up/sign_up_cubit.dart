@@ -60,7 +60,7 @@ class SignUpCubit extends Cubit<SignUpState> {
       // If registered, read cached user and dispatch login event
       if (isRegistered) {
         final userModel = await repository.readCachedUser();
-        print("User Model ${userModel}");
+        print("User Model $userModel");
         if (userModel != null) {
           
           final userEntity = userModel.toEntity();

@@ -18,23 +18,6 @@ class UserDetailPage extends StatefulWidget {
 }
 
 class _UserDetailPageState extends State<UserDetailPage> {
-  bool _isEditingRole = false;
-  bool _isEditingStatus = false;
-  String? _selectedRole;
-  String? _selectedStatus;
-
-  final List<String> _availableRoles = [
-    'Admin',
-    'Supérette',
-    'Grossiste',
-    'Livreur',
-  ];
-
-  final List<String> _availableStatuses = [
-    'Actif',
-    'Suspendu',
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -47,13 +30,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
   }
 
-  String _formatDateTime(DateTime? date) {
-    if (date == null) return 'N/A';
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  Color _getActiveStatusColor(bool isActive) {
+    return isActive ? Colors.green : Colors.red;
   }
 
-  Color _getStatusColor(String status) {
-    return status == 'Actif' ? Colors.green : Colors.red;
+  String _getActiveStatusText(bool isActive) {
+    // TODO: Use app localization
+    return isActive ? 'Actif' : 'Suspendu';
   }
 
   @override
@@ -69,10 +52,10 @@ class _UserDetailPageState extends State<UserDetailPage> {
                 backgroundColor: Colors.green,
               ),
             );
-            setState(() {
-              _isEditingRole = false;
-              _isEditingStatus = false;
-            });
+            // Reload user details after successful operation
+            context.read<AdminUsersBloc>().add(
+              AdminUsersLoadDetailEvent(userId: widget.userId),
+            );
           } else if (state is AdminUsersError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -159,10 +142,10 @@ class _UserDetailPageState extends State<UserDetailPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(user.status).withOpacity(0.1),
+                          color: _getActiveStatusColor(user.isActive).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
-                            color: _getStatusColor(user.status),
+                            color: _getActiveStatusColor(user.isActive),
                             width: 1,
                           ),
                         ),
@@ -174,14 +157,14 @@ class _UserDetailPageState extends State<UserDetailPage> {
                               height: 8,
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
-                                color: _getStatusColor(user.status),
+                                color: _getActiveStatusColor(user.isActive),
                               ),
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              user.status,
+                              _getActiveStatusText(user.isActive),
                               style: TextStyle(
-                                color: _getStatusColor(user.status),
+                                color: _getActiveStatusColor(user.isActive),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -199,7 +182,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
                 const SizedBox(height: 16),
                 _buildInfoCard([
                   _InfoRow(label: 'Nom', value: user.name),
-                  _InfoRow(label: 'Email', value: user.email),
+                  if (user.supermarketName != null)
+                    _InfoRow(label: 'Supérette', value: user.supermarketName!),
                   _InfoRow(label: 'Téléphone', value: user.phone),
                   if (user.storeName != null)
                     _InfoRow(label: 'Magasin', value: user.storeName!),
@@ -208,27 +192,42 @@ class _UserDetailPageState extends State<UserDetailPage> {
                       label: 'Représentant',
                       value: user.representativeName!,
                     ),
-                  if (user.address != null)
-                    _InfoRow(label: 'Adresse', value: user.address!),
                 ]),
 
                 const SizedBox(height: 24),
 
-                // Role Section
+                // Addresses Section
+                if (user.addresses != null && user.addresses!.isNotEmpty) ...[
+                  _buildSectionTitle('Adresses'),
+                  const SizedBox(height: 16),
+                  ...user.addresses!.map((address) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12.0),
+                    child: _buildInfoCard([
+                      _InfoRow(label: 'Rue', value: address.street),
+                      _InfoRow(label: 'Ville', value: address.city),
+                      _InfoRow(label: 'Quartier', value: address.district),
+                    ]),
+                  )),
+                  const SizedBox(height: 12),
+                ],
+
+                // Role Section (Read-only)
                 _buildSectionTitle('Rôle'),
                 const SizedBox(height: 16),
-                _buildRoleCard(user),
+                _buildInfoCard([
+                  _InfoRow(label: 'Rôle', value: user.role),
+                ]),
 
                 const SizedBox(height: 24),
 
-                // Status Section
+                // Status Section with Text Button
                 _buildSectionTitle('Statut du compte'),
                 const SizedBox(height: 16),
-                _buildStatusCard(user),
+                _buildStatusCardWithButton(user),
 
                 const SizedBox(height: 24),
 
-                // Activity History
+                // Activity History (without last active date)
                 _buildSectionTitle('Historique'),
                 const SizedBox(height: 16),
                 _buildInfoCard([
@@ -236,11 +235,10 @@ class _UserDetailPageState extends State<UserDetailPage> {
                     label: 'Date d\'inscription',
                     value: _formatDate(user.registrationDate),
                   ),
-                  _InfoRow(
-                    label: 'Dernière activité',
-                    value: _formatDateTime(user.lastActivityDate),
-                  ),
                 ]),
+
+                // Add bottom padding to avoid navigation bar covering content
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -302,225 +300,86 @@ class _UserDetailPageState extends State<UserDetailPage> {
     );
   }
 
-  Widget _buildRoleCard(AdminUser user) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!, width: 1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(
-            width: 150,
-            child: Text(
-              'Rôle actuel',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
-              ),
-            ),
-          ),
-          Expanded(
-            child: _isEditingRole
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButton<String>(
-                          value: _selectedRole ?? user.role,
-                          isExpanded: true,
-                          items: _availableRoles
-                              .map((role) => DropdownMenuItem(
-                                    value: role,
-                                    child: Text(role),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedRole = value;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () {
-                          if (_selectedRole != null &&
-                              _selectedRole != user.role) {
-                            context.read<AdminUsersBloc>().add(
-                                  AdminUsersUpdateRoleEvent(
-                                    userId: user.id,
-                                    newRole: _selectedRole!,
-                                  ),
-                                );
-                          } else {
-                            setState(() {
-                              _isEditingRole = false;
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.check, color: Colors.green),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isEditingRole = false;
-                            _selectedRole = null;
-                          });
-                        },
-                        icon: const Icon(Icons.close, color: Colors.red),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.lightPrimary.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          user.role,
-                          style: TextStyle(
-                            color: AppColors.lightPrimary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isEditingRole = true;
-                            _selectedRole = user.role;
-                          });
-                        },
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          color: AppColors.lightPrimary,
-                          size: 20,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildStatusCardWithButton(AdminUser user) {
+    final isActive = user.isActive;
+    final buttonText = isActive ? 'Suspendre' : 'Activer';
 
-  Widget _buildStatusCard(AdminUser user) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey[300]!, width: 1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
-            width: 150,
-            child: Text(
-              'Statut',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: _getActiveStatusColor(user.isActive),
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Text(
+                _getActiveStatusText(user.isActive),
+                style: TextStyle(
+                  color: _getActiveStatusColor(user.isActive),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 16,
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: _isEditingStatus
-                ? Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButton<String>(
-                          value: _selectedStatus ?? user.status,
-                          isExpanded: true,
-                          items: _availableStatuses
-                              .map((status) => DropdownMenuItem(
-                                    value: status,
-                                    child: Text(status),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedStatus = value;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: () {
-                          if (_selectedStatus != null &&
-                              _selectedStatus != user.status) {
-                            context.read<AdminUsersBloc>().add(
-                                  AdminUsersUpdateStatusEvent(
-                                    userId: user.id,
-                                    newStatus: _selectedStatus!,
-                                  ),
-                                );
-                          } else {
-                            setState(() {
-                              _isEditingStatus = false;
-                            });
-                          }
-                        },
-                        icon: const Icon(Icons.check, color: Colors.green),
-                      ),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isEditingStatus = false;
-                            _selectedStatus = null;
-                          });
-                        },
-                        icon: const Icon(Icons.close, color: Colors.red),
-                      ),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 8,
-                            height: 8,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _getStatusColor(user.status),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            user.status,
-                            style: TextStyle(
-                              color: _getStatusColor(user.status),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _isEditingStatus = true;
-                            _selectedStatus = user.status;
-                          });
-                        },
-                        icon: Icon(
-                          Icons.edit_outlined,
-                          color: AppColors.lightPrimary,
-                          size: 20,
-                        ),
-                      ),
-                    ],
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () {
+              // Show confirmation dialog
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Confirmation'),
+                  content: Text(
+                    'Êtes-vous sûr de vouloir ${buttonText.toLowerCase()} cet utilisateur?',
                   ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Annuler'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        // Use blacklist endpoints for suspend/activate
+                        if (isActive) {
+                          // Suspend user by adding to blacklist
+                          this.context.read<AdminUsersBloc>().add(
+                            AdminUsersAddToBlacklistEvent(userId: user.id),
+                          );
+                        } else {
+                          // Activate user by restoring from blacklist
+                          this.context.read<AdminUsersBloc>().add(
+                            AdminUsersRestoreFromBlacklistEvent(userId: user.id),
+                          );
+                        }
+                      },
+                      child: Text(buttonText),
+                    ),
+                  ],
+                ),
+              );
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: isActive ? Colors.red : Colors.green,
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: Text(
+              buttonText,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

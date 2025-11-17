@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
-import 'package:webview_flutter_platform_interface/webview_flutter_platform_interface.dart';
 // import 'package:webview_flutter_wkwebview/webview_flutter_wkwebview.dart';
 
 class PaymentWebViewPage extends StatefulWidget {
   final String url;
   final String? title;
 
-  const PaymentWebViewPage({Key? key, required this.url, this.title}) : super(key: key);
+  const PaymentWebViewPage({super.key, required this.url, this.title});
 
   @override
   State<PaymentWebViewPage> createState() => _PaymentWebViewPageState();

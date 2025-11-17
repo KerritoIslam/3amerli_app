@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/notifications/notification_service.dart';
+import 'utils/logging/app_logger.dart';
 import 'core/config/injection.dart' as di;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/catalog/app/bloc/catalog_bloc.dart';
@@ -16,15 +18,14 @@ import 'utils/constants/app_language.dart';
 import 'utils/theme/app_theme.dart';
 import 'core/config/router.dart';
 import 'core/storage/local_storage.dart';
+import 'package:go_router/go_router.dart';
 // routing will provide pages and blocs via DI where needed
-
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Lock orientation to portrait (vertical) only
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
-  
   ]);
   // Initialize Firebase if configured (guards against missing config in dev)
   try {
@@ -33,9 +34,6 @@ void main() async {
     // Safe to continue without Firebase in environments where it's not configured
   }
   await di.init();
-
-  // Initialize local + push notifications wiring (safe even if Firebase failed)
-  await NotificationService().init();
 
   // Ensure selected app language is set from persisted settings before runApp
   final settings = di.sl<Settings>();
@@ -64,6 +62,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late final Settings _settings;
   late ThemeMode _themeMode;
+  late final GoRouter _router;
 
   @override
   void initState() {
@@ -75,15 +74,32 @@ class _MyAppState extends State<MyApp> {
     _applyLanguage(_settings.language);
     _settings.languageNotifier.addListener(() {
       _applyLanguage(_settings.language);
-      setState(() {});
+      if (mounted) {
+        setState(() {});
+      }
     });
 
     // Listen for theme changes
     _settings.themeModeNotifier.addListener(() {
-      setState(() {
-        _themeMode = _settings.themeModeNotifier.value;
-      });
+      if (mounted) {
+        setState(() {
+          _themeMode = _settings.themeModeNotifier.value;
+        });
+      }
     });
+
+    // Setup notifications
+    _setupNotifications();
+  }
+
+  Future<void> _setupNotifications() async {
+    try {
+      final notificationService = NotificationService();
+      await notificationService.init();
+      notificationService.setOnNotificationTap(_handleNotificationTap);
+    } catch (e, stackTrace) {
+      AppLogger.error('Error setting up notifications', e, stackTrace);
+    }
   }
 
   void _applyLanguage(String code) {
@@ -105,50 +121,58 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-  final authBloc = di.sl<AuthBloc>();
-  final localStorage = di.sl<LocalStorage>();
-  // Attempt auto-auth on startup: if tokens exist, try refresh and dispatch login
-  Future.microtask(() async {
-    try {
-      final authRepo = di.sl<AuthRepositoryImpl>();
-      print('[startup] Checking tokens for auto-auth');
-      final access = await di.sl<AuthService>().readAccessToken();
-      final refresh = await di.sl<AuthService>().readRefreshToken();
-      print('[startup] access: ${access != null ? 'present' : 'absent'}, refresh: ${refresh != null ? 'present' : 'absent'}');
-      var ok = false;
-      if (access != null) {
-        // we have access token, try to read cached user
-        final userModel = await authRepo.readCachedUser();
-        if (userModel != null) {
-          final userEntity = userModel.toEntity();
-          final user = userEntity.role == 'SUPERMARKET' ? Supermarket.fromUser(userEntity) : userEntity;
-          print('[startup] Found cached user, marking authenticated: ${user.phoneNumber}');
-          authBloc.add(LogInEvent(user));
-          ok = true;
-        }
-      }
-      if (!ok && refresh != null) {
-        print('[startup] Trying refresh tokens');
-        final refreshed = await authRepo.refreshTokens();
-        if (refreshed) {
+    final authBloc = di.sl<AuthBloc>();
+    final localStorage = di.sl<LocalStorage>();
+    _router = createRouter(authBloc: authBloc, localStorage: localStorage);
+
+    // Attempt auto-auth on startup: if tokens exist, try refresh and dispatch login
+    Future.microtask(() async {
+      try {
+        final authRepo = di.sl<AuthRepositoryImpl>();
+        AppLogger.debug('Checking tokens for auto-auth');
+        final access = await di.sl<AuthService>().readAccessToken();
+        final refresh = await di.sl<AuthService>().readRefreshToken();
+        AppLogger.debug(
+            'Access token: ${access != null ? 'present' : 'absent'}, Refresh token: ${refresh != null ? 'present' : 'absent'}');
+        var ok = false;
+        if (access != null) {
+          // we have access token, try to read cached user
           final userModel = await authRepo.readCachedUser();
           if (userModel != null) {
             final userEntity = userModel.toEntity();
-            final user = userEntity.role == 'SUPERMARKET' ? Supermarket.fromUser(userEntity) : userEntity;
-            print('[startup] Refresh succeeded, logging in user: ${user.phoneNumber}');
+            final user = userEntity.role == 'SUPERMARKET'
+                ? Supermarket.fromUser(userEntity)
+                : userEntity;
+            AppLogger.debug(
+                'Found cached user, marking authenticated: ${user.phoneNumber}');
             authBloc.add(LogInEvent(user));
             ok = true;
           }
-        } else {
-          print('[startup] Refresh failed');
         }
+        if (!ok && refresh != null) {
+          AppLogger.debug('Trying to refresh tokens');
+          final refreshed = await authRepo.refreshTokens();
+          if (refreshed) {
+            final userModel = await authRepo.readCachedUser();
+            if (userModel != null) {
+              final userEntity = userModel.toEntity();
+              final user = userEntity.role == 'SUPERMARKET'
+                  ? Supermarket.fromUser(userEntity)
+                  : userEntity;
+              AppLogger.debug(
+                  'Refresh succeeded, logging in user: ${user.phoneNumber}');
+              authBloc.add(LogInEvent(user));
+              ok = true;
+            }
+          } else {
+            AppLogger.debug('Token refresh failed');
+          }
+        }
+        if (!ok) AppLogger.debug('No valid session found');
+      } catch (e, stackTrace) {
+        AppLogger.error('Auto-auth error', e, stackTrace);
       }
-      if (!ok) print('[startup] No valid session found');
-    } catch (e) {
-      print('[startup] Auto-auth error: $e');
-    }
-  });
-  final router = createRouter(authBloc: authBloc, localStorage: localStorage);
+    });
     // Provide app-scoped blocs at the root so children can use context.read<T>()
     return MultiBlocProvider(
       providers: [
@@ -157,14 +181,50 @@ class _MyAppState extends State<MyApp> {
         BlocProvider.value(value: di.sl<NotificationsBloc>()),
       ],
       child: MaterialApp.router(
-        
         debugShowCheckedModeBanner: false,
         title: '3amerli',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
         themeMode: _themeMode,
-        routerConfig: router,
+        routerConfig: _router,
       ),
     );
+  }
+
+  // Handle notification taps with deep linking
+  void _handleNotificationTap(RemoteMessage message) {
+    if (message.data.isNotEmpty) {
+      // Handle deep linking from notification data
+      final data = message.data;
+
+      // Example: Navigate to specific page based on notification type
+      if (data.containsKey('type')) {
+        final type = data['type'];
+        switch (type) {
+          case 'order':
+            if (data.containsKey('orderId')) {
+              _router.go('/admin/orders/${data['orderId']}');
+            }
+            break;
+          case 'product':
+            if (data.containsKey('productId')) {
+              _router.go('/catalog');
+              // You could add product detail navigation here
+            }
+            break;
+          case 'promotion':
+            _router.go('/catalog');
+            break;
+          default:
+            _router.go('/home');
+        }
+      } else {
+        // Default navigation if no specific type
+        _router.go('/home');
+      }
+    } else {
+      // Default navigation if no data
+      _router.go('/home');
+    }
   }
 }

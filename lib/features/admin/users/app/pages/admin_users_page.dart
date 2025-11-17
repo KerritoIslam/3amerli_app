@@ -29,11 +29,16 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   void _loadUsers() {
-    final statusFilter = _selectedTab == 'Suspendu' ? 'Suspendu' : null;
-    context.read<AdminUsersBloc>().add(AdminUsersLoadEvent(
-          query: _searchQuery.isEmpty ? null : _searchQuery,
-          statusFilter: statusFilter,
-        ));
+    if (_selectedTab == 'Suspendu') {
+      // Load from blacklist endpoint
+      context.read<AdminUsersBloc>().add(const AdminUsersLoadBlacklistEvent());
+    } else {
+      // Load all users
+      context.read<AdminUsersBloc>().add(AdminUsersLoadEvent(
+            query: _searchQuery.isEmpty ? null : _searchQuery,
+            statusFilter: null,
+          ));
+    }
   }
 
   void _onSearchChanged(String value) {
@@ -187,12 +192,22 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
           // Users Table
           Expanded(
             child: SingleChildScrollView(
-              child: BlocBuilder<AdminUsersBloc, AdminUsersState>(
+              child: BlocConsumer<AdminUsersBloc, AdminUsersState>(
+                listener: (context, state) {
+                  if (state is AdminUsersOperationSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(state.message)),
+                    );
+                    _loadUsers();
+                  }
+                },
                 builder: (context, state) {
                   if (state is AdminUsersLoading) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (state is AdminUsersLoaded) {
                     return _buildUsersTable(state.users);
+                  } else if (state is AdminUsersBlacklistLoaded) {
+                    return _buildUsersTable(state.blacklistedUsers);
                   } else if (state is AdminUsersError) {
                     return Center(child: Text(state.message));
                   }
@@ -312,6 +327,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               child: ListView.separated(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
                 itemCount: filteredUsers.length,
                 separatorBuilder: (context, index) => Divider(
                   height: 1,
@@ -369,6 +385,19 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                         },
                       );
                     },
+                    onSuspendToggle: () {
+                      if (_selectedTab == 'Suspendu') {
+                        // User is in blacklist, restore them
+                        context.read<AdminUsersBloc>().add(
+                              AdminUsersRestoreFromBlacklistEvent(userId: u.id),
+                            );
+                      } else {
+                        // User is not in blacklist, add them
+                        context.read<AdminUsersBloc>().add(
+                              AdminUsersAddToBlacklistEvent(userId: u.id),
+                            );
+                      }
+                    },
                   );
                 },
               ),
@@ -419,6 +448,7 @@ class _UserRow extends StatelessWidget {
   final ValueChanged<bool> onSelectionChanged;
   final VoidCallback onView;
   final VoidCallback onDelete;
+  final VoidCallback? onSuspendToggle;
 
   const _UserRow({
     required this.user,
@@ -426,6 +456,7 @@ class _UserRow extends StatelessWidget {
     required this.onSelectionChanged,
     required this.onView,
     required this.onDelete,
+    this.onSuspendToggle,
   });
 
   @override
@@ -528,9 +559,7 @@ class _UserRow extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 GestureDetector(
-                  onTap: () {
-                    // TODO: suspend action handler (dispatch event)
-                  },
+                  onTap: onSuspendToggle,
                   child: SvgPicture.asset('assets/icons/suspend.svg', width: 14, height: 14, color: AppColors.brandDeep, semanticsLabel: 'suspend'),
                 ),
                 const SizedBox(width: 4),

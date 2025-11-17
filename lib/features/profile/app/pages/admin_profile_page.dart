@@ -79,7 +79,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
 
                     Widget userColumn(User user) {
                       final pic = (user.profilePic ?? '').trim();
-                      print("[admin_profile] the user pic is : ${pic}");
+                      print("[admin_profile] the user pic is : $pic");
                       final placeholder = 'https://picsum.photos/seed/profile/200/200';
 
                       // Validate the URL before using it to avoid passing invalid URIs to Image.network

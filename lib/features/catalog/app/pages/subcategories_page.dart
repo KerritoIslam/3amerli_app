@@ -19,8 +19,11 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
 
   void _toggle(child) {
     setState(() {
-      if (_selected.contains(child.id)) _selected.remove(child.id);
-      else _selected.add(child.id);
+      if (_selected.contains(child.id)) {
+        _selected.remove(child.id);
+      } else {
+        _selected.add(child.id);
+      }
     });
     try {
       final catalogBloc = context.read<CatalogBloc>();
@@ -71,8 +74,11 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          if (_selected.length == widget.parent.subcategories.length) _selected.clear();
-                          else _selected.addAll(widget.parent.subcategories.map((e) => e.id));
+                          if (_selected.length == widget.parent.subcategories.length) {
+                            _selected.clear();
+                          } else {
+                            _selected.addAll(widget.parent.subcategories.map((e) => e.id));
+                          }
                         });
                         final selectedNames = widget.parent.subcategories.where((e) => _selected.contains(e.id)).map((e) => e.name).join(',');
                         try {

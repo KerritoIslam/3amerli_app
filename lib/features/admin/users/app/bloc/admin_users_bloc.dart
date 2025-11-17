@@ -17,6 +17,9 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
     on<AdminUsersDeleteEvent>(_onDelete);
     on<AdminUsersDeleteMultipleEvent>(_onDeleteMultiple);
     on<AdminUsersLoadRolesEvent>(_onLoadRoles);
+    on<AdminUsersLoadBlacklistEvent>(_onLoadBlacklist);
+    on<AdminUsersAddToBlacklistEvent>(_onAddToBlacklist);
+    on<AdminUsersRestoreFromBlacklistEvent>(_onRestoreFromBlacklist);
   }
 
   Future<void> _onLoad(
@@ -120,6 +123,43 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
     try {
       final roles = await _repository.getRoles();
       emit(AdminUsersRolesLoaded(roles: roles));
+    } catch (e) {
+      emit(AdminUsersError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onLoadBlacklist(
+    AdminUsersLoadBlacklistEvent event,
+    Emitter<AdminUsersState> emit,
+  ) async {
+    emit(AdminUsersLoading());
+    try {
+      final users = await _repository.getBlacklistedUsers(page: event.page, limit: event.limit);
+      emit(AdminUsersBlacklistLoaded(blacklistedUsers: users));
+    } catch (e) {
+      emit(AdminUsersError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onAddToBlacklist(
+    AdminUsersAddToBlacklistEvent event,
+    Emitter<AdminUsersState> emit,
+  ) async {
+    try {
+      await _repository.addToBlacklist(event.userId);
+      emit(const AdminUsersOperationSuccess(message: 'Utilisateur suspendu avec succès'));
+    } catch (e) {
+      emit(AdminUsersError(message: e.toString()));
+    }
+  }
+
+  Future<void> _onRestoreFromBlacklist(
+    AdminUsersRestoreFromBlacklistEvent event,
+    Emitter<AdminUsersState> emit,
+  ) async {
+    try {
+      await _repository.restoreFromBlacklist(event.userId);
+      emit(const AdminUsersOperationSuccess(message: 'Utilisateur restauré avec succès'));
     } catch (e) {
       emit(AdminUsersError(message: e.toString()));
     }

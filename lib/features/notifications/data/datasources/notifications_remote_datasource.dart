@@ -66,7 +66,7 @@ class NotificationsRemoteDataSource {
 
   Future<void> deleteNotification(String id) async {
     try {
-      final resp = await apiService.client.delete('/notifications/$id');
+      final resp = await apiService.delete('/notifications/$id');
       if (_isSuccess(resp.statusCode)) return;
       final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to delete notification';
       throw ApiException(msg, statusCode: resp.statusCode);
@@ -76,6 +76,43 @@ class NotificationsRemoteDataSource {
       final baseMsg = e.message ?? 'Network error while deleting notification';
       final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
       developer.log('Dio error deleteNotification - status: $status, serverResponse: $serverResp', name: 'NotificationsRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+    }
+  }
+
+  /// PATCH /notifications/read - Mark multiple notifications as read
+  Future<void> markMultipleRead(List<int> ids) async {
+    try {
+      final resp = await apiService.patch('/notifications/read', data: {'ids': ids});
+      if (_isSuccess(resp.statusCode)) return;
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to mark notifications read';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+      final baseMsg = e.message ?? 'Network error while marking notifications read';
+      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log('Dio error markMultipleRead - status: $status, serverResponse: $serverResp', name: 'NotificationsRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+    }
+  }
+
+  /// POST /notifications/register-fcm-token - Register FCM token for current user
+  Future<void> registerFcmToken(String token, String os) async {
+    try {
+      final resp = await apiService.post('/notifications/register-fcm-token', data: {
+        'fcmToken': token,
+        'os': os, // "android" or "ios"
+      });
+      if (_isSuccess(resp.statusCode)) return;
+      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to register FCM token';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+      final baseMsg = e.message ?? 'Network error while registering FCM token';
+      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log('Dio error registerFcmToken - status: $status, serverResponse: $serverResp', name: 'NotificationsRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
       throw ApiException(detailed, statusCode: status, isNetworkError: true);
     }
   }

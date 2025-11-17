@@ -21,10 +21,18 @@ class AdminProductsBloc
   ) async {
     emit(AdminProductsLoading());
     try {
+      // Debug logging
+      print('📦 [AdminProductsBloc] Loading products - categoryIds: ${event.categoryIds}, brandIds: ${event.brandIds}, query: ${event.query}');
+      
       final products = await repository.getProducts(
         query: event.query,
         category: event.category,
+        categoryIds: event.categoryIds,
+        brandIds: event.brandIds,
       );
+      
+      print('📦 [AdminProductsBloc] Loaded ${products.length} products');
+      
       emit(AdminProductsLoaded(
         products: products,
         currentQuery: event.query,

@@ -115,8 +115,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         // Determine which section is shown first so we can place the
                         // "Marquer tout comme lu" action next to that section header
                         String? firstSection;
-                        if (today.isNotEmpty) firstSection = 'today';
-                        else if (yesterday.isNotEmpty) firstSection = 'yesterday';
+                        if (today.isNotEmpty) {
+                          firstSection = 'today';
+                        } else if (yesterday.isNotEmpty) firstSection = 'yesterday';
                         else if (last7.isNotEmpty) firstSection = 'last7';
 
                         return SingleChildScrollView(
@@ -126,17 +127,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               if (today.isNotEmpty) ...[
                                 const SizedBox(height: 8),
                                 sectionHeaderWithAction('Aujourd\'hui', showAction: firstSection == 'today'),
-                                ...today.map((n) => NotificationListCard(notification: n, onTap: () => onTapNotification(n))).toList(),
+                                ...today.map((n) => _buildDismissibleNotification(n)),
                               ],
                               if (yesterday.isNotEmpty) ...[
                                 const SizedBox(height: 12),
                                 sectionHeaderWithAction('Hier', showAction: firstSection == 'yesterday'),
-                                ...yesterday.map((n) => NotificationListCard(notification: n, onTap: () => onTapNotification(n))).toList(),
+                                ...yesterday.map((n) => _buildDismissibleNotification(n)),
                               ],
                               if (last7.isNotEmpty) ...[
                                 const SizedBox(height: 12),
                                 sectionHeaderWithAction('Les 7 derniers jours', showAction: firstSection == 'last7'),
-                                ...last7.map((n) => NotificationListCard(notification: n, onTap: () => onTapNotification(n))).toList(),
+                                ...last7.map((n) => _buildDismissibleNotification(n)),
                               ],
                               const SizedBox(height: 40),
                             ],
@@ -152,6 +153,36 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDismissibleNotification(ent.AppNotification notification) {
+    return Dismissible(
+      key: Key('notification_${notification.id}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.symmetric(vertical: 6.0),
+        decoration: BoxDecoration(
+          color: Colors.red,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(Icons.delete, color: Colors.white),
+      ),
+      onDismissed: (direction) {
+        _bloc.add(NotificationsDeleteEvent(notification.id));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Notification supprimée'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      },
+      child: NotificationListCard(
+        notification: notification,
+        onTap: () => onTapNotification(notification),
       ),
     );
   }

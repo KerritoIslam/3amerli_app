@@ -9,19 +9,22 @@ class SkeletonBox extends StatefulWidget {
   final double height;
   final BorderRadius? borderRadius;
 
-  const SkeletonBox({Key? key, this.width = double.infinity, this.height = 12, this.borderRadius}) : super(key: key);
+  const SkeletonBox(
+      {super.key, required this.width, required this.height, this.borderRadius});
 
   @override
   State<SkeletonBox> createState() => _SkeletonBoxState();
 }
 
-class _SkeletonBoxState extends State<SkeletonBox> with SingleTickerProviderStateMixin {
+class _SkeletonBoxState extends State<SkeletonBox>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1200))
       ..repeat();
   }
 
@@ -34,7 +37,8 @@ class _SkeletonBoxState extends State<SkeletonBox> with SingleTickerProviderStat
   @override
   Widget build(BuildContext context) {
     final baseColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.06);
-    final highlightColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.12);
+    final highlightColor =
+        Theme.of(context).colorScheme.onSurface.withOpacity(0.12);
 
     return AnimatedBuilder(
       animation: _controller,
@@ -52,7 +56,10 @@ class _SkeletonBoxState extends State<SkeletonBox> with SingleTickerProviderStat
           child: ClipRRect(
             borderRadius: widget.borderRadius ?? BorderRadius.circular(6),
             child: CustomPaint(
-              painter: _ShimmerPainter(progress: t, baseColor: baseColor, highlightColor: highlightColor),
+              painter: _ShimmerPainter(
+                  progress: t,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor),
               child: const SizedBox.expand(),
             ),
           ),
@@ -67,7 +74,10 @@ class _ShimmerPainter extends CustomPainter {
   final Color baseColor;
   final Color highlightColor;
 
-  _ShimmerPainter({required this.progress, required this.baseColor, required this.highlightColor});
+  _ShimmerPainter(
+      {required this.progress,
+      required this.baseColor,
+      required this.highlightColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -93,6 +103,8 @@ class _ShimmerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _ShimmerPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.baseColor != baseColor || oldDelegate.highlightColor != highlightColor;
+    return oldDelegate.progress != progress ||
+        oldDelegate.baseColor != baseColor ||
+        oldDelegate.highlightColor != highlightColor;
   }
 }

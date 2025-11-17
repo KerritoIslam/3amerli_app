@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:amerli_app/core/config/injection.dart';
 import '../bloc/catalog_bloc.dart';
 import '../bloc/catalog_event.dart';
 import '../bloc/categories_bloc.dart';
@@ -30,8 +31,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
 
   void _toggle(Category c) {
     setState(() {
-      if (_selected.contains(c.id)) _selected.remove(c.id);
-      else _selected.add(c.id);
+      if (_selected.contains(c.id)) {
+        _selected.remove(c.id);
+      } else {
+        _selected.add(c.id);
+      }
     });
     // Optionally, trigger a catalog filter load for immediate feedback
     try {
@@ -93,8 +97,11 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         final state = context.read<CategoriesBloc>().state;
                         if (state is CategoriesLoaded) {
                           setState(() {
-                            if (_selected.length == state.items.length) _selected.clear();
-                            else _selected.addAll(state.items.map((e) => e.id));
+                            if (_selected.length == state.items.length) {
+                              _selected.clear();
+                            } else {
+                              _selected.addAll(state.items.map((e) => e.id));
+                            }
                           });
                           final selectedNames = state.items.where((e) => _selected.contains(e.id)).map((e) => e.name).join(',');
                           try {
@@ -168,14 +175,14 @@ class _CategoriesPageState extends State<CategoriesPage> {
                               width: double.infinity,
                               child: OutlinedButton(
                                 onPressed: () {
-                                  final state = context.read<CategoriesBloc>().state;
-                                  if (state is CategoriesLoaded) {
-                                    final selectedNames = state.items.where((e) => _selected.contains(e.id)).map((e) => e.name).join(',');
-                                    try {
-                                      context.read<CatalogBloc>().add(CatalogLoadEvent(query: selectedNames));
-                                    } catch (_) {}
-                                  }
-                                  Navigator.of(context).pop();
+                                  // Apply filters instantly using service locator
+                                  final catalogBloc = sl<CatalogBloc>();
+                                  catalogBloc.add(CatalogLoadEvent(
+                                    categoryIds: _selected.isEmpty ? null : _selected.toList(),
+                                  ));
+                                  
+                                  // Pop with selected IDs
+                                  Navigator.of(context).pop(_selected);
                                 },
                                 style: OutlinedButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(vertical: 14)),
                                 child: const Text('Appliquer les filtres'),

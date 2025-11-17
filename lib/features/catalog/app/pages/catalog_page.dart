@@ -278,7 +278,7 @@ class _CatalogPageState extends State<CatalogPage> {
 
             const SizedBox(height: 12),
 
-            // Categories grid
+            // Categories grid (limited to prevent overflow)
             BlocBuilder<CategoriesBloc, CategoriesState>(builder: (context, state) {
               if (state is CategoriesLoading) {
                 // show skeleton grid while loading
@@ -290,11 +290,20 @@ class _CatalogPageState extends State<CatalogPage> {
                 return const SizedBox.shrink();
               }
               if (state is CategoriesLoaded) {
-                // Show a small grid with two rows (adjust crossAxisCount based on width)
+                // Limit to 9 categories (3 rows of 3) to prevent overflow
+                // The 4th row will show "..." if there are more categories
+                const maxCategoriesToShow = 9;
+                final allCategories = state.items;
+                final hasMore = allCategories.length > maxCategoriesToShow;
+                final displayCategories = hasMore 
+                    ? allCategories.take(maxCategoriesToShow).toList() 
+                    : allCategories;
+                
                 return CategoryGrid(
-                  categories: state.items,
+                  categories: displayCategories,
                   crossAxisCount: 3,
                   itemHeight: 90,
+                  showMoreIndicator: hasMore,
                   onSelectionChanged: (selectedIds) {
                     // Update selected categories with the full array
                     _updateSelectedCategories(selectedIds);
@@ -307,7 +316,13 @@ class _CatalogPageState extends State<CatalogPage> {
             const SizedBox(height: 12),
             // Product list
             Expanded(
-              child: BlocBuilder<CatalogBloc, CatalogState>(builder: (context, state) {
+              child: BlocBuilder<CatalogBloc, CatalogState>(
+                bloc: _catalogBloc,
+                builder: (context, state) {
+                // Debug logging
+                // ignore: avoid_print
+                print('🖼️ [CatalogPage] BlocBuilder rebuild - state: ${state.runtimeType}');
+                
                 final isLoading = state is CatalogLoading;
                 final isLoadingMore = state is CatalogLoadingMore;
                 
@@ -336,6 +351,8 @@ class _CatalogPageState extends State<CatalogPage> {
                 if (state is CatalogLoaded) {
                   final products = state.products;
                   final hasMore = state.hasMore;
+                  // ignore: avoid_print
+                  print('🖼️ [CatalogPage] Displaying ${products.length} products');
                   if (products.isEmpty) return Center(child: Text('Aucun produit trouvé', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.hint)));
                   return ProductsList(
                     products: state.products,

@@ -51,13 +51,24 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
   }
 
   @override
-  Future<List<Product>> getProducts({String? query, String? category}) async {
+  Future<List<Product>> getProducts({
+    String? query,
+    String? category,
+    List<int>? categoryIds,
+    List<int>? brandIds,
+  }) async {
     final qp = <String, dynamic>{};
     if (query != null && query.isNotEmpty) qp['search'] = query;
-    // If category looks like an id list (comma separated) pass as categoryIds
-    if (category != null && category.isNotEmpty) qp['categoryIds'] = category;
+    if (category != null && category.isNotEmpty) qp['category'] = category;
+    if (categoryIds != null && categoryIds.isNotEmpty) {
+      qp['categoryIds'] = categoryIds.join(',');
+    }
+    if (brandIds != null && brandIds.isNotEmpty) {
+      qp['brandIds'] = brandIds.join(',');
+    }
 
-    final resp = await apiService.get('/products/admin/all', queryParameters: qp);
+    final resp =
+        await apiService.get('/products/admin/all', queryParameters: qp);
     final list = _extractList(resp.data);
 
     // Debug: print extracted length and a preview to help diagnose empty UI
@@ -95,7 +106,8 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
         } else {
           // skip unsupported entry types
           // ignore: avoid_print
-          print('[ADMIN PRODUCTS] skipped unsupported entry type: ${e.runtimeType}');
+          print(
+              '[ADMIN PRODUCTS] skipped unsupported entry type: ${e.runtimeType}');
         }
       } catch (ex, st) {
         // ignore: avoid_print
@@ -124,14 +136,30 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
       throw UnsupportedError('addProduct not implemented for remote admin API');
 
   @override
-  Future<void> updateProduct(Product product) async =>
-      throw UnsupportedError('updateProduct not implemented for remote admin API');
+  Future<void> updateProduct(Product product) async => throw UnsupportedError(
+      'updateProduct not implemented for remote admin API');
 
   @override
-  Future<void> deleteProduct(String id) async =>
-      throw UnsupportedError('deleteProduct not implemented for remote admin API');
+  Future<void> deleteProduct(String id) async {
+    try {
+      final resp = await apiService.delete('/products/$id');
+      if (resp.statusCode == null ||
+          resp.statusCode! < 200 ||
+          resp.statusCode! >= 300) {
+        throw Exception('Failed to delete product: ${resp.statusCode}');
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('[ADMIN PRODUCTS] Delete product error: $e');
+      rethrow;
+    }
+  }
 
   @override
-  Future<void> deleteProducts(List<String> ids) async =>
-      throw UnsupportedError('deleteProducts not implemented for remote admin API');
+  Future<void> deleteProducts(List<String> ids) async {
+    // Delete products one by one (backend doesn't have bulk delete endpoint)
+    for (final id in ids) {
+      await deleteProduct(id);
+    }
+  }
 }

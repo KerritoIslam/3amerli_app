@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:amerli_app/features/orders/presentation/pages/order_tracking_page.dart';
+import 'package:amerli_app/features/orders/domain/entities/order.dart';
 
 /// Minimal, clean SuccessPage implementation.
 class SuccessPage extends StatefulWidget {
@@ -10,16 +12,18 @@ class SuccessPage extends StatefulWidget {
   final String? amount;
   final String? invoiceUrl;
   final VoidCallback? onInvoiceTap;
+  final Order? order;
 
   const SuccessPage({
-    Key? key,
+    super.key,
     this.orderId,
     this.date,
     this.paymentMethod,
     this.amount,
     this.invoiceUrl,
     this.onInvoiceTap,
-  }) : super(key: key);
+    this.order,
+  });
 
   @override
   State<SuccessPage> createState() => _SuccessPageState();
@@ -68,7 +72,7 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/cart', (route) => route.settings.name == '/'),
         ),
         title: Text('Succès', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
@@ -123,7 +127,10 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: () => Navigator.of(context).popUntil((r) => r.isFirst),
+                          onPressed: () {
+                            // Navigate to home page (catalog is at index 0)
+                            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                          },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context).colorScheme.primary,
                             shape: const StadiumBorder(),
@@ -138,7 +145,19 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
                         width: double.infinity,
                         height: 44,
                         child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pushNamed('/order_tracking', arguments: {'orderId': widget.orderId}),
+                          onPressed: () {
+                            if (widget.order != null) {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => OrderTrackingPage(order: widget.order!),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Commande non disponible')),
+                              );
+                            }
+                          },
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(color: Theme.of(context).colorScheme.primary),
                             shape: const StadiumBorder(),

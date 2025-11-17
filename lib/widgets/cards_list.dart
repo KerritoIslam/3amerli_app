@@ -26,7 +26,7 @@ class CardsList extends StatelessWidget {
   final bool scrollable;
 
   const CardsList({
-    Key? key,
+    super.key,
     required this.items,
     this.padding = const EdgeInsets.all(0),
     this.borderRadius = 12.0,
@@ -34,7 +34,7 @@ class CardsList extends StatelessWidget {
     this.borderWidth = 1.0,
     this.backgroundColor,
     this.scrollable = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

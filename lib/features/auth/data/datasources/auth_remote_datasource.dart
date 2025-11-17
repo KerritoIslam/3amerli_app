@@ -8,7 +8,8 @@ class AuthRemoteDataSource {
 
   AuthRemoteDataSource({required this.apiService});
 
-  bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
+  bool _isSuccess(int? status) =>
+      status != null && status >= 200 && status < 300;
 
   /// Request sending OTP to phone number. Endpoint: POST /authentication/otp/send
   Future<void> sendOtp(String phone) async {
@@ -17,23 +18,35 @@ class AuthRemoteDataSource {
       // ignore: avoid_print
       print("DAta Sending OTP to $phone");
 
-      final resp = await apiService.post('/authentication/otp/send', data: {'phoneNumber': phone});
+      final resp = await apiService
+          .post('/authentication/otp/send', data: {'phoneNumber': phone});
       print("Response status code: ${resp.statusCode}");
 
       // Accept any 2xx response as success
       if (!_isSuccess(resp.statusCode)) {
-        final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to send OTP';
+        final msg = resp.data is Map && resp.data['message'] != null
+            ? resp.data['message'].toString()
+            : 'Failed to send OTP';
         throw ApiException(msg, statusCode: resp.statusCode);
       }
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
       final baseMsg = e.message ?? 'Network error while sending OTP';
-      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
-      developer.log('Dio error sendOtp - status: $status, serverResponse: $serverResp', name: 'AuthRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      final detailed =
+          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log(
+          'Dio error sendOtp - status: $status, serverResponse: $serverResp',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
       throw ApiException(detailed, statusCode: status, isNetworkError: true);
     } catch (e, st) {
-      developer.log('Unexpected error sending OTP: $e', name: 'AuthRemoteDataSource', error: e, stackTrace: st as StackTrace?);
+      developer.log('Unexpected error sending OTP: $e',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: st as StackTrace?);
       throw ApiException('Unexpected error while sending OTP');
     }
   }
@@ -42,25 +55,35 @@ class AuthRemoteDataSource {
   /// Expects response with accessToken, refreshToken, user, isRegistered
   Future<Map<String, dynamic>> validateOtp(String phone, String otp) async {
     try {
-
-      
-      final resp = await apiService.post('/authentication/otp/validate', data: {'phoneNumber': phone, 'otp': otp});
+      final resp = await apiService.post('/authentication/otp/validate',
+          data: {'phoneNumber': phone, 'otp': otp});
       print("Register Data Response for validateOtp: ${resp.data}");
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         return Map<String, dynamic>.from(resp.data as Map);
       }
 
-      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Invalid OTP or server error';
+      final msg = resp.data is Map && resp.data['message'] != null
+          ? resp.data['message'].toString()
+          : 'Invalid OTP or server error';
       throw ApiException(msg, statusCode: resp.statusCode);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
       final baseMsg = e.message ?? 'Network error while validating OTP';
-      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
-      developer.log('Dio error validateOtp - status: $status, serverResponse: $serverResp', name: 'AuthRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      final detailed =
+          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log(
+          'Dio error validateOtp - status: $status, serverResponse: $serverResp',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
       throw ApiException(detailed, statusCode: status, isNetworkError: true);
     } catch (e, st) {
-      developer.log('Unexpected error validateOtp: $e', name: 'AuthRemoteDataSource', error: e, stackTrace: st as StackTrace?);
+      developer.log('Unexpected error validateOtp: $e',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: st as StackTrace?);
       throw ApiException('Unexpected error while validating OTP');
     }
   }
@@ -69,24 +92,36 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> register(Map<String, dynamic> profile) async {
     try {
       print("Register Data Sent: $profile");
-      final resp = await apiService.client.put('/authentication/register', data: profile);
+      final resp = await apiService.client
+          .put('/authentication/register', data: profile);
       print("Register status code: ${resp.statusCode}");
       print("Register Data Response: ${resp.data}");
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         return Map<String, dynamic>.from(resp.data as Map);
       }
 
-      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Registration failed';
+      final msg = resp.data is Map && resp.data['message'] != null
+          ? resp.data['message'].toString()
+          : 'Registration failed';
       throw ApiException(msg, statusCode: resp.statusCode);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
       final baseMsg = e.message ?? 'Network error while registering';
-      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
-      developer.log('Dio error register - status: $status, serverResponse: $serverResp', name: 'AuthRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      final detailed =
+          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log(
+          'Dio error register - status: $status, serverResponse: $serverResp',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
       throw ApiException(detailed, statusCode: status, isNetworkError: true);
     } catch (e, st) {
-      developer.log('Unexpected error register: $e', name: 'AuthRemoteDataSource', error: e, stackTrace: st as StackTrace?);
+      developer.log('Unexpected error register: $e',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: st as StackTrace?);
       throw ApiException('Unexpected error while registering');
     }
   }
@@ -97,25 +132,64 @@ class AuthRemoteDataSource {
   Future<Map<String, dynamic>> refresh(String refreshToken) async {
     try {
       final baseUrl = apiService.client.options.baseUrl;
-      final d = Dio(BaseOptions(baseUrl: baseUrl, connectTimeout: const Duration(seconds: 10)));
-      final resp = await d.post('/authentication/refresh', options: Options(headers: {'Authorization': 'Bearer $refreshToken'}));
+      final d = Dio(BaseOptions(
+          baseUrl: baseUrl, connectTimeout: const Duration(seconds: 10)));
+      final resp = await d.post('/authentication/refresh',
+          options: Options(headers: {'Authorization': 'Bearer $refreshToken'}));
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         return Map<String, dynamic>.from(resp.data as Map);
       }
 
-      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to refresh token';
+      final msg = resp.data is Map && resp.data['message'] != null
+          ? resp.data['message'].toString()
+          : 'Failed to refresh token';
       throw ApiException(msg, statusCode: resp.statusCode);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
       final baseMsg = e.message ?? 'Network error while refreshing token';
-      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
-      developer.log('Dio error refresh - status: $status, serverResponse: $serverResp', name: 'AuthRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
+      final detailed =
+          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log(
+          'Dio error refresh - status: $status, serverResponse: $serverResp',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
       throw ApiException(detailed, statusCode: status, isNetworkError: true);
     } catch (e, st) {
-      developer.log('Unexpected error refresh: $e', name: 'AuthRemoteDataSource', error: e, stackTrace: st as StackTrace?);
+      developer.log('Unexpected error refresh: $e',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: st as StackTrace?);
       throw ApiException('Unexpected error while refreshing token');
     }
   }
-}
 
+  /// Logout current user in backend with FCM token. Endpoint: POST /authentication/logout
+  Future<void> logout(String fcmToken) async {
+    try {
+      final resp = await apiService.post('/authentication/logout', data: {
+        'fcmToken': fcmToken,
+      });
+      if (_isSuccess(resp.statusCode)) return;
+      final msg = resp.data is Map && resp.data['message'] != null
+          ? resp.data['message'].toString()
+          : 'Failed to logout';
+      throw ApiException(msg, statusCode: resp.statusCode);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+      final baseMsg = e.message ?? 'Network error while logging out';
+      final detailed =
+          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+      developer.log(
+          'Dio error logout - status: $status, serverResponse: $serverResp',
+          name: 'AuthRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
+      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+    }
+  }
+}

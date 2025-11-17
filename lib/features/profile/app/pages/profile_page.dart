@@ -92,7 +92,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                 loadingBuilder: (context, child, loadingProgress) {
                                   if (loadingProgress == null) return child;
                                   return Container(
-                                    color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6),
                                     alignment: Alignment.center,
                                     child: SizedBox(
                                       width: 24,
@@ -107,7 +107,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                   );
                                 },
                                 errorBuilder: (context, error, stackTrace) => Container(
-                                  color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.6),
+                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6),
                                   alignment: Alignment.center,
                                   child: Icon(
                                     Icons.person_outline,

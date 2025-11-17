@@ -51,7 +51,7 @@ class _TopToastOverlay extends StatefulWidget {
   final Color backgroundColor;
   final Duration duration;
 
-  const _TopToastOverlay({Key? key, required this.message, required this.backgroundColor, required this.duration}) : super(key: key);
+  const _TopToastOverlay({required this.message, required this.backgroundColor, required this.duration});
 
   @override
   State<_TopToastOverlay> createState() => _TopToastOverlayState();

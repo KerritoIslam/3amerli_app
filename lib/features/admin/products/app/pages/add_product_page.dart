@@ -8,6 +8,11 @@ import '../bloc/admin_products_bloc.dart';
 import '../bloc/admin_products_event.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:amerli_app/core/config/injection.dart' as di;
+import 'package:amerli_app/features/admin/categories/domain/repositories/admin_categories_repository.dart';
+import 'package:amerli_app/features/admin/categories/domain/entities/category.dart';
+import 'package:amerli_app/features/admin/brands/domain/repositories/admin_brands_repository.dart';
+import 'package:amerli_app/features/admin/brands/domain/entities/brand.dart';
 // import 'package:amerli_app/utils/constants/app_colors.dart';
 
 class AddProductPage extends StatefulWidget {
@@ -38,14 +43,14 @@ class _AddProductPageState extends State<AddProductPage> {
 
   // Step 1 fields
   final TextEditingController _nameController = TextEditingController();
-  String? _selectedBrand;
+  String? _selectedBrandId; // Store brand ID
   final TextEditingController _quantityController = TextEditingController();
-  String? _selectedCategory;
-  final List<String> _brands = [
-    'Marque A',
-    'Marque B',
-    'Marque C',
-  ];
+  String? _selectedCategoryId; // Store category ID
+  List<Brand> _brands = [];
+  List<Category> _categories = [];
+  bool _isLoadingData = false;
+  late final AdminCategoriesRepository _categoriesRepository;
+  late final AdminBrandsRepository _brandsRepository;
   final List<String> _specifications = [];
   final TextEditingController _specController = TextEditingController();
   DateTime? _expirationDate;
@@ -58,14 +63,33 @@ class _AddProductPageState extends State<AddProductPage> {
   final List<String> _images = [];
   int _mainImageIndex = 0;
 
-  final List<String> _categories = [
-    'Boissons',
-    'Boulangerie',
-    'Produits Laitiers',
-    'Épicerie',
-    'Fruits & Légumes',
-    'Viandes & Poissons',
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _categoriesRepository = di.sl<AdminCategoriesRepository>();
+    _brandsRepository = di.sl<AdminBrandsRepository>();
+    _loadCategoriesAndBrands();
+  }
+
+  Future<void> _loadCategoriesAndBrands() async {
+    setState(() => _isLoadingData = true);
+    try {
+      final categories = await _categoriesRepository.getCategories();
+      final brands = await _brandsRepository.getAllBrands();
+      setState(() {
+        _categories = categories;
+        _brands = brands;
+        _isLoadingData = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingData = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de chargement: $e')),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -134,6 +158,35 @@ class _AddProductPageState extends State<AddProductPage> {
 
   void _saveProduct() {
     if (_formKey2.currentState!.validate()) {
+      final bool isEditing = widget.productId != null;
+      
+      // For new products, validate that category and brand are selected
+      if (!isEditing) {
+        if (_selectedCategoryId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Veuillez sélectionner une catégorie')),
+          );
+          return;
+        }
+        if (_selectedBrandId == null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Veuillez sélectionner une marque')),
+          );
+          return;
+        }
+      }
+
+      // Reorder images so main image is first
+      final reorderedImages = <String>[];
+      if (_images.isNotEmpty) {
+        reorderedImages.add(_images[_mainImageIndex]);
+        for (int i = 0; i < _images.length; i++) {
+          if (i != _mainImageIndex) {
+            reorderedImages.add(_images[i]);
+          }
+        }
+      }
+
       // Generate ID for new products
       final String productId = widget.productId ??
           'PRD${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
@@ -141,16 +194,16 @@ class _AddProductPageState extends State<AddProductPage> {
       final product = Product(
         id: productId,
         name: _nameController.text,
-        category: _selectedCategory ?? '',
-        brand: _selectedBrand ?? '',
+        category: _selectedCategoryId ?? '', // Use category ID (can be empty for edit)
+        brand: _selectedBrandId ?? '', // Use brand ID (can be empty for edit)
         quantityPerLot: int.tryParse(_quantityController.text) ?? 0,
         specifications: _specifications,
         expirationDate: _expirationDate,
         pricePerLot: double.tryParse(_priceController.text) ?? 0.0,
         stockStatus: (int.tryParse(_availableQuantityController.text) ?? 0) > 0 ? 'En stock' : 'Rupture',
         availableQuantity: int.tryParse(_availableQuantityController.text) ?? 0,
-        images: _images,
-        mainImageIndex: _mainImageIndex,
+        images: reorderedImages, // Use reordered images with main image first
+        mainImageIndex: 0, // Main image is now always at index 0
       );
 
       if (widget.productId == null) {
@@ -393,14 +446,27 @@ class _AddProductPageState extends State<AddProductPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Informations générales',
-            style: TextStyle(
+          Text(
+            widget.productId != null 
+              ? 'Informations générales (optionnel)'
+              : 'Informations générales',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
+          if (widget.productId != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Modifiez uniquement les champs que vous souhaitez mettre à jour',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           // Product Name
@@ -427,27 +493,33 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
             ),
             child: DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategoryId,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
-                hintText: 'Sélectionner une catégorie',
+                hintText: _isLoadingData ? 'Chargement...' : 'Sélectionner une catégorie',
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
-              validator: (value) =>
-                  value == null ? 'Catégorie requise' : null,
+              validator: (value) {
+                // Only validate as required for new products
+                final bool isEditing = widget.productId != null;
+                if (!isEditing && value == null) {
+                  return 'Catégorie requise';
+                }
+                return null;
+              },
               items: _categories
                   .map((cat) => DropdownMenuItem(
-                        value: cat,
-                        child: Text(cat),
+                        value: cat.id,
+                        child: Text(cat.name),
                       ))
                   .toList(),
-              onChanged: (value) {
+              onChanged: _isLoadingData ? null : (value) {
                 setState(() {
-                  _selectedCategory = value;
+                  _selectedCategoryId = value;
                 });
               },
             ),
@@ -467,26 +539,33 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
             ),
             child: DropdownButtonFormField<String>(
-              value: _selectedBrand,
+              initialValue: _selectedBrandId,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 12,
                 ),
-                hintText: 'Sélectionner une marque',
+                hintText: _isLoadingData ? 'Chargement...' : 'Sélectionner une marque',
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
-              validator: (value) => value == null ? 'Marque requise' : null,
+              validator: (value) {
+                // Only validate as required for new products
+                final bool isEditing = widget.productId != null;
+                if (!isEditing && value == null) {
+                  return 'Marque requise';
+                }
+                return null;
+              },
               items: _brands
                   .map((b) => DropdownMenuItem(
-                        value: b,
-                        child: Text(b),
+                        value: b.id,
+                        child: Text(b.name),
                       ))
                   .toList(),
-              onChanged: (value) {
+              onChanged: _isLoadingData ? null : (value) {
                 setState(() {
-                  _selectedBrand = value;
+                  _selectedBrandId = value;
                 });
               },
             ),
@@ -643,14 +722,27 @@ class _AddProductPageState extends State<AddProductPage> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Détails du prix',
-            style: TextStyle(
+          Text(
+            widget.productId != null
+              ? 'Détails du prix (optionnel)'
+              : 'Détails du prix',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
+          if (widget.productId != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              'Modifiez uniquement les champs que vous souhaitez mettre à jour',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey.shade600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
           const SizedBox(height: 20),
 
           // Price per lot
@@ -926,7 +1018,9 @@ class _AddProductPageState extends State<AddProductPage> {
             style: const TextStyle(fontSize: 14),
             validator: required
                 ? (value) {
-                    if (value == null || value.isEmpty) {
+                    // Only validate as required for new products
+                    final bool isEditing = widget.productId != null;
+                    if (!isEditing && (value == null || value.isEmpty)) {
                       return 'Ce champ est requis';
                     }
                     return null;

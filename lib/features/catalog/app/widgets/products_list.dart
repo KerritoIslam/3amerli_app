@@ -9,7 +9,8 @@ import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
 import 'package:amerli_app/core/config/injection.dart';
 
-typedef ProductItemBuilder = Widget Function(BuildContext context, Product product, int index);
+typedef ProductItemBuilder = Widget Function(
+    BuildContext context, Product product, int index);
 
 class ProductsList extends StatefulWidget {
   final List<Product> products;
@@ -78,7 +79,8 @@ class _ProductsListState extends State<ProductsList> {
       } else {
         _isRequestingMore = false;
       }
-      debugPrint('ProductsList: load more triggered by scroll (threshold row ${widget.rowsToTrigger})');
+      debugPrint(
+          'ProductsList: load more triggered by scroll (threshold row ${widget.rowsToTrigger})');
     }
   }
 
@@ -113,14 +115,17 @@ class _ProductsListState extends State<ProductsList> {
             padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                SkeletonBox(height: 120, borderRadius: BorderRadius.all(Radius.circular(10))),
+              children: [
+                SkeletonBox(
+                    width: double.infinity,
+                    height: 120,
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
                 SizedBox(height: 8),
-                SkeletonBox(height: 14),
+                SkeletonBox(width: 200, height: 14),
                 SizedBox(height: 4),
-                SkeletonBox(height: 12),
+                SkeletonBox(width: 150, height: 12),
                 SizedBox(height: 6),
-                SkeletonBox(height: 16),
+                SkeletonBox(width: 100, height: 16),
               ],
             ),
           ),
@@ -136,15 +141,19 @@ class _ProductsListState extends State<ProductsList> {
         left: 12,
         right: 12,
         top: 8,
-        bottom: widget.hasMore ? 8 : 100, // Add extra space when no more items to prevent bottom nav covering
+        bottom: widget.hasMore
+            ? 8
+            : 100, // Add extra space when no more items to prevent bottom nav covering
       ),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: widget.columns,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.58, // Changed from 0.6 to 0.5  - this gives cards more height
+        childAspectRatio:
+            0.58, // Changed from 0.6 to 0.5  - this gives cards more height
       ),
-      itemCount: products.length + ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
+      itemCount: products.length +
+          ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
       itemBuilder: (context, index) {
         if (index >= products.length) {
           return Container(
@@ -155,14 +164,17 @@ class _ProductsListState extends State<ProductsList> {
             padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                SkeletonBox(height: 120, borderRadius: BorderRadius.all(Radius.circular(10))),
+              children: [
+                SkeletonBox(
+                    width: double.infinity,
+                    height: 120,
+                    borderRadius: BorderRadius.all(Radius.circular(10))),
                 SizedBox(height: 8),
-                SkeletonBox(height: 14),
+                SkeletonBox(width: 200, height: 14),
                 SizedBox(height: 4),
-                SkeletonBox(height: 12),
+                SkeletonBox(width: 150, height: 12),
                 SizedBox(height: 6),
-                SkeletonBox(height: 16),
+                SkeletonBox(width: 100, height: 16),
               ],
             ),
           );
@@ -171,13 +183,16 @@ class _ProductsListState extends State<ProductsList> {
         final product = products[index];
 
         final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
-        if (!_isRequestingMore && widget.onLoadMore != null && index == thresholdIndex) {
+        if (!_isRequestingMore &&
+            widget.onLoadMore != null &&
+            index == thresholdIndex) {
           _isRequestingMore = true;
           final future = widget.onLoadMore!.call();
           future.whenComplete(() {
             _isRequestingMore = false;
           });
-          debugPrint('ProductsList: load more triggered by builder at index $index (row ${widget.rowsToTrigger})');
+          debugPrint(
+              'ProductsList: load more triggered by builder at index $index (row ${widget.rowsToTrigger})');
         }
 
         if (widget.itemBuilder != null) {
@@ -197,19 +212,22 @@ class _ProductsListState extends State<ProductsList> {
                 favoritesBloc.add(FavoritesRemoveEvent(id: product.id));
               } else {
                 // Add to favorites - userId will be fetched from auth service in the repository
-                favoritesBloc.add(FavoritesAddEvent(userId: 0, productId: product.id));
+                favoritesBloc
+                    .add(FavoritesAddEvent(userId: 0, productId: product.id));
               }
-              
+
               // Refresh catalog to reflect changes after a short delay
               Future.delayed(const Duration(milliseconds: 500), () {
                 final catalogBloc = sl<CatalogBloc>();
                 catalogBloc.add(CatalogLoadEvent(loadMore: false));
               });
-              
+
               // Show toast
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(product.isFavorit ? 'Retiré des favoris' : 'Ajouté aux favoris'),
+                  content: Text(product.isFavorit
+                      ? 'Retiré des favoris'
+                      : 'Ajouté aux favoris'),
                   duration: const Duration(seconds: 1),
                   backgroundColor: Theme.of(context).colorScheme.primary,
                 ),
@@ -232,10 +250,9 @@ class _ProductsListState extends State<ProductsList> {
           sellerName: product.sellerName,
           brand: product.brand,
           productId: product.id,
-          
-          
           onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(builder: (ctx) => ProductDetailsPage(product: product)));
+            Navigator.of(context).push(MaterialPageRoute(
+                builder: (ctx) => ProductDetailsPage(product: product)));
           },
         );
         return card;

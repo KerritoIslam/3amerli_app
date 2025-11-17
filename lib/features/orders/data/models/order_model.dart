@@ -1,27 +1,17 @@
 import '../../domain/entities/order.dart';
-import '../../domain/entities/order_status.dart';
 import 'order_product_model.dart';
 
 class OrderModel extends Order {
   OrderModel({
-    required String id,
-    required String sellerId,
-    required String buyerId,
-    required String address,
-    required String paymentMethod,
-    required List<OrderProductModel> products,
-    required OrderStatus status,
-    required DateTime createdAt,
-  }) : super(
-          id: id,
-          sellerId: sellerId,
-          buyerId: buyerId,
-          address: address,
-          paymentMethod: paymentMethod,
-          products: products,
-          status: status,
-          createdAt: createdAt,
-        );
+    required super.id,
+    required super.sellerId,
+    required super.buyerId,
+    required super.address,
+    required super.paymentMethod,
+    required List<OrderProductModel> super.products,
+    required super.status,
+    required super.createdAt,
+  });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) => OrderModel(
         id: json['id']?.toString() ?? '',

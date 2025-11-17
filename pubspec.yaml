@@ -54,7 +54,11 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   image_picker: ^1.0.7
   fl_chart: ^0.69.0
+  permission_handler: ^11.0.1
+  connectivity_plus: ^5.0.2
 
+  bloc: any
+  collection: any
 dev_dependencies:
   flutter_test:
     sdk: flutter

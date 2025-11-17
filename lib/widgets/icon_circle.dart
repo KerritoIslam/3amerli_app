@@ -23,7 +23,7 @@ class IconCircle extends StatelessWidget {
   final bool keepIconColor;
 
   const IconCircle({
-    Key? key,
+    super.key,
     this.asset,
     this.dataIcon,
     required this.isSelected,
@@ -32,8 +32,7 @@ class IconCircle extends StatelessWidget {
     this.size = 40.0,
     this.iconSize,
     this.keepIconColor = false,
-  })  : assert(asset != null || dataIcon != null, 'Either asset or dataIcon must be provided'),
-        super(key: key);
+  })  : assert(asset != null || dataIcon != null, 'Either asset or dataIcon must be provided');
 
   @override
   Widget build(BuildContext context) {

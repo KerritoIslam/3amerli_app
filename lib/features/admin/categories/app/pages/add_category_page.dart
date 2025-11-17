@@ -20,7 +20,6 @@ class AddCategoryPage extends StatefulWidget {
 class _AddCategoryPageState extends State<AddCategoryPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
   final List<TextEditingController> _subCategoryControllers = [
     TextEditingController(),
   ];
@@ -29,7 +28,6 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _descriptionController.dispose();
     for (var controller in _subCategoryControllers) {
       controller.dispose();
     }
@@ -68,7 +66,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       final category = Category(
         id: categoryId,
         name: _nameController.text,
-        description: _descriptionController.text,
+        description: '',
         imageUrl: _imagePath,
         productCount: 0,
         createdAt: DateTime.now(),
@@ -169,18 +167,6 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                         controller: _nameController,
                         hintText: 'Ex: Alimentation générale',
                         labelText: 'Nom de la catégorie *',
-                        validator: (value) => value == null || value.isEmpty
-                            ? 'Ce champ est requis'
-                            : null,
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Description
-                      AppTextField(
-                        controller: _descriptionController,
-                        hintText: 'Entrez une description',
-                        labelText: 'Description *',
-                        maxLines: 3,
                         validator: (value) => value == null || value.isEmpty
                             ? 'Ce champ est requis'
                             : null,
@@ -303,7 +289,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                             ],
                           ),
                         );
-                      }).toList(),
+                      }),
 
                       // Add Subcategory Button
                       ElevatedButton(

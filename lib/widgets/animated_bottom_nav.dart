@@ -26,11 +26,11 @@ class AnimatedBottomNavBar extends StatelessWidget {
   final ValueChanged<int> onItemSelected;
 
   const AnimatedBottomNavBar({
-    Key? key,
+    super.key,
     required this.items,
     required this.selectedIndex,
     required this.onItemSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -63,11 +63,11 @@ class NavBarItem extends StatefulWidget {
   final VoidCallback onTap;
 
   const NavBarItem({
-    Key? key,
+    super.key,
     required this.item,
     required this.isSelected,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<NavBarItem> createState() => _NavBarItemState();
@@ -163,13 +163,13 @@ class InnerShadow extends StatelessWidget {
   final double blur; // height of the gradient
 
   const InnerShadow({
-    Key? key,
+    super.key,
     required this.child,
     this.radius = 12,
     this.color = const Color(0x22000000),
     this.strength = 0.18,
     this.blur = 8.0,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

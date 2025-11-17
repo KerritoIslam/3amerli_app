@@ -8,6 +8,7 @@ abstract class CatalogRepository {
   /// - [pageSize]: items per page (default 50)
   /// - [query]: search term
   /// - [categoryIds]: optional list of category ids to filter by
+  /// - [brandIds]: optional list of brand ids to filter by
   /// - [forceRefresh]: bypass cache
-  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds, bool forceRefresh = false});
+  Future<List<Product>> getProducts({int page = 1, int pageSize = 50, String? query, List<int>? categoryIds, List<int>? brandIds, bool forceRefresh = false});
 }
