@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/features/orders/presentation/pages/order_tracking_page.dart';
 import 'package:amerli_app/features/orders/domain/entities/order.dart';
 
@@ -29,7 +30,8 @@ class SuccessPage extends StatefulWidget {
   State<SuccessPage> createState() => _SuccessPageState();
 }
 
-class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStateMixin {
+class _SuccessPageState extends State<SuccessPage>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _arc;
   late final Animation<double> _check;
@@ -41,9 +43,14 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     // make the arc draw a bit longer and then run a shorter elastic check scale
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1300));
-    _arc = CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.8, curve: Curves.easeInOut));
-    _check = CurvedAnimation(parent: _controller, curve: const Interval(0.82, 1.0, curve: Curves.elasticOut));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1300));
+    _arc = CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.8, curve: Curves.easeInOut));
+    _check = CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.82, 1.0, curve: Curves.elasticOut));
     _controller.addStatusListener((s) {
       if (s == AnimationStatus.completed) {
         // after arc+check finish, move the circle up, then reveal content
@@ -72,9 +79,14 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/cart', (route) => route.settings.name == '/'),
+          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+              '/cart', (route) => route.settings.name == '/'),
         ),
-        title: Text('Succès', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: Colors.black)),
+        title: Text(AppLanguage.success,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700, color: Colors.black)),
         iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: SafeArea(
@@ -88,11 +100,17 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
                 top: MediaQuery.of(context).size.height * 0.40,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18.0, vertical: 16.0),
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(40),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4))
+                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -105,20 +123,26 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
                           width: 112,
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ),
 
                       // Summary rows
-                      _summaryRow('Date', widget.date ?? '-'),
+                      _summaryRow(AppLanguage.date, widget.date ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Méthode de paiement', widget.paymentMethod ?? '-'),
+                      _summaryRow(AppLanguage.paymentMethod,
+                          widget.paymentMethod ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Commande', widget.orderId ?? '-'),
+                      _summaryRow(
+                          AppLanguage.orderLabel, widget.orderId ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Montant payé', widget.amount ?? '-', emphasize: true),
+                      _summaryRow(AppLanguage.amountPaid, widget.amount ?? '-',
+                          emphasize: true),
 
                       const SizedBox(height: 12),
 
@@ -129,13 +153,18 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
                         child: ElevatedButton(
                           onPressed: () {
                             // Navigate to home page (catalog is at index 0)
-                            Navigator.of(context).pushNamedAndRemoveUntil('/home', (route) => false);
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                                '/home', (route) => false);
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Theme.of(context).colorScheme.primary,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
                             shape: const StadiumBorder(),
                           ),
-                          child: const Text('Retour à l\'accueil', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                          child: Text(AppLanguage.backToHome,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700)),
                         ),
                       ),
 
@@ -149,21 +178,28 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
                             if (widget.order != null) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => OrderTrackingPage(order: widget.order!),
+                                  builder: (_) =>
+                                      OrderTrackingPage(order: widget.order!),
                                 ),
                               );
                             } else {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Commande non disponible')),
+                                SnackBar(
+                                    content:
+                                        Text(AppLanguage.orderNotAvailable)),
                               );
                             }
                           },
                           style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Theme.of(context).colorScheme.primary),
+                            side: BorderSide(
+                                color: Theme.of(context).colorScheme.primary),
                             shape: const StadiumBorder(),
                             backgroundColor: Colors.transparent,
                           ),
-                          child: Text('Suivre ma commande', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                          child: Text(AppLanguage.followMyOrder,
+                              style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -216,21 +252,28 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
                 child: Column(
                   children: [
                     Text(
-                      'Merci ! Votre paiement a bien été reçu.\n\u2028 Votre commande est désormais en cours de traitement.\nVous recevrez une notification dès qu’elle sera expédiée.',
+                      AppLanguage.thankYouPaymentMessage,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 10),
                     GestureDetector(
                       onTap: () {
-                        if (widget.onInvoiceTap != null) return widget.onInvoiceTap!.call();
+                        if (widget.onInvoiceTap != null) {
+                          return widget.onInvoiceTap!.call();
+                        }
                         if (widget.invoiceUrl != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Ouverture facture...')));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(AppLanguage.openingInvoice)));
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Facture non disponible')));
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(AppLanguage.invoiceNotAvailable)));
                         }
                       },
-                      child: Text('Télécharger ou visualiser la facture', style: TextStyle(color: primary, decoration: TextDecoration.underline)),
+                      child: Text(AppLanguage.downloadOrViewInvoice,
+                          style: TextStyle(
+                              color: primary,
+                              decoration: TextDecoration.underline)),
                     ),
                   ],
                 ),
@@ -242,11 +285,18 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
   }
 
   Widget _summaryRow(String label, String value, {bool emphasize = false}) {
-    final labelStyle = emphasize ? const TextStyle(fontWeight: FontWeight.w700) : const TextStyle(color: Colors.black54);
-    final valueStyle = emphasize ? const TextStyle(fontWeight: FontWeight.w800) : const TextStyle(fontWeight: FontWeight.w600);
+    final labelStyle = emphasize
+        ? const TextStyle(fontWeight: FontWeight.w700)
+        : const TextStyle(color: Colors.black54);
+    final valueStyle = emphasize
+        ? const TextStyle(fontWeight: FontWeight.w800)
+        : const TextStyle(fontWeight: FontWeight.w600);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [Text(label, style: labelStyle), Text(value, style: valueStyle)],
+      children: [
+        Text(label, style: labelStyle),
+        Text(value, style: valueStyle)
+      ],
     );
   }
 }
@@ -256,7 +306,10 @@ class _CircleArcPainter extends CustomPainter {
   final Color strokeColor;
   final double strokeWidth;
 
-  _CircleArcPainter({required this.progress, required this.strokeColor, this.strokeWidth = 4});
+  _CircleArcPainter(
+      {required this.progress,
+      required this.strokeColor,
+      this.strokeWidth = 4});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -266,7 +319,7 @@ class _CircleArcPainter extends CustomPainter {
     final base = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..color = strokeColor.withOpacity(0.12)
+      ..color = strokeColor.withValues(alpha: 0.12)
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, base);
@@ -279,10 +332,13 @@ class _CircleArcPainter extends CustomPainter {
 
     final start = -pi / 2;
     final sweep = 2 * pi * progress;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start, sweep, false, arc);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start,
+        sweep, false, arc);
   }
 
   @override
-  bool shouldRepaint(covariant _CircleArcPainter oldDelegate) => oldDelegate.progress != progress || oldDelegate.strokeColor != strokeColor || oldDelegate.strokeWidth != strokeWidth;
+  bool shouldRepaint(covariant _CircleArcPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.strokeColor != strokeColor ||
+      oldDelegate.strokeWidth != strokeWidth;
 }
-

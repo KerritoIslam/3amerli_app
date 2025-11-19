@@ -158,8 +158,8 @@ class AppColors {
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: [
-        scheme.primary.withOpacity(0.36),
-        scheme.onPrimary.withOpacity(0.0)
+        scheme.primary.withValues(alpha: 0.36),
+        scheme.onPrimary.withValues(alpha: 0.0)
       ],
       stops: const [0.0, 1.0],
     );

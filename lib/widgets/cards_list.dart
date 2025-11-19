@@ -42,29 +42,24 @@ class CardsList extends StatelessWidget {
 
     Widget buildItem(BuildContext ctx, int index) {
       final item = items[index];
-      return Container(
-        
-       
-        child: Material(
-        
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: item.onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
-              child: Row(
-                children: [
-                  if (item.leading != null) ...[
-                    item.leading!,
-                    const SizedBox(width: 12),
-                  ],
-                  Expanded(child: item.title),
-                  if (item.trailing != null) ...[
-                    const SizedBox(width: 12),
-                    item.trailing!,
-                  ],
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: item.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+            child: Row(
+              children: [
+                if (item.leading != null) ...[
+                  item.leading!,
+                  const SizedBox(width: 12),
                 ],
-              ),
+                Expanded(child: item.title),
+                if (item.trailing != null) ...[
+                  const SizedBox(width: 12),
+                  item.trailing!,
+                ],
+              ],
             ),
           ),
         ),

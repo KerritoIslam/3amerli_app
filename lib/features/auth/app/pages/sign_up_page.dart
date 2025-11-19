@@ -79,7 +79,8 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
   final _phoneController = TextEditingController();
   final FocusNode _phoneFocusNode = FocusNode();
   // OTP inputs
-  final List<TextEditingController> _otpControllers = List.generate(4, (_) => TextEditingController());
+  final List<TextEditingController> _otpControllers =
+      List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _otpFocusNodes = List.generate(4, (_) => FocusNode());
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   // track previous raw viewInsets bottom (physical pixels) to detect keyboard hide
@@ -89,8 +90,12 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
   void dispose() {
     _phoneController.dispose();
     _phoneFocusNode.dispose();
-    for (final c in _otpControllers) { c.dispose(); }
-    for (final f in _otpFocusNodes) { f.dispose(); }
+    for (final c in _otpControllers) {
+      c.dispose();
+    }
+    for (final f in _otpFocusNodes) {
+      f.dispose();
+    }
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -141,14 +146,14 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-      // Observe the current sign-up state so we can lock the panel when
-      // the flow enters the OTP verification step.
-      final signUpState = context.watch<SignUpCubit>().state;
-      // Ensure a clearly contrasting panel color: pick an explicit grey
-      // dependent on theme brightness so it's visible over the background.
-      // Use the theme's secondary color for the panel background so it aligns
-      // with the app's color scheme.
-      final panelColor = Theme.of(context).colorScheme.secondary;
+          // Observe the current sign-up state so we can lock the panel when
+          // the flow enters the OTP verification step.
+          final signUpState = context.watch<SignUpCubit>().state;
+          // Ensure a clearly contrasting panel color: pick an explicit grey
+          // dependent on theme brightness so it's visible over the background.
+          // Use the theme's secondary color for the panel background so it aligns
+          // with the app's color scheme.
+          final panelColor = Theme.of(context).colorScheme.secondary;
           // Use the height provided by the LayoutBuilder constraints so the
           // panel adapts correctly when this page is embedded in other
           // widgets (like a tabbed onboarding flow) and avoid overflow.
@@ -165,12 +170,14 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
           // When focused OR when we're in the OTP verification state, expand
           // to fill the screen (move up by statusBar so the panel covers the
           // system status bar). Otherwise collapse to half screen.
-          final bool expanded = _phoneFocusNode.hasFocus || signUpState.status == VerificationStatus.enteringOtp;
+          final bool expanded = _phoneFocusNode.hasFocus ||
+              signUpState.status == VerificationStatus.enteringOtp;
           final targetTop = expanded ? -statusBar : halfTop;
 
           // When expanded we want no top curve so the panel reads as a
           // full-screen rectangle. Use dynamic curve height for the clipper.
-          final panelCurveHeight = expanded ? 0.0 : AppDimensions.panelCurveHeight;
+          final panelCurveHeight =
+              expanded ? 0.0 : AppDimensions.panelCurveHeight;
 
           // Clip the whole area to avoid any visual overflow when the panel
           // animates; paint the top area with the app background so the panel
@@ -183,32 +190,36 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
           return Stack(
             clipBehavior: Clip.none,
             children: [
-                // Top background area: a neutral/grey surface
-                Positioned.fill(child: Container(color: topBg)),
+              // Top background area: a neutral/grey surface
+              Positioned.fill(child: Container(color: topBg)),
 
-                // Hero illustration in the top half (visible when panel is collapsed).
-                // Add vertical padding so it doesn't touch system UI, and keep it
-                // below the panel until the panel expands to top=0 and covers it.
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: halfTop,
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: AppDimensions.spacingXXL, bottom: AppDimensions.spacingS, left: AppDimensions.spacingL, right: AppDimensions.spacingL),
-                      child: Center(
-                        child: SvgPicture.asset(
-                          'assets/images/hero/phone_number_hero.svg',
-                          fit: BoxFit.contain,
-                          // give the SVG room but keep it inside the top half
-                          height: halfTop - AppDimensions.spacingM * 2,
-                          semanticsLabel: 'Hero illustration',
-                        ),
+              // Hero illustration in the top half (visible when panel is collapsed).
+              // Add vertical padding so it doesn't touch system UI, and keep it
+              // below the panel until the panel expands to top=0 and covers it.
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: halfTop,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        top: AppDimensions.spacingXXL,
+                        bottom: AppDimensions.spacingS,
+                        left: AppDimensions.spacingL,
+                        right: AppDimensions.spacingL),
+                    child: Center(
+                      child: SvgPicture.asset(
+                        'assets/images/hero/phone_number_hero.svg',
+                        fit: BoxFit.contain,
+                        // give the SVG room but keep it inside the top half
+                        height: halfTop - AppDimensions.spacingM * 2,
+                        semanticsLabel: 'Hero illustration',
                       ),
                     ),
                   ),
                 ),
+              ),
 
               // Bottom curved container that holds the form — clipped to a centered top arc
               // Animated panel: expands to full screen when the phone field gains focus
@@ -225,9 +236,17 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                     decoration: BoxDecoration(
                       color: panelColor,
                       // subtle top border and shadow to increase separation from the hero
-                      border: Border(top: BorderSide(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06))),
+                      border: Border(
+                          top: BorderSide(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurface
+                                  .withValues(alpha: 0.06))),
                       boxShadow: [
-                        BoxShadow(color: Colors.black26, blurRadius: 12, offset: Offset(0, -6)),
+                        BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 12,
+                            offset: Offset(0, -6)),
                       ],
                     ),
                     child: Builder(builder: (context) {
@@ -237,171 +256,249 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                       final double curveH = panelCurveHeight;
                       // When expanded (focused or in OTP stage), increase top padding so the content
                       // is pushed down and not crowded by the status bar.
-                      final bool expanded = _phoneFocusNode.hasFocus || signUpState.status == VerificationStatus.enteringOtp;
-                      final topPadding = contentTopPadding + curveH + AppDimensions.spacing - AppDimensions.panelTopOffset + (expanded ? AppDimensions.panelExpandedExtra : 0.0);
+                      final bool expanded = _phoneFocusNode.hasFocus ||
+                          signUpState.status == VerificationStatus.enteringOtp;
+                      final topPadding = contentTopPadding +
+                          curveH +
+                          AppDimensions.spacing -
+                          AppDimensions.panelTopOffset +
+                          (expanded ? AppDimensions.panelExpandedExtra : 0.0);
 
                       return Padding(
-                        padding: EdgeInsets.fromLTRB(AppDimensions.panelHorizontalPadding, topPadding, AppDimensions.panelHorizontalPadding, AppDimensions.panelBottomPadding),
-                          child: BlocListener<SignUpCubit, SignUpState>(
+                        padding: EdgeInsets.fromLTRB(
+                            AppDimensions.panelHorizontalPadding,
+                            topPadding,
+                            AppDimensions.panelHorizontalPadding,
+                            AppDimensions.panelBottomPadding),
+                        child: BlocListener<SignUpCubit, SignUpState>(
                           // Only react when the result becomes `newUser` — navigation to
                           // home for existing users is handled centrally by the AuthBloc
                           // -> router redirect to avoid concurrent navigator updates.
-                          listenWhen: (previous, current) => previous.result != current.result &&
+                          listenWhen: (previous, current) =>
+                              previous.result != current.result &&
                               current.result == AuthResult.newUser,
                           listener: (context, state) {
                             // Use post-frame callback to avoid navigator locked / hero scope issues
                             if (state.result == AuthResult.newUser) {
-                              print("New User Detected : Navigating to Complete Profile");
+                              print(
+                                  "New User Detected : Navigating to Complete Profile");
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 // Navigate using GoRouter to the dedicated route. The
                                 // CompleteProfilePage will be built by the router so we
                                 // avoid pushing a second Navigator with the same GlobalKey.
-                                GoRouter.of(context).push('/complete-profile', extra: context.read<SignUpCubit>());
+                                GoRouter.of(context).push('/complete-profile',
+                                    extra: context.read<SignUpCubit>());
                               });
                             }
                           },
                           child: BlocBuilder<SignUpCubit, SignUpState>(
                             builder: (context, state) {
                               // If entering OTP stage, show verification UI; otherwise show phone form
-                              if (state.status == VerificationStatus.enteringOtp) {
+                              if (state.status ==
+                                  VerificationStatus.enteringOtp) {
                                 return SingleChildScrollView(
                                   child: ConstrainedBox(
-                                    constraints: BoxConstraints(maxHeight: constraints.maxHeight - topPadding),
+                                    constraints: BoxConstraints(
+                                        maxHeight:
+                                            constraints.maxHeight - topPadding),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
-                                    Text(
-                                      AppLanguage.verifyNumber,
-                                      style: AppTextStyles.headline1,
-                                    ),
-                                    const SizedBox(height: 8),
-                                    // Message text that ends with the tappable phone number + icon
-                                    RichText(
-                                      text: TextSpan(
-                                        style: AppTextStyles.body.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                        children: [
-                                          TextSpan(text: '${AppLanguage.codeSent} '),
-                                          WidgetSpan(
-                                            alignment: PlaceholderAlignment.middle,
-                                            child: GestureDetector(
-                                              behavior: HitTestBehavior.opaque,
-                                              onTap: () => _returnToPhoneEntry(cubit),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Text(
-                                                    '${state.countryCode} ${state.phoneNumber}',
-                                                    style: AppTextStyles.body.copyWith(
-                                                      color: Colors.blue,
-                                                      decoration: TextDecoration.underline,
-                                                      decorationColor: Colors.blue,
+                                        Text(
+                                          AppLanguage.verifyNumber,
+                                          style: AppTextStyles.headline1,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        // Message text that ends with the tappable phone number + icon
+                                        RichText(
+                                          text: TextSpan(
+                                            style: AppTextStyles.body.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface),
+                                            children: [
+                                              TextSpan(
+                                                  text:
+                                                      '${AppLanguage.codeSent} '),
+                                              WidgetSpan(
+                                                alignment:
+                                                    PlaceholderAlignment.middle,
+                                                child: GestureDetector(
+                                                  behavior:
+                                                      HitTestBehavior.opaque,
+                                                  onTap: () =>
+                                                      _returnToPhoneEntry(
+                                                          cubit),
+                                                  child: Row(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        '${state.countryCode} ${state.phoneNumber}',
+                                                        style: AppTextStyles
+                                                            .body
+                                                            .copyWith(
+                                                          color: Colors.blue,
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline,
+                                                          decorationColor:
+                                                              Colors.blue,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 6),
+                                                      SvgPicture.asset(
+                                                        'assets/icons/edit.svg',
+                                                        width: 18,
+                                                        height: 18,
+                                                        colorFilter: ColorFilter.mode(Colors.blue, BlendMode.srcIn),
+                                                        semanticsLabel:
+                                                            'Edit phone',
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(height: 18),
+                                        // OTP boxes
+                                        Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 50.0),
+                                          child: Directionality(
+                                            textDirection: TextDirection.ltr,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: List.generate(4, (i) {
+                                                return SizedBox(
+                                                  width: 56,
+                                                  child: TextField(
+                                                    controller:
+                                                        _otpControllers[i],
+                                                    focusNode:
+                                                        _otpFocusNodes[i],
+                                                    keyboardType:
+                                                        TextInputType.number,
+                                                    textAlign: TextAlign.center,
+                                                    maxLength: 1,
+                                                    style: TextStyle(
+                                                        fontSize: 24,
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .primary),
+                                                    decoration: InputDecoration(
+                                                      counterText: '',
+                                                      hintText: '0',
+                                                      hintStyle: TextStyle(
+                                                          color:
+                                                              AppColors.hint),
+                                                      enabledBorder:
+                                                          UnderlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color:
+                                                                AppColors.hint),
+                                                      ),
+                                                      focusedBorder:
+                                                          UnderlineInputBorder(
+                                                        borderSide: BorderSide(
+                                                            color: Theme.of(
+                                                                    context)
+                                                                .colorScheme
+                                                                .primary,
+                                                            width: 2),
+                                                      ),
                                                     ),
+                                                    onChanged: (v) {
+                                                      if (v.length > 1) {
+                                                        // handle paste: distribute characters
+                                                        final chars =
+                                                            v.split('');
+                                                        for (var j = 0;
+                                                            j < chars.length &&
+                                                                (i + j) < 4;
+                                                            j++) {
+                                                          _otpControllers[i + j]
+                                                              .text = chars[j];
+                                                        }
+                                                        final next =
+                                                            (i + chars.length)
+                                                                .clamp(0, 4);
+                                                        if (next < 4)
+                                                          _otpFocusNodes[next]
+                                                              .requestFocus();
+                                                      } else {
+                                                        if (v.isNotEmpty) {
+                                                          if (i < 3)
+                                                            _otpFocusNodes[
+                                                                    i + 1]
+                                                                .requestFocus();
+                                                        } else {
+                                                          if (i > 0)
+                                                            _otpFocusNodes[
+                                                                    i - 1]
+                                                                .requestFocus();
+                                                        }
+                                                      }
+                                                    },
                                                   ),
-                                                  const SizedBox(width: 6),
-                                                  SvgPicture.asset(
-                                                    'assets/icons/edit.svg',
-                                                    width: 18,
-                                                    height: 18,
-                                                    color: Colors.blue,
-                                                    semanticsLabel: 'Edit phone',
-                                                  ),
-                                                ],
+                                                );
+                                              }),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Center(
+                                          child: GestureDetector(
+                                            onTap: () async {
+                                              // resend code
+                                              await cubit.sendCode();
+                                            },
+                                            child: Text(
+                                              AppLanguage.noCodeReceived,
+                                              textAlign: TextAlign.center,
+                                              style: AppTextStyles.caption
+                                                  .copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .primary,
+                                                decoration:
+                                                    TextDecoration.underline,
                                               ),
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                    const SizedBox(height: 18),
-                                    // OTP boxes
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 50.0),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: List.generate(4, (i) {
-                                          return SizedBox(
-                                            width: 56,
-                                            child: TextField(
-                                              controller: _otpControllers[i],
-                                              focusNode: _otpFocusNodes[i],
-                                              keyboardType: TextInputType.number,
-                                              textAlign: TextAlign.center,
-                                              maxLength: 1,
-                                              style: TextStyle(fontSize: 24, color: Theme.of(context).colorScheme.primary),
-                                              decoration: InputDecoration(
-                                                counterText: '',
-                                                hintText: '0',
-                                                hintStyle: TextStyle(color: AppColors.hint),
-                                                enabledBorder: UnderlineInputBorder(
-                                                  borderSide: BorderSide(color: AppColors.hint),
-                                                ),
-                                                focusedBorder: UnderlineInputBorder(
-                                                  borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
-                                                ),
-                                              ),
-                                              onChanged: (v) {
-                                                if (v.length > 1) {
-                                                  // handle paste: distribute characters
-                                                  final chars = v.split('');
-                                                  for (var j = 0; j < chars.length && (i + j) < 4; j++) {
-                                                    _otpControllers[i + j].text = chars[j];
-                                                  }
-                                                  final next = (i + chars.length).clamp(0, 4);
-                                                  if (next < 4) _otpFocusNodes[next].requestFocus();
+                                        ),
+                                        const Spacer(),
+                                        // Ensure the verify button is placed above system
+                                        // navigation (soft buttons) by using SafeArea.
+                                        SafeArea(
+                                          top: false,
+                                          minimum: const EdgeInsets.only(
+                                              bottom: 24.0),
+                                          child: SizedBox(
+                                            width: double.infinity,
+                                            child: AppButton(
+                                              text: AppLanguage.verifyMyNumber,
+                                              onPressed: () {
+                                                final code = _otpControllers
+                                                    .map((c) => c.text)
+                                                    .join();
+                                                if (code == '0000') {
+                                                  // Special-case debug code
+                                                  print('valid');
                                                 } else {
-                                                  if (v.isNotEmpty) {
-                                                    if (i < 3) _otpFocusNodes[i + 1].requestFocus();
-                                                  } else {
-                                                    if (i > 0) _otpFocusNodes[i - 1].requestFocus();
-                                                  }
+                                                  cubit.verifyOtp(code);
                                                 }
                                               },
+                                              height: 48,
                                             ),
-                                          );
-                                        }),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Center(
-                                      child: GestureDetector(
-                                        onTap: () async {
-                                          // resend code
-                                          await cubit.sendCode();
-                                        },
-                                        child: Text(
-                                          AppLanguage.noCodeReceived,
-                                          textAlign: TextAlign.center,
-                                          style: AppTextStyles.caption.copyWith(
-                                            color: Theme.of(context).colorScheme.primary,
-                                            decoration: TextDecoration.underline,
                                           ),
                                         ),
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    // Ensure the verify button is placed above system
-                                    // navigation (soft buttons) by using SafeArea.
-                                    SafeArea(
-                                      top: false,
-                                      minimum: const EdgeInsets.only(bottom: 24.0),
-                                      child: SizedBox(
-                                        width: double.infinity,
-                                        child: AppButton(
-                                          text: AppLanguage.verifyMyNumber,
-                                          onPressed: () {
-                                            final code = _otpControllers.map((c) => c.text).join();
-                                            if (code == '0000') {
-                                              // Special-case debug code
-                                              print('valid');
-                                            } else {
-                                              cubit.verifyOtp(code);
-                                            }
-                                          },
-                                          height: 48,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
+                                      ],
                                     ),
                                   ),
                                 );
@@ -409,143 +506,213 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
 
                               // Phone entry form (existing)
                               return SingleChildScrollView(
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(maxHeight: constraints.maxHeight - topPadding),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                  Text(
-                                    AppLanguage.phoneNumberTitle,
-                                    style: AppTextStyles.headline1,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    AppLanguage.phoneNumberSubtitle,
-                                    style: AppTextStyles.body,
-                                  ),
-                                  const SizedBox(height: 12),
-                                  // Form around the phone field to support validation
-                                  Form(
-                                    key: _formKey,
-                                    child: AppTextField(
-                                      controller: _phoneController,
-                                      focusNode: _phoneFocusNode,
-                                      keyboardType: TextInputType.phone,
-                                      hintText: null,
-                                      // validate phone: must be digits and at least 8 chars
-                                      validator: (v) {
-                                        final value = v?.trim() ?? '';
-                                        if (value.isEmpty) return AppLanguage.phoneEmptyError;
-                                        // Strict Algerian number pattern: ^(?:\+213|0)(5|6|7)[0-9]{8}$
-                                        final pattern = r'^(?:\+213|0)(5|6|7)[0-9]{8}$';
-                                        final reg = RegExp(pattern);
-                                        if (!reg.hasMatch(value)) return AppLanguage.phoneInvalidError;
-                                        return null;
-                                      },
-                                      // Disable live validation; validation will be
-                                      // triggered explicitly when the Send button is pressed.
-                                      autovalidateMode: AutovalidateMode.disabled,
-                                      // leading is a button containing the flag and an up-arrow.
-                                      leading: SizedBox(
-                                        width: AppDimensions.flagButtonWidth,
-                                        child: Padding(
-                                          padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-                                          child: _FlagButton(
-                                            currentAsset: 'assets/images/flags/algeria.svg',
-                                            onSelected: (asset) => cubit.setCountryCode(asset),
-                                            preserveFocus: _phoneFocusNode,
+                                  child: ConstrainedBox(
+                                      constraints: BoxConstraints(
+                                          maxHeight: constraints.maxHeight -
+                                              topPadding),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            AppLanguage.phoneNumberTitle,
+                                            style: AppTextStyles.headline1,
                                           ),
-                                        ),
-                                      ),
-                                      onChanged: (v) => cubit.setPhoneNumber(v),
-                                    ),
-                                  ),
-
-                                  // Flexible spacer pushes the following content to the bottom
-                                  const Spacer(),
-
-                                  // If focused: show consent above the button, then the button.
-                                  // Otherwise: the button is hidden and consent sits at the bottom.
-                                  if (_phoneFocusNode.hasFocus) ...[
-                                    Align(
-                                      alignment: Alignment.center,
-                                      child: RichText(
-                                        textAlign: TextAlign.center,
-                                        text: TextSpan(
-                                          style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                          children: [
-                                            TextSpan(text: '${AppLanguage.consentPrefix} '),
-                                            TextSpan(
-                                              text: AppLanguage.termsOfUse,
-                                              style: const TextStyle(decoration: TextDecoration.underline),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            AppLanguage.phoneNumberSubtitle,
+                                            style: AppTextStyles.body,
+                                          ),
+                                          const SizedBox(height: 12),
+                                          // Form around the phone field to support validation
+                                          Form(
+                                            key: _formKey,
+                                            child: AppTextField(
+                                              controller: _phoneController,
+                                              focusNode: _phoneFocusNode,
+                                              keyboardType: TextInputType.phone,
+                                              hintText: null,
+                                              // validate phone: must be digits and at least 8 chars
+                                              validator: (v) {
+                                                final value = v?.trim() ?? '';
+                                                if (value.isEmpty)
+                                                  return AppLanguage
+                                                      .phoneEmptyError;
+                                                // Strict Algerian number pattern: ^(?:\+213|0)(5|6|7)[0-9]{8}$
+                                                final pattern =
+                                                    r'^(?:\+213|0)(5|6|7)[0-9]{8}$';
+                                                final reg = RegExp(pattern);
+                                                if (!reg.hasMatch(value))
+                                                  return AppLanguage
+                                                      .phoneInvalidError;
+                                                return null;
+                                              },
+                                              // Disable live validation; validation will be
+                                              // triggered explicitly when the Send button is pressed.
+                                              autovalidateMode:
+                                                  AutovalidateMode.disabled,
+                                              // leading is a button containing the flag and an up-arrow.
+                                              leading: SizedBox(
+                                                width: AppDimensions
+                                                    .flagButtonWidth,
+                                                child: Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          left: 8.0,
+                                                          right: 8.0),
+                                                  child: _FlagButton(
+                                                    currentAsset:
+                                                        'assets/images/flags/algeria.svg',
+                                                    onSelected: (asset) => cubit
+                                                        .setCountryCode(asset),
+                                                    preserveFocus:
+                                                        _phoneFocusNode,
+                                                  ),
+                                                ),
+                                              ),
+                                              onChanged: (v) =>
+                                                  cubit.setPhoneNumber(v),
                                             ),
-                                            TextSpan(text: ' ${AppLanguage.and} '),
-                                            TextSpan(
-                                              text: AppLanguage.privacyPolicy,
-                                              style: const TextStyle(decoration: TextDecoration.underline),
+                                          ),
+
+                                          // Flexible spacer pushes the following content to the bottom
+                                          const Spacer(),
+
+                                          // If focused: show consent above the button, then the button.
+                                          // Otherwise: the button is hidden and consent sits at the bottom.
+                                          if (_phoneFocusNode.hasFocus) ...[
+                                            Align(
+                                              alignment: Alignment.center,
+                                              child: RichText(
+                                                textAlign: TextAlign.center,
+                                                text: TextSpan(
+                                                  style: AppTextStyles.caption
+                                                      .copyWith(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .onSurface),
+                                                  children: [
+                                                    TextSpan(
+                                                        text:
+                                                            '${AppLanguage.consentPrefix} '),
+                                                    TextSpan(
+                                                      text: AppLanguage
+                                                          .termsOfUse,
+                                                      style: const TextStyle(
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline),
+                                                    ),
+                                                    TextSpan(
+                                                        text:
+                                                            ' ${AppLanguage.and} '),
+                                                    TextSpan(
+                                                      text: AppLanguage
+                                                          .privacyPolicy,
+                                                      style: const TextStyle(
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 12),
+                                            AnimatedSwitcher(
+                                              duration: const Duration(
+                                                  milliseconds: 200),
+                                              switchInCurve: Curves.easeOut,
+                                              switchOutCurve: Curves.easeIn,
+                                              child: SizedBox(
+                                                key: const ValueKey(
+                                                    'send_button'),
+                                                width: double.infinity,
+                                                child: AppButton(
+                                                  text: AppLanguage.sendCode,
+                                                  onPressed: state.status ==
+                                                          VerificationStatus
+                                                              .loading
+                                                      ? null
+                                                      : () async {
+                                                          // Validate the form before sending
+                                                          final valid = _formKey
+                                                                  .currentState
+                                                                  ?.validate() ??
+                                                              false;
+
+                                                          if (!valid) return;
+
+                                                          await cubit
+                                                              .sendCode();
+                                                        },
+                                                  isLoading: state.status ==
+                                                      VerificationStatus
+                                                          .loading,
+                                                  height: 48,
+                                                  padding: const EdgeInsets
+                                                      .symmetric(
+                                                      horizontal: 20),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(
+                                                height:
+                                                    AppDimensions.spacingXL),
+                                          ] else ...[
+                                            // Hidden send button
+                                            AnimatedSwitcher(
+                                              duration: const Duration(
+                                                  milliseconds: 200),
+                                              child: const SizedBox.shrink(
+                                                  key: ValueKey(
+                                                      'send_button_hidden')),
+                                            ),
+                                            const SizedBox(
+                                                height:
+                                                    AppDimensions.spacingXL),
+                                            Align(
+                                              alignment: Alignment.center,
+                                              child: RichText(
+                                                textAlign: TextAlign.center,
+                                                text: TextSpan(
+                                                  style: AppTextStyles.caption
+                                                      .copyWith(
+                                                          color:
+                                                              Theme.of(context)
+                                                                  .colorScheme
+                                                                  .onSurface),
+                                                  children: [
+                                                    TextSpan(
+                                                        text:
+                                                            '${AppLanguage.consentPrefix} '),
+                                                    TextSpan(
+                                                      text: AppLanguage
+                                                          .termsOfUse,
+                                                      style: const TextStyle(
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline),
+                                                    ),
+                                                    TextSpan(
+                                                        text:
+                                                            ' ${AppLanguage.and} '),
+                                                    TextSpan(
+                                                      text: AppLanguage
+                                                          .privacyPolicy,
+                                                      style: const TextStyle(
+                                                          decoration:
+                                                              TextDecoration
+                                                                  .underline),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           ],
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 200),
-                                      switchInCurve: Curves.easeOut,
-                                      switchOutCurve: Curves.easeIn,
-                                      child: SizedBox(
-                                        key: const ValueKey('send_button'),
-                                        width: double.infinity,
-                                        child: AppButton(
-                                          text: AppLanguage.sendCode,
-                                          onPressed: state.status == VerificationStatus.loading
-                                              ? null
-                                              : () async {
-                                                  // Validate the form before sending
-                                                  final valid = _formKey.currentState?.validate() ?? false;
-
-                                                  if (!valid) return;
-
-                                                  await cubit.sendCode();
-                                                },
-                                          isLoading: state.status == VerificationStatus.loading,
-                                          height: 48,
-                                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(height: AppDimensions.spacingXL),
-                                  ] else ...[
-                                    // Hidden send button
-                                    AnimatedSwitcher(
-                                      duration: const Duration(milliseconds: 200),
-                                      child: const SizedBox.shrink(key: ValueKey('send_button_hidden')),
-                                    ),
-                                    const SizedBox(height: AppDimensions.spacingXL),
-                                    Align(
-                                      alignment: Alignment.center,
-                                      child: RichText(
-                                        textAlign: TextAlign.center,
-                                        text: TextSpan(
-                                          style: AppTextStyles.caption.copyWith(color: Theme.of(context).colorScheme.onSurface),
-                                          children: [
-                                            TextSpan(text: '${AppLanguage.consentPrefix} '),
-                                            TextSpan(
-                                              text: AppLanguage.termsOfUse,
-                                              style: const TextStyle(decoration: TextDecoration.underline),
-                                            ),
-                                            TextSpan(text: ' ${AppLanguage.and} '),
-                                            TextSpan(
-                                              text: AppLanguage.privacyPolicy,
-                                              style: const TextStyle(decoration: TextDecoration.underline),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              )));
+                                        ],
+                                      )));
                             },
                           ),
                         ),
@@ -577,7 +744,10 @@ class _FlagButton extends StatefulWidget {
   final ValueChanged<String> onSelected;
   final FocusNode? preserveFocus;
 
-  const _FlagButton({required this.currentAsset, required this.onSelected, this.preserveFocus});
+  const _FlagButton(
+      {required this.currentAsset,
+      required this.onSelected,
+      this.preserveFocus});
 
   @override
   State<_FlagButton> createState() => _FlagButtonState();
@@ -636,17 +806,24 @@ class _FlagButtonState extends State<_FlagButton> {
                           children: List.generate(3, (i) {
                             return InkWell(
                               onTap: () {
-                                widget.onSelected('assets/images/flags/algeria.svg');
+                                widget.onSelected(
+                                    'assets/images/flags/algeria.svg');
                                 _removeOverlay();
-                                if (hadFocus && (widget.preserveFocus != null)) {
-                                  Future.microtask(() => widget.preserveFocus!.requestFocus());
+                                if (hadFocus &&
+                                    (widget.preserveFocus != null)) {
+                                  Future.microtask(() =>
+                                      widget.preserveFocus!.requestFocus());
                                 }
                               },
                               child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12.0, vertical: 10.0),
                                 child: Row(
                                   children: [
-                                    FlagImage.asset('assets/images/flags/algeria.svg', width: 28, height: 20),
+                                    FlagImage.asset(
+                                        'assets/images/flags/algeria.svg',
+                                        width: 28,
+                                        height: 20),
                                     const SizedBox(width: 12),
                                     Text('Algeria'),
                                   ],
@@ -666,7 +843,7 @@ class _FlagButtonState extends State<_FlagButton> {
       );
     });
 
-  Overlay.of(context).insert(_overlayEntry!);
+    Overlay.of(context).insert(_overlayEntry!);
   }
 
   @override
@@ -701,13 +878,16 @@ class _FlagButtonState extends State<_FlagButton> {
             },
             child: LayoutBuilder(
               builder: (context, constraints) {
-                const neededWidth = 64.0; // flag(28)+spacing(8)+icon(16)+inner padding(12)
+                const neededWidth =
+                    64.0; // flag(28)+spacing(8)+icon(16)+inner padding(12)
                 final content = Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6.0, vertical: 8.0),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      FlagImage.asset(widget.currentAsset, width: 28, height: 20),
+                      FlagImage.asset(widget.currentAsset,
+                          width: 28, height: 20),
                       const SizedBox(width: 8),
                       Icon(
                         Icons.keyboard_arrow_up,
@@ -718,8 +898,12 @@ class _FlagButtonState extends State<_FlagButton> {
                   ),
                 );
 
-                if (constraints.maxWidth.isFinite && constraints.maxWidth < neededWidth) {
-                  return FittedBox(fit: BoxFit.scaleDown, alignment: Alignment.centerLeft, child: content);
+                if (constraints.maxWidth.isFinite &&
+                    constraints.maxWidth < neededWidth) {
+                  return FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: content);
                 }
 
                 // Ensure the entire available width is tappable by placing the

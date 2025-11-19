@@ -5,10 +5,12 @@ import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../bloc/admin_categories_bloc.dart';
 import '../bloc/admin_categories_event.dart';
 import '../bloc/admin_categories_state.dart';
 import '../../domain/entities/category.dart';
+
 class AdminCategoriesPage extends StatefulWidget {
   const AdminCategoriesPage({super.key});
 
@@ -34,7 +36,9 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
   }
 
   void _onSearch(String query) {
-    context.read<AdminCategoriesBloc>().add(AdminCategoriesLoadEvent(query: query));
+    context
+        .read<AdminCategoriesBloc>()
+        .add(AdminCategoriesLoadEvent(query: query));
   }
 
   @override
@@ -45,7 +49,9 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
           ErrorHandler.showError(context, state.message);
         } else if (state is AdminCategoriesOperationSuccess) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: AppColors.brandDeep),
+            SnackBar(
+                content: Text(state.message),
+                backgroundColor: AppColors.brandDeep),
           );
         }
       },
@@ -66,7 +72,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.tertiaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.tertiaryContainer,
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
@@ -75,13 +82,21 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                           width: 16,
                           height: 16,
                           color: Theme.of(context).colorScheme.onPrimary,
-                          placeholderBuilder: (context) => Icon(Icons.arrow_back, size: 16, color: Theme.of(context).colorScheme.onPrimary),
+                          placeholderBuilder: (context) => Icon(
+                              Icons.arrow_back,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.onPrimary),
                         ),
                       ),
                     ),
                     Expanded(
                       child: Center(
-                        child: Text('Gérer les catégories', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black), textAlign: TextAlign.center),
+                        child: Text(AppLanguage.manageCategories,
+                            style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black),
+                            textAlign: TextAlign.center),
                       ),
                     ),
                     const SizedBox(width: 40),
@@ -96,18 +111,25 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                   height: 40,
                   child: Row(
                     children: [
-                      Expanded(child: SizedBox(height: 40, child: AppSearchbar(onChanged: _onSearch))),
+                      Expanded(
+                          child: SizedBox(
+                              height: 40,
+                              child: AppSearchbar(onChanged: _onSearch))),
                       const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: () => context.push('/admin/categories/add'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                           minimumSize: const Size(0, 40),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
                         ),
-                        child: const Text('Ajouter', style: TextStyle(fontSize: 13)),
+                        child: Text(AppLanguage.add,
+                            style: const TextStyle(fontSize: 13)),
                       ),
                     ],
                   ),
@@ -118,22 +140,30 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
 
               // Content
               Expanded(
-                child: BlocBuilder<AdminCategoriesBloc, AdminCategoriesState>(builder: (context, state) {
-                  if (state is AdminCategoriesLoading) return const Center(child: CircularProgressIndicator());
+                child: BlocBuilder<AdminCategoriesBloc, AdminCategoriesState>(
+                    builder: (context, state) {
+                  if (state is AdminCategoriesLoading)
+                    return const Center(child: CircularProgressIndicator());
                   if (state is AdminCategoriesLoaded) {
                     return SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        _buildCategoriesTable(state),
-                        const SizedBox(height: 24),
-                        const Text('Sous-catégories', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black)),
-                        const SizedBox(height: 12),
-                        _buildSubCategoriesTable(state),
-                        const SizedBox(height: 100),
-                      ]),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildCategoriesTable(state),
+                            const SizedBox(height: 24),
+                            Text(AppLanguage.subcategories,
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black)),
+                            const SizedBox(height: 12),
+                            _buildSubCategoriesTable(state),
+                            const SizedBox(height: 100),
+                          ]),
                     );
                   }
-                  return const Center(child: Text('Aucune donnée disponible'));
+                  return Center(child: Text(AppLanguage.noDataAvailable));
                 }),
               ),
             ],
@@ -148,24 +178,33 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
       margin: const EdgeInsets.symmetric(horizontal: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
-        border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1),
+        borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+        border:
+            Border.all(color: Theme.of(context).colorScheme.primary, width: 1),
       ),
       child: Column(
         children: [
           // Header Row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-            decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
+            decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(12),
+                    topRight: Radius.circular(12))),
             child: Row(children: [
               SizedBox(
                 width: 36,
                 child: Checkbox(
-                  value: _selectedIds.length == state.filteredCategories.length && _selectedIds.isNotEmpty,
+                  value:
+                      _selectedIds.length == state.filteredCategories.length &&
+                          _selectedIds.isNotEmpty,
                   onChanged: (value) {
                     setState(() {
                       if (value == true) {
-                        _selectedIds.addAll(state.filteredCategories.map((cat) => cat.id));
+                        _selectedIds.addAll(
+                            state.filteredCategories.map((cat) => cat.id));
                       } else {
                         _selectedIds.clear();
                       }
@@ -176,8 +215,20 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Expanded(flex: 4, child: Text('Catégorie', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black))),
-              const SizedBox(width: 44, child: Text('Actions', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black))),
+              Expanded(
+                  flex: 4,
+                  child: Text(AppLanguage.category,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black))),
+              SizedBox(
+                  width: 44,
+                  child: Text(AppLanguage.actions,
+                      style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black))),
             ]),
           ),
 
@@ -214,17 +265,43 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                       Container(
                         width: 36,
                         height: 36,
-                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
-                        child: category.imageUrl != null && category.imageUrl!.isNotEmpty
-                            ? ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(category.imageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.image_not_supported, color: Colors.grey.shade400, size: 16)))
-                            : Icon(Icons.category, color: Theme.of(context).colorScheme.primary, size: 18),
+                        decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8)),
+                        child: category.imageUrl != null &&
+                                category.imageUrl!.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(category.imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => Icon(
+                                        Icons.image_not_supported,
+                                        color: Colors.grey.shade400,
+                                        size: 16)))
+                            : Icon(Icons.category,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 18),
                       ),
                       const SizedBox(width: 6),
                       Expanded(
-                        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Text(category.name, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black), maxLines: 2, overflow: TextOverflow.ellipsis),
-                          Text(category.id, style: TextStyle(fontSize: 9, color: Colors.grey.shade600)),
-                        ]),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(category.name,
+                                  style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis),
+                              Text(category.id,
+                                  style: TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.grey.shade600)),
+                            ]),
                       ),
                     ]),
                   ),
@@ -236,13 +313,15 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         InkWell(
-                          onTap: () => context.push('/admin/categories/edit/${category.id}'),
+                          onTap: () => context
+                              .push('/admin/categories/edit/${category.id}'),
                           child: SvgPicture.asset(
                             'assets/icons/small_edit.svg',
                             width: 16,
                             height: 16,
                             color: AppColors.brandDeep,
-                            placeholderBuilder: (c) => Icon(Icons.edit, size: 16, color: AppColors.brandDeep),
+                            placeholderBuilder: (c) => Icon(Icons.edit,
+                                size: 16, color: AppColors.brandDeep),
                           ),
                         ),
                         const SizedBox(width: 6),
@@ -253,7 +332,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                             width: 16,
                             height: 16,
                             color: Colors.red,
-                            placeholderBuilder: (c) => Icon(Icons.delete, size: 16, color: Colors.red),
+                            placeholderBuilder: (c) =>
+                                Icon(Icons.delete, size: 16, color: Colors.red),
                           ),
                         ),
                       ],
@@ -261,7 +341,11 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                   ),
                 ]),
               ),
-              Divider(height: 1, thickness: 1, color: Theme.of(context).colorScheme.primary.withOpacity(0.12)),
+              Divider(
+                  height: 1,
+                  thickness: 1,
+                  color:
+                      Theme.of(context).colorScheme.primary.withOpacity(0.12)),
             ]);
           }),
         ],
@@ -272,25 +356,59 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
   Widget _buildSubCategoriesTable(AdminCategoriesLoaded state) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: Theme.of(context).colorScheme.primary, width: 1)),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: Theme.of(context).colorScheme.primary, width: 1)),
       child: Column(children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-          decoration: BoxDecoration(color: Colors.grey.shade50, borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12))),
+          decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12), topRight: Radius.circular(12))),
           child: Row(children: [
-            SizedBox(width: 36, child: Checkbox(value: _selectedSubIds.length == state.subCategories.length && _selectedSubIds.isNotEmpty, onChanged: (value) {
-              setState(() {
-                if (value == true) {
-                  _selectedSubIds.addAll(state.subCategories.map((s) => s.id));
-                } else {
-                  _selectedSubIds.clear();
-                }
-              });
-            }, shape: const CircleBorder(), activeColor: AppColors.brandDeep)),
+            SizedBox(
+                width: 36,
+                child: Checkbox(
+                    value:
+                        _selectedSubIds.length == state.subCategories.length &&
+                            _selectedSubIds.isNotEmpty,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedSubIds
+                              .addAll(state.subCategories.map((s) => s.id));
+                        } else {
+                          _selectedSubIds.clear();
+                        }
+                      });
+                    },
+                    shape: const CircleBorder(),
+                    activeColor: AppColors.brandDeep)),
             const SizedBox(width: 8),
-            const Expanded(flex: 3, child: Text('Sous-catégorie', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black))),
-            const Expanded(flex: 3, child: Text('Catégorie principale', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black))),
-            const SizedBox(width: 50, child: Text('Actions', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black))),
+            Expanded(
+                flex: 3,
+                child: Text(AppLanguage.subcategory,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black))),
+            Expanded(
+                flex: 3,
+                child: Text(AppLanguage.mainCategory,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black))),
+            SizedBox(
+                width: 50,
+                child: Text(AppLanguage.actions,
+                    style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black))),
           ]),
         ),
 
@@ -300,7 +418,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
 
           Category? parent;
           try {
-            parent = state.categories.firstWhere((c) => c.id == subCategory.categoryId);
+            parent = state.categories
+                .firstWhere((c) => c.id == subCategory.categoryId);
           } catch (_) {
             parent = null;
           }
@@ -309,27 +428,60 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               child: Row(children: [
-                SizedBox(width: 36, child: Checkbox(value: isSelected, onChanged: (value) {
-                  setState(() {
-                    if (value == true) {
-                      _selectedSubIds.add(subCategory.id);
-                    } else {
-                      _selectedSubIds.remove(subCategory.id);
-                    }
-                  });
-                }, shape: const CircleBorder(), activeColor: AppColors.brandDeep)),
+                SizedBox(
+                    width: 36,
+                    child: Checkbox(
+                        value: isSelected,
+                        onChanged: (value) {
+                          setState(() {
+                            if (value == true) {
+                              _selectedSubIds.add(subCategory.id);
+                            } else {
+                              _selectedSubIds.remove(subCategory.id);
+                            }
+                          });
+                        },
+                        shape: const CircleBorder(),
+                        activeColor: AppColors.brandDeep)),
                 const SizedBox(width: 8),
 
                 // Subcategory name
-                Expanded(flex: 3, child: Text(subCategory.name, style: const TextStyle(fontSize: 11, color: Colors.black))),
+                Expanded(
+                    flex: 3,
+                    child: Text(subCategory.name,
+                        style: const TextStyle(
+                            fontSize: 11, color: Colors.black))),
 
                 // Parent category with image
                 Expanded(
                   flex: 3,
                   child: Row(children: [
-                    Container(width: 32, height: 32, decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(6)), child: parent != null && parent.imageUrl != null && parent.imageUrl!.isNotEmpty ? ClipRRect(borderRadius: BorderRadius.circular(6), child: Image.network(parent.imageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.image_not_supported, size: 16, color: Colors.grey.shade400))) : Icon(Icons.category, size: 16, color: Colors.grey.shade600)),
+                    Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(6)),
+                        child: parent != null &&
+                                parent.imageUrl != null &&
+                                parent.imageUrl!.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(6),
+                                child: Image.network(parent.imageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (c, e, s) => Icon(
+                                        Icons.image_not_supported,
+                                        size: 16,
+                                        color: Colors.grey.shade400)))
+                            : Icon(Icons.category,
+                                size: 16, color: Colors.grey.shade600)),
                     const SizedBox(width: 8),
-                    Expanded(child: Text(subCategory.categoryName, style: TextStyle(fontSize: 10, color: Colors.grey.shade600), maxLines: 1, overflow: TextOverflow.ellipsis)),
+                    Expanded(
+                        child: Text(subCategory.categoryName,
+                            style: TextStyle(
+                                fontSize: 10, color: Colors.grey.shade600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis)),
                   ]),
                 ),
 
@@ -340,13 +492,15 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       InkWell(
-                        onTap: () => context.push('/admin/subcategories/edit/${subCategory.id}'),
+                        onTap: () => context.push(
+                            '/admin/subcategories/edit/${subCategory.id}'),
                         child: SvgPicture.asset(
                           'assets/icons/small_edit.svg',
                           width: 16,
                           height: 16,
                           color: AppColors.brandDeep,
-                          placeholderBuilder: (c) => Icon(Icons.edit, size: 16, color: AppColors.brandDeep),
+                          placeholderBuilder: (c) => Icon(Icons.edit,
+                              size: 16, color: AppColors.brandDeep),
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -357,7 +511,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                           width: 16,
                           height: 16,
                           color: Colors.red,
-                          placeholderBuilder: (c) => Icon(Icons.delete, size: 16, color: Colors.red),
+                          placeholderBuilder: (c) =>
+                              Icon(Icons.delete, size: 16, color: Colors.red),
                         ),
                       ),
                     ],
@@ -365,7 +520,10 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                 ),
               ]),
             ),
-            Divider(height: 1, thickness: 1, color: Theme.of(context).colorScheme.primary.withOpacity(0.12)),
+            Divider(
+                height: 1,
+                thickness: 1,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.12)),
           ]);
         }),
       ]),
@@ -376,16 +534,21 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer la catégorie'),
-        content: const Text('Êtes-vous sûr de vouloir supprimer cette catégorie ?'),
+        title: Text(AppLanguage.delete),
+        content: Text(AppLanguage.deleteCategoryConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLanguage.cancel)),
           TextButton(
             onPressed: () {
-              context.read<AdminCategoriesBloc>().add(AdminCategoriesDeleteEvent(categoryId));
+              context
+                  .read<AdminCategoriesBloc>()
+                  .add(AdminCategoriesDeleteEvent(categoryId));
               Navigator.pop(context);
             },
-            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+            child: Text(AppLanguage.delete,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -396,16 +559,21 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Supprimer la sous-catégorie'),
-        content: const Text('Êtes-vous sûr de vouloir supprimer cette sous-catégorie ?'),
+        title: Text(AppLanguage.delete),
+        content: Text(AppLanguage.deleteSubcategoryConfirm),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLanguage.cancel)),
           TextButton(
             onPressed: () {
-              context.read<AdminCategoriesBloc>().add(AdminSubCategoriesDeleteEvent(id));
+              context
+                  .read<AdminCategoriesBloc>()
+                  .add(AdminSubCategoriesDeleteEvent(id));
               Navigator.pop(context);
             },
-            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+            child: Text(AppLanguage.delete,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),

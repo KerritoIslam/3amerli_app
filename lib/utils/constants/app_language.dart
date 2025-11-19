@@ -290,6 +290,16 @@ class AppLanguage {
       AppLocale.fr: 'Catégories',
       AppLocale.ar: 'فئات',
     },
+    'subcategory': {
+      AppLocale.en: 'Subcategory',
+      AppLocale.fr: 'Sous-catégorie',
+      AppLocale.ar: 'فئة فرعية',
+    },
+    'subcategories': {
+      AppLocale.en: 'Subcategories',
+      AppLocale.fr: 'Sous-catégories',
+      AppLocale.ar: 'فئات فرعية',
+    },
     'brand': {
       AppLocale.en: 'Brand',
       AppLocale.fr: 'Marque',
@@ -314,6 +324,11 @@ class AppLanguage {
       AppLocale.en: 'Actions',
       AppLocale.fr: 'Actions',
       AppLocale.ar: 'إجراءات',
+    },
+    'mainCategory': {
+      AppLocale.en: 'Main category',
+      AppLocale.fr: 'Catégorie principale',
+      AppLocale.ar: 'الفئة الرئيسية',
     },
     'name': {
       AppLocale.en: 'Name',
@@ -473,6 +488,16 @@ class AppLanguage {
       AppLocale.fr: 'Veuillez sélectionner une marque',
       AppLocale.ar: 'يرجى اختيار علامة تجارية',
     },
+    'defineYourLocation': {
+      AppLocale.en: 'Set your location',
+      AppLocale.fr: 'Définissez votre localisation',
+      AppLocale.ar: 'حدد موقعك',
+    },
+    'enterAddressHint': {
+      AppLocale.en: 'Specify your address to receive your deliveries.',
+      AppLocale.fr: 'Précisez votre adresse pour recevoir vos livraisons.',
+      AppLocale.ar: 'حدد عنوانك لاستلام طلباتك.',
+    },
     'confirmDelete': {
       AppLocale.en: 'Are you sure you want to delete?',
       AppLocale.fr: 'Êtes-vous sûr de vouloir supprimer ?',
@@ -548,10 +573,29 @@ class AppLanguage {
       AppLocale.fr: 'Impossible de récupérer la position',
       AppLocale.ar: 'تعذر الحصول على الموقع',
     },
+    'locationPluginUnavailable': {
+      AppLocale.en: 'Location plugin unavailable. Please restart the app.',
+      AppLocale.fr:
+          'Le plugin de localisation n\'est pas disponible. Redémarrez l\'application.',
+      AppLocale.ar: 'مكوِّن تحديد الموقع غير متاح. يرجى إعادة تشغيل التطبيق.',
+    },
     'gettingLocation': {
       AppLocale.en: 'Getting location...',
       AppLocale.fr: 'Récupération de la position...',
       AppLocale.ar: 'جارٍ الحصول على الموقع...',
+    },
+    'locationPermissionPermanentlyDenied': {
+      AppLocale.en:
+          'Location permission is permanently denied. Please enable it in app settings.',
+      AppLocale.fr:
+          'La permission de localisation est définitivement refusée. Veuillez l\'activer dans les paramètres de l\'application.',
+      AppLocale.ar:
+          'تم رفض إذن الموقع بشكل دائم. يرجى تفعيله من إعدادات التطبيق.',
+    },
+    'useCurrentLocation': {
+      AppLocale.en: 'Use my current location',
+      AppLocale.fr: 'Utiliser ma position actuelle',
+      AppLocale.ar: 'استخدام موقعي الحالي',
     },
     'selectDeliveryAddress': {
       AppLocale.en: 'Please select a delivery address',
@@ -563,10 +607,35 @@ class AppLanguage {
       AppLocale.fr: 'Retour à mes adresses',
       AppLocale.ar: 'العودة إلى العناوين',
     },
+    'myAddresses': {
+      AppLocale.en: 'My addresses',
+      AppLocale.fr: 'Mes adresses',
+      AppLocale.ar: 'عناويني',
+    },
     'addressCreationFailed': {
       AppLocale.en: 'Failed to create address',
       AppLocale.fr: 'Échec de la création de l\'adresse',
       AppLocale.ar: 'فشل إنشاء العنوان',
+    },
+    'streetAndNumber': {
+      AppLocale.en: 'Street and number *',
+      AppLocale.fr: 'Rue et numéro *',
+      AppLocale.ar: 'الشارع والرقم *',
+    },
+    'districtOrCommune': {
+      AppLocale.en: 'District / Commune',
+      AppLocale.fr: 'Quartier / Commune',
+      AppLocale.ar: 'الحي / البلدية',
+    },
+    'cityLabel': {
+      AppLocale.en: 'City',
+      AppLocale.fr: 'Ville',
+      AppLocale.ar: 'المدينة',
+    },
+    'fieldRequired': {
+      AppLocale.en: 'This field is required',
+      AppLocale.fr: 'Ce champ est requis',
+      AppLocale.ar: 'هذا الحقل مطلوب',
     },
     'print': {
       AppLocale.en: 'Print',
@@ -648,6 +717,38 @@ class AppLanguage {
       AppLocale.fr: 'Ouverture facture...',
       AppLocale.ar: 'جارٍ فتح الفاتورة...',
     },
+    'completeYourProfile': {
+      AppLocale.en: 'Complete your profile',
+      AppLocale.fr: 'Complétez votre profil',
+      AppLocale.ar: 'أكمل ملفك الشخصي',
+    },
+    'completeProfileSubtitle': {
+      AppLocale.en:
+          'This information helps us personalize your offers and verify your account.',
+      AppLocale.fr:
+          'Ces informations nous permettent de personnaliser vos offres et de valider votre compte.',
+      AppLocale.ar: 'تساعدنا هذه المعلومات على تخصيص عروضك والتحقق من حسابك.',
+    },
+    'storeNameLabel': {
+      AppLocale.en: 'Store name *',
+      AppLocale.fr: 'Nom de la supérette *',
+      AppLocale.ar: 'اسم المتجر *',
+    },
+    'representativeNameLabel': {
+      AppLocale.en: 'Representative full name',
+      AppLocale.fr: 'Nom et prénom du représentant',
+      AppLocale.ar: 'الاسم الكامل للمُمثل',
+    },
+    'validateAndContinue': {
+      AppLocale.en: 'Validate and continue',
+      AppLocale.fr: 'Valider et continuer',
+      AppLocale.ar: 'تحقق واستمر',
+    },
+    'registrationFailed': {
+      AppLocale.en: 'Registration failed',
+      AppLocale.fr: 'Échec de l\'enregistrement',
+      AppLocale.ar: 'فشل التسجيل',
+    },
     'orderNotAvailable': {
       AppLocale.en: 'Order not available',
       AppLocale.fr: 'Commande non disponible',
@@ -677,6 +778,11 @@ class AppLanguage {
       AppLocale.en: 'Are you sure you want to delete this category?',
       AppLocale.fr: 'Êtes-vous sûr de vouloir supprimer cette catégorie ?',
       AppLocale.ar: 'هل أنت متأكد أنك تريد حذف هذه الفئة؟',
+    },
+    'deleteSubcategoryConfirm': {
+      AppLocale.en: 'Are you sure you want to delete this subcategory?',
+      AppLocale.fr: 'Êtes-vous sûr de vouloir supprimer cette sous-catégorie ?',
+      AppLocale.ar: 'هل أنت متأكد أنك تريد حذف هذه الفئة الفرعية؟',
     },
     'deleteBrandConfirm': {
       AppLocale.en: 'Do you want to delete "{name}"?',
@@ -729,6 +835,55 @@ class AppLanguage {
       AppLocale.ar: 'تصدير المنتجات',
     },
 
+    // Support
+    'needHelpTitle': {
+      AppLocale.en: 'Need Help?',
+      AppLocale.fr: 'Besoin d\'aide ?',
+      AppLocale.ar: 'هل تحتاج مساعدة؟',
+    },
+    'contactUsDirectlyAt': {
+      AppLocale.en: 'Contact us directly at',
+      AppLocale.fr: 'Contactez-nous directement au',
+      AppLocale.ar: 'اتصل بنا مباشرة على',
+    },
+    'or': {
+      AppLocale.en: 'or',
+      AppLocale.fr: 'ou',
+      AppLocale.ar: 'أو',
+    },
+
+    // Success Page
+    'success': {
+      AppLocale.en: 'Success',
+      AppLocale.fr: 'Succès',
+      AppLocale.ar: 'نجاح',
+    },
+    'orderLabel': {
+      AppLocale.en: 'Order',
+      AppLocale.fr: 'Commande',
+      AppLocale.ar: 'طلب',
+    },
+    'amountPaid': {
+      AppLocale.en: 'Amount Paid',
+      AppLocale.fr: 'Montant payé',
+      AppLocale.ar: 'المبلغ المدفوع',
+    },
+    'followMyOrder': {
+      AppLocale.en: 'Follow My Order',
+      AppLocale.fr: 'Suivre ma commande',
+      AppLocale.ar: 'تتبع طلبي',
+    },
+    'thankYouPaymentMessage': {
+      AppLocale.en: 'Thank you for your payment!',
+      AppLocale.fr: 'Merci pour votre paiement !',
+      AppLocale.ar: 'شكرا لك على الدفع!',
+    },
+    'invoiceNotAvailable': {
+      AppLocale.en: 'Invoice not available',
+      AppLocale.fr: 'Facture non disponible',
+      AppLocale.ar: 'الفاتورة غير متوفرة',
+    },
+
     // Cart & Payment
     'pay': {
       AppLocale.en: 'Pay',
@@ -749,6 +904,66 @@ class AppLanguage {
       AppLocale.en: 'Payment',
       AppLocale.fr: 'Paiement',
       AppLocale.ar: 'الدفع',
+    },
+    'paymentMethodTitle': {
+      AppLocale.en: 'Payment method',
+      AppLocale.fr: 'Mode de paiement',
+      AppLocale.ar: 'طريقة الدفع',
+    },
+    'myProducts': {
+      AppLocale.en: 'My Products',
+      AppLocale.fr: 'Mes Produits',
+      AppLocale.ar: 'منتجاتي',
+    },
+    'editShort': {
+      AppLocale.en: 'Edit',
+      AppLocale.fr: 'Modifier',
+      AppLocale.ar: 'تعديل',
+    },
+    'tapToAddDeliveryAddress': {
+      AppLocale.en: 'Tap to add a delivery address',
+      AppLocale.fr: 'Appuyez pour ajouter une adresse de livraison',
+      AppLocale.ar: 'اضغط لإضافة عنوان تسليم',
+    },
+    'incompleteAddress': {
+      AppLocale.en: 'Incomplete address',
+      AppLocale.fr: 'Adresse incomplète',
+      AppLocale.ar: 'عنوان غير مكتمل',
+    },
+    'payOnDelivery': {
+      AppLocale.en: 'Pay on delivery',
+      AppLocale.fr: 'Payez à la livraison',
+      AppLocale.ar: 'ادفع عند التسليم',
+    },
+    'cashPayment': {
+      AppLocale.en: 'Cash payment',
+      AppLocale.fr: 'Paiement en espèces',
+      AppLocale.ar: 'دفع نقدي',
+    },
+    'onlinePayment': {
+      AppLocale.en: 'Online payment',
+      AppLocale.fr: 'Paiement en ligne',
+      AppLocale.ar: 'دفع عبر الإنترنت',
+    },
+    'cardPaymentDetails': {
+      AppLocale.en: 'Bank card (CIB/EDAHABIA)',
+      AppLocale.fr: 'Carte bancaire (CIB/EDAHABIA)',
+      AppLocale.ar: 'بطاقة بنكية (CIB/EDAHABIA)',
+    },
+    'cancelPayment': {
+      AppLocale.en: 'Cancel payment',
+      AppLocale.fr: 'Annuler le paiement',
+      AppLocale.ar: 'إلغاء الدفع',
+    },
+    'areYouSureCancelPayment': {
+      AppLocale.en: 'Are you sure you want to cancel the payment?',
+      AppLocale.fr: 'Êtes-vous sûr de vouloir annuler le paiement?',
+      AppLocale.ar: 'هل أنت متأكد أنك تريد إلغاء الدفع؟',
+    },
+    'yesCancel': {
+      AppLocale.en: 'Yes, cancel',
+      AppLocale.fr: 'Oui, annuler',
+      AppLocale.ar: 'نعم، إلغاء',
     },
     'paymentMethod': {
       AppLocale.en: 'Payment Method',
@@ -826,6 +1041,11 @@ class AppLanguage {
       AppLocale.en: 'Retry Payment',
       AppLocale.fr: 'Réessayer le paiement',
       AppLocale.ar: 'إعادة محاولة الدفع',
+    },
+    'securePayment': {
+      AppLocale.en: 'Secure Payment',
+      AppLocale.fr: 'Paiement sécurisé',
+      AppLocale.ar: 'دفع آمن',
     },
 
     // Admin Dashboard
@@ -950,6 +1170,71 @@ class AppLanguage {
       AppLocale.fr: 'Profil',
       AppLocale.ar: 'الملف الشخصي',
     },
+    'invoices': {
+      AppLocale.en: 'Invoices',
+      AppLocale.fr: 'Factures',
+      AppLocale.ar: 'الفواتير',
+    },
+    'supportAndHelp': {
+      AppLocale.en: 'Help & Support',
+      AppLocale.fr: 'Aide & Support',
+      AppLocale.ar: 'المساعدة والدعم',
+    },
+    'ordersTabAll': {
+      AppLocale.en: 'All',
+      AppLocale.fr: 'Tout',
+      AppLocale.ar: 'الكل',
+    },
+    'ordersTabInProgress': {
+      AppLocale.en: 'In Progress',
+      AppLocale.fr: 'En cours',
+      AppLocale.ar: 'قيد التنفيذ',
+    },
+    'ordersTabDelivered': {
+      AppLocale.en: 'Delivered',
+      AppLocale.fr: 'Livrées',
+      AppLocale.ar: 'تم التسليم',
+    },
+    'ordersTabCanceled': {
+      AppLocale.en: 'Cancelled',
+      AppLocale.fr: 'Annulées',
+      AppLocale.ar: 'ملغاة',
+    },
+    'ordersTitle': {
+      AppLocale.en: 'My Orders',
+      AppLocale.fr: 'Mes Commandes',
+      AppLocale.ar: 'طلباتي',
+    },
+    'items': {
+      AppLocale.en: 'items',
+      AppLocale.fr: 'articles',
+      AppLocale.ar: 'عناصر',
+    },
+    'follow': {
+      AppLocale.en: 'Follow',
+      AppLocale.fr: 'Suivre',
+      AppLocale.ar: 'متابعة',
+    },
+    'cannotOpenDialer': {
+      AppLocale.en: 'Cannot open dialer',
+      AppLocale.fr: 'Impossible d\'ouvrir le composeur',
+      AppLocale.ar: 'تعذر فتح الهاتف',
+    },
+    'cannotOpenMailClient': {
+      AppLocale.en: 'Cannot open mail client',
+      AppLocale.fr: 'Impossible d\'ouvrir l\'application mail',
+      AppLocale.ar: 'تعذر فتح البريد',
+    },
+    'personalInformation': {
+      AppLocale.en: 'Personal Information',
+      AppLocale.fr: 'Informations personnelles',
+      AppLocale.ar: 'المعلومات الشخصية',
+    },
+    'additional': {
+      AppLocale.en: 'Additional',
+      AppLocale.fr: 'Supplémentaire',
+      AppLocale.ar: 'إضافي',
+    },
   };
 
   static String _t(String key) => _translations[key]?[current] ?? key;
@@ -1010,11 +1295,14 @@ class AppLanguage {
   static String get users => _t('users');
   static String get category => _t('category');
   static String get categories => _t('categories');
+  static String get subcategory => _t('subcategory');
+  static String get subcategories => _t('subcategories');
   static String get brand => _t('brand');
   static String get brands => _t('brands');
   static String get price => _t('price');
   static String get stock => _t('stock');
   static String get actions => _t('actions');
+  static String get mainCategory => _t('mainCategory');
   static String get name => _t('name');
   static String get date => _t('date');
   static String get status => _t('status');
@@ -1053,6 +1341,8 @@ class AppLanguage {
   // Messages
   static String get pleaseSelectCategory => _t('pleaseSelectCategory');
   static String get pleaseSelectBrand => _t('pleaseSelectBrand');
+  static String get defineYourLocation => _t('defineYourLocation');
+  static String get enterAddressHint => _t('enterAddressHint');
   static String get confirmDelete => _t('confirmDelete');
   static String get deleteSuccess => _t('deleteSuccess');
   static String get saveSuccess => _t('saveSuccess');
@@ -1069,9 +1359,19 @@ class AppLanguage {
   static String get locationPermissionDenied => _t('locationPermissionDenied');
   static String get unableToGetLocation => _t('unableToGetLocation');
   static String get gettingLocation => _t('gettingLocation');
+  static String get locationPluginUnavailable =>
+      _t('locationPluginUnavailable');
+  static String get locationPermissionPermanentlyDenied =>
+      _t('locationPermissionPermanentlyDenied');
+  static String get useCurrentLocation => _t('useCurrentLocation');
   static String get selectDeliveryAddress => _t('selectDeliveryAddress');
   static String get backToAddresses => _t('backToAddresses');
+  static String get myAddresses => _t('myAddresses');
   static String get addressCreationFailed => _t('addressCreationFailed');
+  static String get streetAndNumber => _t('streetAndNumber');
+  static String get districtOrCommune => _t('districtOrCommune');
+  static String get cityLabel => _t('cityLabel');
+  static String get fieldRequired => _t('fieldRequired');
   static String get print => _t('print');
   static String get noPdfAvailable => _t('noPdfAvailable');
   static String get unableToDownloadPdf => _t('unableToDownloadPdf');
@@ -1088,12 +1388,19 @@ class AppLanguage {
   static String get editFormNotImplemented => _t('editFormNotImplemented');
   static String get failedToLoadInvoices => _t('failedToLoadInvoices');
   static String get openingInvoice => _t('openingInvoice');
+  static String get completeYourProfile => _t('completeYourProfile');
+  static String get completeProfileSubtitle => _t('completeProfileSubtitle');
+  static String get storeNameLabel => _t('storeNameLabel');
+  static String get representativeNameLabel => _t('representativeNameLabel');
+  static String get validateAndContinue => _t('validateAndContinue');
+  static String get registrationFailed => _t('registrationFailed');
   static String get orderNotAvailable => _t('orderNotAvailable');
   static String get loadingProductError => _t('loadingProductError');
   static String get addWithPlus => _t('addWithPlus');
   static String get deleteProductConfirm => _t('deleteProductConfirm');
   static String get deleteProductsConfirm => _t('deleteProductsConfirm');
   static String get deleteCategoryConfirm => _t('deleteCategoryConfirm');
+  static String get deleteSubcategoryConfirm => _t('deleteSubcategoryConfirm');
   static String deleteBrandConfirm(String name) =>
       _t('deleteBrandConfirm').replaceAll('{name}', name);
   static String get brandUpdated => _t('brandUpdated');
@@ -1111,6 +1418,15 @@ class AppLanguage {
   static String get payMyOrder => _t('payMyOrder');
   static String get myCart => _t('myCart');
   static String get payment => _t('payment');
+  static String get paymentMethodTitle => _t('paymentMethodTitle');
+  static String get myProducts => _t('myProducts');
+  static String get editShort => _t('editShort');
+  static String get tapToAddDeliveryAddress => _t('tapToAddDeliveryAddress');
+  static String get incompleteAddress => _t('incompleteAddress');
+  static String get payOnDelivery => _t('payOnDelivery');
+  static String get cashPayment => _t('cashPayment');
+  static String get onlinePayment => _t('onlinePayment');
+  static String get cardPaymentDetails => _t('cardPaymentDetails');
   static String get paymentMethod => _t('paymentMethod');
   static String get cash => _t('cash');
   static String get card => _t('card');
@@ -1128,6 +1444,10 @@ class AppLanguage {
   static String get backToHome => _t('backToHome');
   static String get downloadOrViewInvoice => _t('downloadOrViewInvoice');
   static String get retryPayment => _t('retryPayment');
+  static String get securePayment => _t('securePayment');
+  static String get cancelPayment => _t('cancelPayment');
+  static String get areYouSureCancelPayment => _t('areYouSureCancelPayment');
+  static String get yesCancel => _t('yesCancel');
 
   // Admin Dashboard
   static String get dashboard => _t('dashboard');
@@ -1160,4 +1480,30 @@ class AppLanguage {
   static String get cart => _t('cart');
   static String get ordersNav => _t('myOrdersNav');
   static String get profile => _t('profile');
+
+  // Support
+  static String get needHelpTitle => _t('needHelpTitle');
+  static String get contactUsDirectlyAt => _t('contactUsDirectlyAt');
+  static String get or => _t('or');
+
+  // Success Page
+  static String get success => _t('success');
+  static String get orderLabel => _t('orderLabel');
+  static String get amountPaid => _t('amountPaid');
+  static String get followMyOrder => _t('followMyOrder');
+  static String get thankYouPaymentMessage => _t('thankYouPaymentMessage');
+  static String get invoiceNotAvailable => _t('invoiceNotAvailable');
+  static String get invoices => _t('invoices');
+  static String get supportAndHelp => _t('supportAndHelp');
+  static String get ordersTabAll => _t('ordersTabAll');
+  static String get ordersTabInProgress => _t('ordersTabInProgress');
+  static String get ordersTabDelivered => _t('ordersTabDelivered');
+  static String get ordersTabCanceled => _t('ordersTabCanceled');
+  static String get ordersTitle => _t('ordersTitle');
+  static String get items => _t('items');
+  static String get follow => _t('follow');
+  static String get cannotOpenDialer => _t('cannotOpenDialer');
+  static String get cannotOpenMailClient => _t('cannotOpenMailClient');
+  static String get personalInformation => _t('personalInformation');
+  static String get additional => _t('additional');
 }

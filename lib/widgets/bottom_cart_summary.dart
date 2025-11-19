@@ -22,7 +22,7 @@ class BottomCartSummary extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(40),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 4)),
               ],
             ),
             padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 14.0),
@@ -36,7 +36,7 @@ class BottomCartSummary extends StatelessWidget {
                     width: 112,
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                     ),
                   ),

@@ -6,10 +6,11 @@ import 'package:amerli_app/widgets/app_button.dart';
 import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:amerli_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class AddressSelectionPage extends StatefulWidget {
   final Map<String, dynamic>? currentAddress;
-  
+
   const AddressSelectionPage({super.key, this.currentAddress});
 
   @override
@@ -74,8 +75,8 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
         setState(() => _isFetchingLocation = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Le plugin de localisation n\'est pas disponible. Redémarrez l\'application.'),
+            SnackBar(
+              content: Text(AppLanguage.locationPluginUnavailable),
             ),
           );
         }
@@ -90,7 +91,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
         setState(() => _isFetchingLocation = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Permission de localisation refusée')),
+            SnackBar(content: Text(AppLanguage.locationPermissionDenied)),
           );
         }
         return;
@@ -102,22 +103,19 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
           showDialog(
             context: context,
             builder: (ctx) => AlertDialog(
-              title: const Text('Permission requise'),
-              content: const Text(
-                'La permission de localisation est définitivement refusée. '
-                'Veuillez l\'activer dans les paramètres de l\'application.',
-              ),
+              title: Text(AppLanguage.permissionRequired),
+              content: Text(AppLanguage.locationPermissionPermanentlyDenied),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('Annuler'),
+                  child: Text(AppLanguage.cancel),
                 ),
                 TextButton(
                   onPressed: () {
                     Geolocator.openAppSettings();
                     Navigator.of(ctx).pop();
                   },
-                  child: const Text('Ouvrir les paramètres'),
+                  child: Text(AppLanguage.openSettings),
                 ),
               ],
             ),
@@ -147,7 +145,8 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
 
         setState(() {
           _streetController.text = streetParts.join(', ');
-          _quarterController.text = p.subAdministrativeArea ?? p.subLocality ?? '';
+          _quarterController.text =
+              p.subAdministrativeArea ?? p.subLocality ?? '';
           _cityController.text = p.locality ?? p.administrativeArea ?? '';
         });
       }
@@ -155,7 +154,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
       debugPrint('Location fetch error: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Impossible de récupérer la position')),
+          SnackBar(content: Text(AppLanguage.unableToGetLocation)),
         );
       }
     } finally {
@@ -186,12 +185,12 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(child: CircularProgressIndicator()),
+        builder: (context) => Center(child: CircularProgressIndicator()),
       );
 
       // Create address via API
       final newAddress = await _profileRepository.createAddress(addressData);
-      
+
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
 
@@ -202,11 +201,11 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
     } catch (e) {
       // Close loading dialog
       if (mounted) Navigator.of(context).pop();
-      
+
       debugPrint('Failed to create address: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Échec de la création de l\'adresse')),
+          SnackBar(content: Text(AppLanguage.addressCreationFailed)),
         );
       }
     }
@@ -245,8 +244,8 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
             ),
           ),
         ),
-        title: const Text(
-          'Adresse de livraison',
+        title: Text(
+          AppLanguage.deliveryAddress,
           style: TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.w700,
@@ -257,7 +256,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
       ),
       body: SafeArea(
         child: _isLoadingAddresses
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(child: CircularProgressIndicator())
             : (_showForm || _addresses.isEmpty)
                 ? _buildAddressForm()
                 : _buildAddressList(),
@@ -272,14 +271,14 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Mes adresses',
+            AppLanguage.myAddresses,
             style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+                  fontWeight: FontWeight.bold,
+                ),
           ),
           const SizedBox(height: 12),
           Text(
-            'Sélectionnez une adresse de livraison',
+            AppLanguage.selectDeliveryAddress,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
@@ -315,7 +314,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                           ),
                           const SizedBox(width: 16),
                           Text(
-                            'Ajouter une nouvelle adresse',
+                            AppLanguage.addNewAddress,
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.w600,
@@ -330,7 +329,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
 
                 final address = _addresses[index];
                 final isSelected = _selectedAddressId == address['id'];
-                
+
                 return InkWell(
                   onTap: () {
                     setState(() {
@@ -341,8 +340,11 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: isSelected 
-                          ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
+                      color: isSelected
+                          ? Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1)
                           : Colors.white,
                       border: Border.all(
                         color: isSelected
@@ -355,7 +357,9 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                     child: Row(
                       children: [
                         Icon(
-                          isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+                          isSelected
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_unchecked,
                           color: isSelected
                               ? Theme.of(context).colorScheme.primary
                               : Colors.grey,
@@ -395,7 +399,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
             padding: const EdgeInsets.only(top: 12.0, bottom: 12.0),
             child: AppButton(
               onPressed: _selectedAddressId != null ? _onValidate : null,
-              text: 'Valider l\'adresse',
+              text: AppLanguage.validateAddress,
               width: double.infinity,
               height: 50,
             ),
@@ -431,42 +435,48 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                               });
                             },
                             icon: const Icon(Icons.arrow_back),
-                            label: const Text('Retour à mes adresses'),
+                            label: Text(AppLanguage.backToAddresses),
                           ),
                         ),
                       const SizedBox(height: 8),
                       Text(
-                        'Définissez votre localisation',
-                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        AppLanguage.defineYourLocation,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Précisez votre adresse pour recevoir vos livraisons.',
+                        AppLanguage.enterAddressHint,
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       const SizedBox(height: 24),
 
-                      Text('Rue et numéro *', style: Theme.of(context).textTheme.bodySmall),
+                      Text(AppLanguage.streetAndNumber,
+                          style: Theme.of(context).textTheme.bodySmall),
                       const SizedBox(height: 8),
                       AppTextField(
                         controller: _streetController,
                         validator: (v) {
                           if (v == null || v.trim().isEmpty) {
-                            return 'Ce champ est requis';
+                            return AppLanguage.fieldRequired;
                           }
                           return null;
                         },
                       ),
                       const SizedBox(height: 16),
 
-                      Text('Quartier / Commune', style: Theme.of(context).textTheme.bodySmall),
+                      Text(AppLanguage.districtOrCommune,
+                          style: Theme.of(context).textTheme.bodySmall),
                       const SizedBox(height: 8),
                       AppTextField(controller: _quarterController),
                       const SizedBox(height: 16),
 
-                      Text('Ville', style: Theme.of(context).textTheme.bodySmall),
+                      Text(AppLanguage.cityLabel,
+                          style: Theme.of(context).textTheme.bodySmall),
                       const SizedBox(height: 8),
                       AppTextField(controller: _cityController),
                       const SizedBox(height: 12),
@@ -477,7 +487,7 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: AppButton(
                           onPressed: _onValidate,
-                          text: 'Valider l\'adresse',
+                          text: AppLanguage.validateAddress,
                           width: double.infinity,
                           height: 50,
                         ),
@@ -486,31 +496,41 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
                       Center(
                         child: _isFetchingLocation
                             ? Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 6.0),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 6.0),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: const [
+                                  children: [
                                     SizedBox(
                                       width: 16,
                                       height: 16,
-                                      child: CircularProgressIndicator(strokeWidth: 2.0),
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2.0),
                                     ),
-                                    SizedBox(width: 12),
-                                    Text('Récupération de la position...'),
+                                    const SizedBox(width: 12),
+                                    Text(AppLanguage.gettingLocation),
                                   ],
                                 ),
                               )
                             : GestureDetector(
                                 onTap: _useCurrentLocation,
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 8.0),
                                   child: Text(
-                                    'Utiliser ma position actuelle',
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      decoration: TextDecoration.underline,
-                                      decorationColor: Theme.of(context).colorScheme.primary,
-                                      color: Theme.of(context).colorScheme.primary,
-                                    ),
+                                    AppLanguage.useCurrentLocation,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                          decoration: TextDecoration.underline,
+                                          decorationColor: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                        ),
                                   ),
                                 ),
                               ),

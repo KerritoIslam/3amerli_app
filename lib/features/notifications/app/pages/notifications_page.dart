@@ -65,7 +65,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
-                            child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 16, height: 16, color: Theme.of(context).colorScheme.onPrimary,
+                            child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 16, height: 16, colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.onPrimary, BlendMode.srcIn),
                                 placeholderBuilder: (context) => Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary)),
                           ),
                         ),

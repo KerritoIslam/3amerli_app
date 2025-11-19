@@ -10,6 +10,7 @@ import 'package:amerli_app/core/ui/toast/toast_service.dart';
 import 'package:amerli_app/core/network/api_exception.dart' show ApiException;
 import 'package:geocoding/geocoding.dart';
 import '../../../../utils/constants/app_dimensions.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class CompleteProfilePage extends StatefulWidget {
   const CompleteProfilePage({super.key});
@@ -48,7 +49,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
 
   void _goTo(int idx) {
     setState(() => _index = idx);
-    _pageController.animateToPage(idx, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
+    _pageController.animateToPage(idx,
+        duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
   }
 
   void _onCredentialsValidate() {
@@ -88,7 +90,9 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       print("Registration Error: $e\n$st");
 
       // Show 'Network error' when error denotes network/backend transport issue
-      final msg = (e is ApiException && e.isNetworkError) ? 'Network error' : (e is ApiException ? e.message : 'Échec de l\'enregistrement');
+      final msg = (e is ApiException && e.isNetworkError)
+          ? AppLanguage.networkError
+          : (e is ApiException ? e.message : AppLanguage.registrationFailed);
       if (mounted) {
         ToastService.instance.showToast(context, msg, type: ToastType.error);
       }
@@ -109,8 +113,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
         permission = await Geolocator.checkPermission();
       } on NoSuchMethodError {
         setState(() => _isFetchingLocation = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Le plugin de localisation n\'est pas disponible. Arrêtez l\'application et lancez-la à nouveau (full rebuild).'),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(AppLanguage.locationPluginUnavailable),
         ));
         return;
       }
@@ -120,7 +124,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
 
       if (permission == LocationPermission.denied) {
         setState(() => _isFetchingLocation = false);
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Permission de localisation refusée')));
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(AppLanguage.locationPermissionDenied)));
         return;
       }
 
@@ -130,14 +135,18 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
         showDialog(
           context: context,
           builder: (ctx) => AlertDialog(
-            title: const Text('Permission requise'),
-            content: const Text('La permission de localisation est définitivement refusée. Veuillez l\'activer dans les paramètres de l\'application.'),
+            title: Text(AppLanguage.permissionRequired),
+            content: Text(AppLanguage.locationPermissionPermanentlyDenied),
             actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler')),
-              TextButton(onPressed: () {
-                Geolocator.openAppSettings();
-                Navigator.of(ctx).pop();
-              }, child: const Text('Ouvrir les paramètres')),
+              TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(AppLanguage.cancel)),
+              TextButton(
+                  onPressed: () {
+                    Geolocator.openAppSettings();
+                    Navigator.of(ctx).pop();
+                  },
+                  child: Text(AppLanguage.openSettings)),
             ],
           ),
         );
@@ -145,21 +154,25 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
       }
 
       // permission granted
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.best);
-  final lat = pos.latitude;
-  final lon = pos.longitude;
+      final pos = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.best);
+      final lat = pos.latitude;
+      final lon = pos.longitude;
 
       // reverse geocode
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lon);
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         final streetParts = <String>[];
-        if (p.street != null && p.street!.trim().isNotEmpty) streetParts.add(p.street!.trim());
-        if (p.subLocality != null && p.subLocality!.trim().isNotEmpty) streetParts.add(p.subLocality!.trim());
+        if (p.street != null && p.street!.trim().isNotEmpty)
+          streetParts.add(p.street!.trim());
+        if (p.subLocality != null && p.subLocality!.trim().isNotEmpty)
+          streetParts.add(p.subLocality!.trim());
 
         setState(() {
           _streetController.text = streetParts.join(', ');
-          _quarterController.text = p.subAdministrativeArea ?? p.subLocality ?? '';
+          _quarterController.text =
+              p.subAdministrativeArea ?? p.subLocality ?? '';
           _cityController.text = p.locality ?? p.administrativeArea ?? '';
           // do not persist or send mapsUrl to backend per requirements
         });
@@ -172,7 +185,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     } catch (e, st) {
       // ignore or show error
       debugPrint('Location fetch error: $e\n$st');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Impossible de récupérer la position')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLanguage.unableToGetLocation)));
     } finally {
       setState(() => _isFetchingLocation = false);
     }
@@ -214,30 +228,50 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                       child: LayoutBuilder(builder: (context, constraints) {
                         return SingleChildScrollView(
                           child: ConstrainedBox(
-                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                            constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight),
                             child: IntrinsicHeight(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const SizedBox(height: 8),
-                                  Text('Complétez votre profil', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                                  Text(AppLanguage.completeYourProfile,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 12),
-                                  Text('Ces informations nous permettent de personnaliser vos offres et de valider votre compte.', style: Theme.of(context).textTheme.bodyMedium),
+                                  Text(AppLanguage.completeProfileSubtitle,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
                                   const SizedBox(height: 24),
-
-                                  Text('Nom de la supérette *', style: Theme.of(context).textTheme.bodySmall),
+                                  Text(AppLanguage.storeNameLabel,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall),
                                   const SizedBox(height: 8),
-                                  AppTextField(controller: _storeNameController, validator: (v) {
-                                    if (v == null || v.trim().isEmpty) return 'Ce champ est requis';
-                                    return null;
-                                  }),
+                                  AppTextField(
+                                      controller: _storeNameController,
+                                      validator: (v) {
+                                        if (v == null || v.trim().isEmpty)
+                                          return AppLanguage.fieldRequired;
+                                        return null;
+                                      }),
                                   const SizedBox(height: 16),
-
-                                  Text('Nom et prénom du représentant', style: Theme.of(context).textTheme.bodySmall),
+                                  Text(AppLanguage.representativeNameLabel,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall),
                                   const SizedBox(height: 8),
                                   AppTextField(controller: _repNameController),
                                   const Spacer(),
-                                  AppButton(onPressed: _onCredentialsValidate, text: 'Valider et continuer', width: double.infinity, height: 50),
+                                  AppButton(
+                                      onPressed: _onCredentialsValidate,
+                                      text: AppLanguage.validateAndContinue,
+                                      width: double.infinity,
+                                      height: 50),
                                 ],
                               ),
                             ),
@@ -255,62 +289,109 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                       child: LayoutBuilder(builder: (context, constraints) {
                         return SingleChildScrollView(
                           child: ConstrainedBox(
-                            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                            constraints: BoxConstraints(
+                                minHeight: constraints.maxHeight),
                             child: IntrinsicHeight(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const SizedBox(height: 8),
-                                  Text('Définissez votre localisation', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
+                                  Text(AppLanguage.defineYourLocation,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineMedium
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold)),
                                   const SizedBox(height: 12),
-                                  Text('Précisez votre adresse pour recevoir vos livraisons.', style: Theme.of(context).textTheme.bodyMedium),
+                                  Text(AppLanguage.enterAddressHint,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodyMedium),
                                   const SizedBox(height: 24),
 
-                                  Text('Rue et numéro *', style: Theme.of(context).textTheme.bodySmall),
+                                  Text(AppLanguage.streetAndNumber,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall),
                                   const SizedBox(height: 8),
-                                  AppTextField(controller: _streetController, validator: (v) {
-                                    if (v == null || v.trim().isEmpty) return 'Ce champ est requis';
-                                    return null;
-                                  }),
+                                  AppTextField(
+                                      controller: _streetController,
+                                      validator: (v) {
+                                        if (v == null || v.trim().isEmpty)
+                                          return AppLanguage.fieldRequired;
+                                        return null;
+                                      }),
                                   const SizedBox(height: 16),
 
-                                  Text('Quartier / Commune', style: Theme.of(context).textTheme.bodySmall),
+                                  Text(AppLanguage.districtOrCommune,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall),
                                   const SizedBox(height: 8),
                                   AppTextField(controller: _quarterController),
                                   const SizedBox(height: 16),
 
-                                  Text('Ville', style: Theme.of(context).textTheme.bodySmall),
+                                  Text(AppLanguage.cityLabel,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall),
                                   const SizedBox(height: 8),
                                   AppTextField(controller: _cityController),
                                   const SizedBox(height: 12),
                                   // push the button and the trigger down a bit
                                   const Spacer(),
                                   Padding(
-                                    padding: const EdgeInsets.only(bottom: 12.0),
-                                    child: AppButton(onPressed: _onLocationValidate, text: 'Valider l\'adresse', width: double.infinity, height: 50),
+                                    padding:
+                                        const EdgeInsets.only(bottom: 12.0),
+                                    child: AppButton(
+                                        onPressed: _onLocationValidate,
+                                        text: AppLanguage.validateAddress,
+                                        width: double.infinity,
+                                        height: 50),
                                   ),
                                   // place the location trigger under the button and center it
                                   Center(
                                     child: _isFetchingLocation
                                         ? Padding(
-                                            padding: const EdgeInsets.symmetric(vertical: 6.0),
-                                            child: Row(mainAxisSize: MainAxisSize.min, children: const [
-                                              SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2.0)),
-                                              SizedBox(width: 12),
-                                              Text('Récupération de la position...'),
-                                            ]),
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 6.0),
+                                            child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  const SizedBox(
+                                                      width: 16,
+                                                      height: 16,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth:
+                                                                  2.0)),
+                                                  const SizedBox(width: 12),
+                                                  Text(AppLanguage
+                                                      .gettingLocation),
+                                                ]),
                                           )
                                         : GestureDetector(
                                             onTap: _useCurrentLocation,
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                            child: Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 8.0),
                                               child: Text(
-                                                'Utiliser ma position actuelle',
-                                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                                  decoration: TextDecoration.underline,
-                                                  decorationColor: Theme.of(context).colorScheme.primary,
-                                                  color: Theme.of(context).colorScheme.primary,
-                                                ),
+                                                AppLanguage.useCurrentLocation,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      decoration: TextDecoration
+                                                          .underline,
+                                                      decorationColor:
+                                                          Theme.of(context)
+                                                              .colorScheme
+                                                              .primary,
+                                                      color: Theme.of(context)
+                                                          .colorScheme
+                                                          .primary,
+                                                    ),
                                               ),
                                             ),
                                           ),

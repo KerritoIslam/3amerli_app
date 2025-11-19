@@ -1,6 +1,8 @@
 import 'package:amerli_app/features/auth/app/bloc/auth_event.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/utils/constants/app_text_styles.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+
 import 'package:amerli_app/widgets/app_button.dart';
 import 'package:amerli_app/widgets/cards_list.dart';
 import 'package:flutter/material.dart';
@@ -60,7 +62,8 @@ class _ProfilePageState extends State<ProfilePage> {
         child: SizedBox(
           width: double.infinity,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 8.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 28.0, vertical: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -78,7 +81,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     // Helper to build the user column
                     Widget userColumn(User user) {
                       final pic = (user.profilePic ?? '').trim();
-                      final imageUrl = pic.isNotEmpty ? pic : 'https://picsum.photos/seed/profile/200/200';
+                      final imageUrl = pic.isNotEmpty
+                          ? pic
+                          : 'https://picsum.photos/seed/profile/200/200';
                       return Column(
                         children: [
                           const SizedBox(height: 15),
@@ -89,39 +94,59 @@ class _ProfilePageState extends State<ProfilePage> {
                               child: Image.network(
                                 imageUrl,
                                 fit: BoxFit.cover,
-                                loadingBuilder: (context, child, loadingProgress) {
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
                                   if (loadingProgress == null) return child;
                                   return Container(
-                                    color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6),
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .surfaceContainerHighest
+                                        .withOpacity(0.6),
                                     alignment: Alignment.center,
                                     child: SizedBox(
                                       width: 24,
                                       height: 24,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2.0,
-                                        value: loadingProgress.expectedTotalBytes != null
-                                            ? loadingProgress.cumulativeBytesLoaded / (loadingProgress.expectedTotalBytes ?? 1)
+                                        value: loadingProgress
+                                                    .expectedTotalBytes !=
+                                                null
+                                            ? loadingProgress
+                                                    .cumulativeBytesLoaded /
+                                                (loadingProgress
+                                                        .expectedTotalBytes ??
+                                                    1)
                                             : null,
                                       ),
                                     ),
                                   );
                                 },
-                                errorBuilder: (context, error, stackTrace) => Container(
-                                  color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6),
+                                errorBuilder: (context, error, stackTrace) =>
+                                    Container(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .surfaceContainerHighest
+                                      .withOpacity(0.6),
                                   alignment: Alignment.center,
                                   child: Icon(
                                     Icons.person_outline,
                                     size: 48,
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Text(user.name, style: Theme.of(context).textTheme.titleLarge),
+                          Text(user.name,
+                              style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: 8),
-                          Text(user.phoneNumber, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                          Text(user.phoneNumber,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w500)),
                         ],
                       );
                     }
@@ -142,9 +167,14 @@ class _ProfilePageState extends State<ProfilePage> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          Text('Nom d\'utilisateur', style: Theme.of(context).textTheme.titleLarge),
+                          Text(AppLanguage.name,
+                              style: Theme.of(context).textTheme.titleLarge),
                           const SizedBox(height: 8),
-                          Text('Numero de téléphone', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+                          Text(AppLanguage.phone,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(fontWeight: FontWeight.w500)),
                         ],
                       );
                     }
@@ -155,7 +185,8 @@ class _ProfilePageState extends State<ProfilePage> {
                         initialData: bloc.state,
                         builder: (context, snapshot) {
                           final state = snapshot.data;
-                          if (state is ProfileLoading) return const CircularProgressIndicator();
+                          if (state is ProfileLoading)
+                            return const CircularProgressIndicator();
                           if (state is ProfileLoaded) {
                             return userColumn(state.user);
                           }
@@ -198,21 +229,30 @@ class _ProfilePageState extends State<ProfilePage> {
                     return placeholderColumn();
                   }),
                 ),
-
                 const SizedBox(height: 20),
-                Text('Mon Compte', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(AppLanguage.myAccount,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
                 CardsList(
                   items: [
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/Informations_personnelles.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Informations Personnelles', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset(
+                          'assets/icons/Informations_personnelles.svg',
+                          width: 24,
+                          height: 24,
+                          color: Theme.of(context).iconTheme.color),
+                      title: Text(AppLanguage.editMyInfo,
+                          style: Theme.of(context).textTheme.titleSmall),
                       onTap: () async {
                         try {
                           User? user;
                           // Try ProfileBloc first
                           try {
-                            final profileBloc = BlocProvider.of<ProfileBloc>(context);
+                            final profileBloc =
+                                BlocProvider.of<ProfileBloc>(context);
                             final s = profileBloc.state;
                             if (s is ProfileLoaded) user = s.user;
                           } catch (_) {}
@@ -220,56 +260,83 @@ class _ProfilePageState extends State<ProfilePage> {
                           // Fallback to AuthBloc
                           if (user == null) {
                             try {
-                              final authBloc = BlocProvider.of<AuthBloc>(context);
+                              final authBloc =
+                                  BlocProvider.of<AuthBloc>(context);
                               final aState = authBloc.state;
                               if (aState is Authenticated) user = aState.user;
                             } catch (_) {}
                           }
 
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => UserInformationPage(user: user)));
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => UserInformationPage(user: user)));
                         } catch (_) {}
                       },
                     ),
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/favoris_reversed.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Favoris', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset(
+                          'assets/icons/favoris_reversed.svg',
+                          width: 24,
+                          height: 24,
+                          color: Theme.of(context).iconTheme.color),
+                      title: Text(AppLanguage.favorites,
+                          style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const FavoritsPage()));
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const FavoritsPage()));
                         } catch (_) {}
                       },
                     ),
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/bills.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Mes factures', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset('assets/icons/bills.svg',
+                          width: 24,
+                          height: 24,
+                          color: Theme.of(context).iconTheme.color),
+                      title: Text(AppLanguage.invoices,
+                          style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const InvoicesPage()));
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const InvoicesPage()));
                         } catch (_) {}
                       },
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-                Text('Additionnel', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(AppLanguage.settings,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
                 CardsList(
                   items: [
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/support.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Support & Aide', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset('assets/icons/support.svg',
+                          width: 24,
+                          height: 24,
+                          color: Theme.of(context).iconTheme.color),
+                      title: Text(AppLanguage.supportAndHelp,
+                          style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportAndAidePage()));
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const SupportAndAidePage()));
                         } catch (_) {}
                       },
                     ),
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/language.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Language', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset('assets/icons/language.svg',
+                          width: 24,
+                          height: 24,
+                          color: Theme.of(context).iconTheme.color),
+                      title: Text(AppLanguage.language,
+                          style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
-                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LanguagePage()));
+                          Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const LanguagePage()));
                         } catch (_) {}
                       },
                     ),
@@ -293,7 +360,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
                       // Wait for the bloc to emit Unauthenticated (timeout after 2s)
                       try {
-                        authBloc.stream.firstWhere((s) => s is Unauthenticated).timeout(const Duration(seconds: 2)).then((_) {
+                        authBloc.stream
+                            .firstWhere((s) => s is Unauthenticated)
+                            .timeout(const Duration(seconds: 2))
+                            .then((_) {
                           try {
                             router.go('/auth');
                           } catch (_) {}
@@ -310,14 +380,24 @@ class _ProfilePageState extends State<ProfilePage> {
                       }
                     } catch (e) {
                       if (mounted) {
-                        ToastService.instance.showToast(context, 'Déconnexion échouée', type: ToastType.error);
+                        ToastService.instance.showToast(
+                            context, AppLanguage.error,
+                            type: ToastType.error);
                       }
                     }
                   },
                   backgroundColor: AppColors.brandRed,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [SvgPicture.asset('assets/icons/logout.svg', width: 24, height: 24, color: AppColors.lightOnPrimary), const SizedBox(width: 18), Text('Se déconnecter', style: AppTextStyles.buttonLargeBold)],
+                    children: [
+                      SvgPicture.asset('assets/icons/logout.svg',
+                          width: 24,
+                          height: 24,
+                          color: AppColors.lightOnPrimary),
+                      const SizedBox(width: 18),
+                      Text(AppLanguage.logout,
+                          style: AppTextStyles.buttonLargeBold)
+                    ],
                   ),
                 )
               ],
@@ -332,7 +412,8 @@ class _ProfilePageState extends State<ProfilePage> {
         child: BlocListener<ProfileBloc, ProfileState>(
           listener: (context, state) {
             if (state is ProfileError) {
-              ToastService.instance.showToast(context, state.message, type: ToastType.error);
+              ToastService.instance
+                  .showToast(context, state.message, type: ToastType.error);
             }
           },
           child: content,

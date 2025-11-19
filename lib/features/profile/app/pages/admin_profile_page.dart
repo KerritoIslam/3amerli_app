@@ -1,5 +1,6 @@
 import 'package:amerli_app/features/auth/app/bloc/auth_event.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/utils/constants/app_text_styles.dart';
 import 'package:amerli_app/widgets/app_button.dart';
 import 'package:amerli_app/widgets/cards_list.dart';
@@ -195,13 +196,13 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                 ),
 
                 const SizedBox(height: 20),
-                Text('Mon Compte', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(AppLanguage.myAccount, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
                 CardsList(
                   items: [
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/Informations_personnelles.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Informations Personnelles', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset('assets/icons/Informations_personnelles.svg', width: 24, height: 24, colorFilter: ColorFilter.mode(Theme.of(context).iconTheme.color!, BlendMode.srcIn)),
+                      title: Text(AppLanguage.personalInformation, style: Theme.of(context).textTheme.titleSmall),
                       onTap: () async {
                         try {
                           User? user;
@@ -226,13 +227,13 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                Text('Additionnel', style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
+                Text(AppLanguage.additional, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600)),
                 const SizedBox(height: 10),
                 CardsList(
                   items: [
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/support.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Support & Aide', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset('assets/icons/support.svg', width: 24, height: 24, colorFilter: ColorFilter.mode(Theme.of(context).iconTheme.color!, BlendMode.srcIn)),
+                      title: Text(AppLanguage.supportAndHelp, style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
                           Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SupportAndAidePage()));
@@ -240,8 +241,8 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                       },
                     ),
                     CardsListItem(
-                      leading: SvgPicture.asset('assets/icons/language.svg', width: 24, height: 24, color: Theme.of(context).iconTheme.color),
-                      title: Text('Language', style: Theme.of(context).textTheme.titleSmall),
+                      leading: SvgPicture.asset('assets/icons/language.svg', width: 24, height: 24, colorFilter: ColorFilter.mode(Theme.of(context).iconTheme.color!, BlendMode.srcIn)),
+                      title: Text(AppLanguage.language, style: Theme.of(context).textTheme.titleSmall),
                       onTap: () {
                         try {
                           Navigator.of(context).push(MaterialPageRoute(builder: (_) => const LanguagePage()));
@@ -285,7 +286,7 @@ class _AdminProfilePageState extends State<AdminProfilePage> {
                   backgroundColor: AppColors.brandRed,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [SvgPicture.asset('assets/icons/logout.svg', width: 24, height: 24, color: AppColors.lightOnPrimary), const SizedBox(width: 18), Text('Se déconnecter', style: AppTextStyles.buttonLargeBold)],
+                    children: [SvgPicture.asset('assets/icons/logout.svg', width: 24, height: 24, colorFilter: const ColorFilter.mode(AppColors.lightOnPrimary, BlendMode.srcIn)), const SizedBox(width: 18), Text(AppLanguage.logout, style: AppTextStyles.buttonLargeBold)],
                   ),
                 )
               ],

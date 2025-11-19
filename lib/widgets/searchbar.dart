@@ -37,9 +37,9 @@ class _AppSearchbarState extends State<AppSearchbar>
       child: AppTextField(
         trailing: InkWell(
           onTap: widget.onFilterTap ?? () => context.push('/filters'),
-          child: SvgPicture.asset("assets/icons/filter_icon.svg",color: Theme.of(context).colorScheme.primary),
+          child: SvgPicture.asset("assets/icons/filter_icon.svg", colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.primary, BlendMode.srcIn)),
         ),
-        prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg",color: Theme.of(context).colorScheme.primary),
+        prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg", colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.primary, BlendMode.srcIn)),
         onChanged: widget.onChanged,
       ),
     );

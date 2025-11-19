@@ -11,5 +11,5 @@ class AppConstants {
   // Updated to the endpoint used by the recent automated tests
   // Keep the API base URL to the host/origin only; repository code uses '/api/v1/...' paths.
   // This prevents the accidental double prefix when concatenating paths.
-  static const String apiBaseUrl = 'https://api.ammerli.com/api/v1/';
+  static const String apiBaseUrl = 'http://api.ammerli.com/api/v1/';
 }

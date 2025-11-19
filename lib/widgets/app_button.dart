@@ -133,7 +133,7 @@ class AppButton extends StatelessWidget {
           padding: EdgeInsets.zero,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(borderRadius)),
           foregroundColor: textColor ?? theme.colorScheme.primary,
-          backgroundColor: isFilled ? primary.withOpacity(0.02) : Colors.transparent,
+          backgroundColor: isFilled ? primary.withValues(alpha: 0.02) : Colors.transparent,
         ),
         child: SizedBox(width: width, height: defaultHeight, child: buttonChild),
       );

@@ -17,7 +17,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/widgets/bottom_cart_summary.dart';
 import 'package:amerli_app/features/cart/app/pages/address_selection_page.dart';
 import 'package:amerli_app/features/cart/app/pages/payment_webview_page.dart';
-
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class PaiementScreen extends StatefulWidget {
   const PaiementScreen({super.key});
@@ -42,7 +42,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
     // Listen to OrdersBloc state changes
     sl<OrdersBloc>().stream.listen((state) {
       if (!mounted) return;
-      
+
       if (state is OrderCreated) {
         // Order created successfully - store the checkout URL and mark order as created
         _pendingCheckoutUrl = state.checkoutUrl;
@@ -50,8 +50,9 @@ class _PaiementScreenState extends State<PaiementScreen> {
         _createdOrderId = state.order.id; // Store the order ID
         _createdOrder = state.order; // Store the full order
         // ignore: avoid_print
-        print('✅ Order created! Order ID: $_createdOrderId | CheckoutUrl: $_pendingCheckoutUrl | Payment Method: $_selectedPaymentMethod | Animation complete: $_animationComplete');
-        
+        print(
+            '✅ Order created! Order ID: $_createdOrderId | CheckoutUrl: $_pendingCheckoutUrl | Payment Method: $_selectedPaymentMethod | Animation complete: $_animationComplete');
+
         // If animation already completed, navigate immediately
         if (_animationComplete) {
           // ignore: avoid_print
@@ -79,13 +80,15 @@ class _PaiementScreenState extends State<PaiementScreen> {
 
   void _navigateAfterOrder(String? checkoutUrl) {
     // ignore: avoid_print
-    print('🎯 _navigateAfterOrder called with URL: $checkoutUrl | Payment Method: $_selectedPaymentMethod');
-    
+    print(
+        '🎯 _navigateAfterOrder called with URL: $checkoutUrl | Payment Method: $_selectedPaymentMethod');
+
     // For CASH payment, always go to success page regardless of checkoutUrl
     if (_selectedPaymentMethod == PaymentMethod.cash) {
       // ignore: avoid_print
-      print('💵 Cash payment detected, going to success page with order ID: $_createdOrderId');
-      
+      print(
+          '💵 Cash payment detected, going to success page with order ID: $_createdOrderId');
+
       // Reset paying state
       setState(() {
         _paying = false;
@@ -93,23 +96,24 @@ class _PaiementScreenState extends State<PaiementScreen> {
         _pendingCheckoutUrl = null;
         _orderCreated = false;
       });
-      
+
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => SuccessPage(
-          orderId: _createdOrderId,
-          paymentMethod: 'CASH',
-          order: _createdOrder,
-        )),
+        MaterialPageRoute(
+            builder: (_) => SuccessPage(
+                  orderId: _createdOrderId,
+                  paymentMethod: 'CASH',
+                  order: _createdOrder,
+                )),
       );
       return;
     }
-    
+
     // For EPAYMENT, check if we have a checkout URL
     if (checkoutUrl != null && checkoutUrl.isNotEmpty) {
       // Online payment - open in WebView
       // ignore: avoid_print
       print('🌐 Opening payment URL in WebView...');
-      
+
       // Reset paying state
       setState(() {
         _paying = false;
@@ -117,7 +121,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
         _pendingCheckoutUrl = null;
         _orderCreated = false;
       });
-      
+
       // Navigate to WebView page
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -129,10 +133,11 @@ class _PaiementScreenState extends State<PaiementScreen> {
       // ignore: avoid_print
       print('⚠️ Online payment but no checkout URL, going to success page...');
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => SuccessPage(
-          orderId: _createdOrderId,
-          paymentMethod: 'EPAYMENT',
-        )),
+        MaterialPageRoute(
+            builder: (_) => SuccessPage(
+                  orderId: _createdOrderId,
+                  paymentMethod: 'EPAYMENT',
+                )),
       );
     }
   }
@@ -141,8 +146,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
     // Validate that an address is selected
     if (_selectedAddress == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez sélectionner une adresse de livraison'),
+        SnackBar(
+          content: Text(AppLanguage.selectDeliveryAddress),
           backgroundColor: Colors.orange,
         ),
       );
@@ -158,9 +163,10 @@ class _PaiementScreenState extends State<PaiementScreen> {
 
       // Build order payload
       final Map<String, dynamic> payload;
-      
+
       // Check if the selected address has an ID (existing address)
-      if (_selectedAddress!.containsKey('id') && _selectedAddress!['id'] != null) {
+      if (_selectedAddress!.containsKey('id') &&
+          _selectedAddress!['id'] != null) {
         // Use addressId for existing address
         payload = OrderPayloadBuilder.build(
           cartItems: cartItems,
@@ -174,7 +180,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
           city: _selectedAddress!['city'] ?? '',
           district: _selectedAddress!['district'] ?? '',
         );
-        
+
         payload = OrderPayloadBuilder.build(
           cartItems: cartItems,
           paymentMethod: paymentMethod,
@@ -247,7 +253,11 @@ class _PaiementScreenState extends State<PaiementScreen> {
             ),
           ),
         ),
-        title: const Text('Paiement', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, fontSize: 18)),
+        title: Text(AppLanguage.payment,
+            style: const TextStyle(
+                color: Colors.black87,
+                fontWeight: FontWeight.w700,
+                fontSize: 18)),
         centerTitle: true,
       ),
       // Body will be a Stack so we can position the BottomCartSummary above
@@ -263,36 +273,55 @@ class _PaiementScreenState extends State<PaiementScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-              const SizedBox(height: 8),
+                    const SizedBox(height: 8),
 
-              // Payment Method Selection (moved to top)
-              const SizedBox(height: 16),
-              const Text('Mode de paiement', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
-              const SizedBox(height: 8),
-              _paymentMethodSelection(),
+                    // Payment Method Selection (moved to top)
+                    const SizedBox(height: 16),
+                    Text(AppLanguage.paymentMethodTitle,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A1A))),
+                    const SizedBox(height: 8),
+                    _paymentMethodSelection(),
 
-              // Order preview
-              const SizedBox(height: 20),
-              const Text('Mes Produits', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A))),
-              const SizedBox(height: 8),
-              _orderPreview(),
+                    // Order preview
+                    const SizedBox(height: 20),
+                    Text(AppLanguage.myProducts,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1A1A1A))),
+                    const SizedBox(height: 8),
+                    _orderPreview(),
 
-              // Adresse
-              const SizedBox(height: 20),
-              Row(
-                children: [
-                  const Expanded(child: Text('Adresse', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Color(0xFF1A1A1A)))),
-                  GestureDetector(
-                        onTap: _openAddressSelection,
-                        child: Text(
-                          _selectedAddress == null ? 'Ajouter une adresse' : 'Modifier',
-                          style: TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.primary),
+                    // Adresse
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Text(AppLanguage.address,
+                                style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF1A1A1A)))),
+                        GestureDetector(
+                          onTap: _openAddressSelection,
+                          child: Text(
+                            _selectedAddress == null
+                                ? AppLanguage.addAddress
+                                : AppLanguage.edit,
+                            style: TextStyle(
+                                fontSize: 14,
+                                color: Theme.of(context).colorScheme.primary),
+                          ),
                         ),
-                      ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _selectedAddress != null ? _addressCard() : _emptyAddressCard(),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    _selectedAddress != null
+                        ? _addressCard()
+                        : _emptyAddressCard(),
 
                     // give enough bottom space so content isn't hidden by the summary
                     const SizedBox(height: 140),
@@ -317,50 +346,62 @@ class _PaiementScreenState extends State<PaiementScreen> {
                     // The normal BottomCartSummary
                     BlocBuilder<CartBloc, CartState>(
                       builder: (context, cartState) {
-                        final List<CartItem> cartItems = cartState is CartLoaded ? cartState.items : const [];
+                        final List<CartItem> cartItems = cartState is CartLoaded
+                            ? cartState.items
+                            : const [];
 
                         return BlocBuilder<CatalogBloc, CatalogState>(
                           builder: (context, catalogState) {
                             List<Product> sourceProducts = [];
-                            if (catalogState is CatalogLoaded || catalogState is CatalogLoadingMore) {
-                              sourceProducts = (catalogState as dynamic).products as List<Product>;
+                            if (catalogState is CatalogLoaded ||
+                                catalogState is CatalogLoadingMore) {
+                              sourceProducts = (catalogState as dynamic)
+                                  .products as List<Product>;
                             }
 
-                            final productsInCart = cartItems.map((ci) {
-                              final id = int.tryParse(ci.productId) ?? -1;
-                              final p = sourceProducts.firstWhere(
-                                (sp) => sp.id == id,
-                                orElse: () => Product(
-                                  id: id,
-                                  name: ci.name,
-                                  description: '',
-                                  price: ci.price,
-                                  stock: 0,
-                                  pics: ci.imageUrl != null && ci.imageUrl!.isNotEmpty ? [ci.imageUrl!] : const [],
-                                  brand: ci.brand,
-                                  soldBy: ci.soldBy,
-                                ),
-                              );
-                              return Product(
-                                id: p.id,
-                                name: p.name,
-                                description: p.description,
-                                price: p.price,
-                                stock: p.stock,
-                                sellerId: p.sellerId,
-                                soldBy: p.soldBy,
-                                pics: p.pics,
-                                brand: p.brand,
-                                markId: p.markId,
-                                isFavorit: p.isFavorit,
-                                quantity: ci.quantity,
-                              );
-                            }).where((p) => p.quantity > 0).toList();
+                            final productsInCart = cartItems
+                                .map((ci) {
+                                  final id = int.tryParse(ci.productId) ?? -1;
+                                  final p = sourceProducts.firstWhere(
+                                    (sp) => sp.id == id,
+                                    orElse: () => Product(
+                                      id: id,
+                                      name: ci.name,
+                                      description: '',
+                                      price: ci.price,
+                                      stock: 0,
+                                      pics: ci.imageUrl != null &&
+                                              ci.imageUrl!.isNotEmpty
+                                          ? [ci.imageUrl!]
+                                          : const [],
+                                      brand: ci.brand,
+                                      soldBy: ci.soldBy,
+                                    ),
+                                  );
+                                  return Product(
+                                    id: p.id,
+                                    name: p.name,
+                                    description: p.description,
+                                    price: p.price,
+                                    stock: p.stock,
+                                    sellerId: p.sellerId,
+                                    soldBy: p.soldBy,
+                                    pics: p.pics,
+                                    brand: p.brand,
+                                    markId: p.markId,
+                                    isFavorit: p.isFavorit,
+                                    quantity: ci.quantity,
+                                  );
+                                })
+                                .where((p) => p.quantity > 0)
+                                .toList();
 
-                            final total = productsInCart.fold<double>(0.0, (sum, p) => sum + (p.price * p.quantity));
+                            final total = productsInCart.fold<double>(
+                                0.0, (sum, p) => sum + (p.price * p.quantity));
 
                             // Size matching the BottomCartSummary placement (matches horizontal padding)
-                            final double w = MediaQuery.of(context).size.width - 40;
+                            final double w =
+                                MediaQuery.of(context).size.width - 40;
                             final double h = 56;
 
                             // Render the BottomCartSummary always but allow replacing the pay button
@@ -374,16 +415,21 @@ class _PaiementScreenState extends State<PaiementScreen> {
                                       height: h,
                                       onComplete: () {
                                         // ignore: avoid_print
-                                        print('🎬 Animation complete! Order Created: $_orderCreated | Payment Method: $_selectedPaymentMethod');
-                                        setState(() => _animationComplete = true);
+                                        print(
+                                            '🎬 Animation complete! Order Created: $_orderCreated | Payment Method: $_selectedPaymentMethod');
+                                        setState(
+                                            () => _animationComplete = true);
                                         // If order was created while animation was running, navigate now
                                         if (_orderCreated) {
                                           // ignore: avoid_print
-                                          print('✨ Order already created, navigating now...');
-                                          _navigateAfterOrder(_pendingCheckoutUrl);
+                                          print(
+                                              '✨ Order already created, navigating now...');
+                                          _navigateAfterOrder(
+                                              _pendingCheckoutUrl);
                                         } else {
                                           // ignore: avoid_print
-                                          print('⏰ Still creating order, will navigate when done...');
+                                          print(
+                                              '⏰ Still creating order, will navigate when done...');
                                         }
                                       },
                                     )
@@ -408,12 +454,24 @@ class _PaiementScreenState extends State<PaiementScreen> {
       final cartItems = cartState is CartLoaded ? cartState.items : const [];
 
       // show up to 3 images
-      final images = cartItems.where((ci) => ci.imageUrl != null && ci.imageUrl!.isNotEmpty).map((ci) => ci.imageUrl!).take(3).toList();
+      final images = cartItems
+          .where((ci) => ci.imageUrl != null && ci.imageUrl!.isNotEmpty)
+          .map((ci) => ci.imageUrl!)
+          .take(3)
+          .toList();
 
       return Container(
         height: 100,
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.06), blurRadius: 6, offset: const Offset(0, 3))]),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.06),
+                  blurRadius: 6,
+                  offset: const Offset(0, 3))
+            ]),
         child: Row(
           children: [
             for (int i = 0; i < 3; i++)
@@ -427,8 +485,11 @@ class _PaiementScreenState extends State<PaiementScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                  Text('Voir le détail', style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600)),
-                ],
+                Text(AppLanguage.viewDetails,
+                    style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w600)),
+              ],
             )
           ],
         ),
@@ -440,7 +501,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
     return Container(
       width: 60,
       height: 60,
-      decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey[100]),
+      decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8), color: Colors.grey[100]),
       child: url == null || url.isEmpty
           ? const Icon(Icons.image, color: Colors.grey)
           : ClipRRect(
@@ -453,7 +515,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
                   return Center(
                     child: CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
-                          ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                          ? loadingProgress.cumulativeBytesLoaded /
+                              loadingProgress.expectedTotalBytes!
                           : null,
                       strokeWidth: 2,
                     ),
@@ -461,7 +524,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
                 },
                 errorBuilder: (context, error, stackTrace) {
                   // Silently handle error and show placeholder
-                  return const Icon(Icons.broken_image, color: Colors.grey, size: 24);
+                  return const Icon(Icons.broken_image,
+                      color: Colors.grey, size: 24);
                 },
               ),
             ),
@@ -472,7 +536,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
     final street = _selectedAddress!['street'] ?? '';
     final district = _selectedAddress!['district'] ?? '';
     final city = _selectedAddress!['city'] ?? '';
-    final fullAddress = [street, district, city].where((s) => s.isNotEmpty).join(', ');
+    final fullAddress =
+        [street, district, city].where((s) => s.isNotEmpty).join(', ');
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -491,7 +556,9 @@ class _PaiementScreenState extends State<PaiementScreen> {
         children: [
           Expanded(
             child: Text(
-              fullAddress.isNotEmpty ? fullAddress : 'Adresse incomplète',
+              fullAddress.isNotEmpty
+                  ? fullAddress
+                  : AppLanguage.incompleteAddress,
               style: const TextStyle(fontSize: 14, color: Color(0xFF333333)),
             ),
           ),
@@ -533,11 +600,12 @@ class _PaiementScreenState extends State<PaiementScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.add_location_alt, color: Theme.of(context).colorScheme.primary),
+            Icon(Icons.add_location_alt,
+                color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Appuyez pour ajouter une adresse de livraison',
+                AppLanguage.tapToAddDeliveryAddress,
                 style: TextStyle(
                   fontSize: 14,
                   color: Theme.of(context).colorScheme.primary,
@@ -558,16 +626,16 @@ class _PaiementScreenState extends State<PaiementScreen> {
         _paymentMethodOption(
           method: PaymentMethod.cash,
           icon: Icons.money,
-          title: 'Paiement en espèces',
-          description: 'Payez à la livraison',
+          title: AppLanguage.cashPayment,
+          description: AppLanguage.payOnDelivery,
         ),
         const SizedBox(height: 8),
         // Online payment option
         _paymentMethodOption(
           method: PaymentMethod.epayment,
           icon: Icons.credit_card,
-          title: 'Paiement en ligne',
-          description: 'Carte bancaire (CIB/EDAHABIA)',
+          title: AppLanguage.onlinePayment,
+          description: AppLanguage.cardPaymentDetails,
         ),
       ],
     );
@@ -580,7 +648,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
     required String description,
   }) {
     final isSelected = _selectedPaymentMethod == method;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -590,10 +658,14 @@ class _PaiementScreenState extends State<PaiementScreen> {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.05) : Colors.white,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
+              : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.grey.shade300,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Colors.grey.shade300,
             width: isSelected ? 2 : 1.5,
           ),
           boxShadow: [
@@ -610,7 +682,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: isSelected 
+                color: isSelected
                     ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                     : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(10),
@@ -618,7 +690,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
               child: Icon(
                 icon,
                 size: 20,
-                color: isSelected 
+                color: isSelected
                     ? Theme.of(context).colorScheme.primary
                     : Colors.grey.shade600,
               ),
@@ -633,7 +705,9 @@ class _PaiementScreenState extends State<PaiementScreen> {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: isSelected ? Theme.of(context).colorScheme.primary : const Color(0xFF1A1A1A),
+                      color: isSelected
+                          ? Theme.of(context).colorScheme.primary
+                          : const Color(0xFF1A1A1A),
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -654,13 +728,13 @@ class _PaiementScreenState extends State<PaiementScreen> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected 
-                      ? Theme.of(context).colorScheme.primary 
+                  color: isSelected
+                      ? Theme.of(context).colorScheme.primary
                       : Colors.grey.shade400,
                   width: 2,
                 ),
-                color: isSelected 
-                    ? Theme.of(context).colorScheme.primary 
+                color: isSelected
+                    ? Theme.of(context).colorScheme.primary
                     : Colors.transparent,
               ),
               child: isSelected
@@ -678,19 +752,24 @@ class _PaiementScreenState extends State<PaiementScreen> {
   }
 }
 
-
 class PaymentAnimationOverlay extends StatefulWidget {
   final double width;
   final double height;
   final VoidCallback onComplete;
 
-  const PaymentAnimationOverlay({super.key, required this.width, required this.height, required this.onComplete});
+  const PaymentAnimationOverlay(
+      {super.key,
+      required this.width,
+      required this.height,
+      required this.onComplete});
 
   @override
-  State<PaymentAnimationOverlay> createState() => _PaymentAnimationOverlayState();
+  State<PaymentAnimationOverlay> createState() =>
+      _PaymentAnimationOverlayState();
 }
 
-class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with SingleTickerProviderStateMixin {
+class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<Color?> _colorAnim;
   late final Animation<double> _movementAnim;
@@ -701,23 +780,36 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 2400));
 
-    _colorAnim = ColorTween(begin: const Color(0xFF8CD630), end: const Color(0xFF04272D)).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.12, curve: Curves.easeIn)),
+    _colorAnim =
+        ColorTween(begin: const Color(0xFF8CD630), end: const Color(0xFF04272D))
+            .animate(
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.0, 0.12, curve: Curves.easeIn)),
     );
 
-    _textFadeAnim = Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.18, curve: Curves.easeOut)));
+    _textFadeAnim = Tween(begin: 1.0, end: 0.0).animate(CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.18, curve: Curves.easeOut)));
 
-  // box1 should fade in before the truck starts moving so it appears simultaneously
-  // with the overlay (and slightly prior to the truck movement).
-  _box1Opacity = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.12, curve: Curves.easeIn)));
+    // box1 should fade in before the truck starts moving so it appears simultaneously
+    // with the overlay (and slightly prior to the truck movement).
+    _box1Opacity = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.12, curve: Curves.easeIn)));
 
     _movementAnim = Tween(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.12, 0.92, curve: Curves.linear)),
+      CurvedAnimation(
+          parent: _controller,
+          curve: const Interval(0.12, 0.92, curve: Curves.linear)),
     );
 
-    _box2Opacity = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: const Interval(0.88, 0.95, curve: Curves.easeIn)));
+    _box2Opacity = Tween(begin: 0.0, end: 1.0).animate(CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.88, 0.95, curve: Curves.easeIn)));
 
     _controller.addStatusListener((s) async {
       if (s == AnimationStatus.completed) {
@@ -729,7 +821,7 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
 
     // start animation
     _controller.forward();
-  // no preload: attempt to render box_1.svg directly via SvgPicture.asset
+    // no preload: attempt to render box_1.svg directly via SvgPicture.asset
   }
 
   @override
@@ -741,7 +833,8 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
   @override
   Widget build(BuildContext context) {
     final double w = widget.width;
-    final double h = widget.height; // container height (keeps space for original BottomCartSummary)
+    final double h = widget
+        .height; // container height (keeps space for original BottomCartSummary)
     // We'll render the animated pill centered vertically inside this container.
     final double pillHeight = 56.0; // visual button height
     final double pillPadding = 12.0; // inner padding inside pill
@@ -762,14 +855,18 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
         final double pillWidth = w;
 
         // For right->left motion inside the pill: truck starts at rightPos and moves to endPos overlapping the box
-        final double rightPos = pillLeft + pillWidth - pillPadding - truckW; // starting X for truck inside pill
+        final double rightPos = pillLeft +
+            pillWidth -
+            pillPadding -
+            truckW; // starting X for truck inside pill
         // move end position so the truck slightly overlaps the box to look like lifting it
         final double boxLeft = pillLeft + pillPadding;
         final double endPos = boxLeft + boxW - (truckW * 0.25);
         final double truckLeft = endPos + (rightPos - endPos) * (1.0 - mov);
 
         final double truckRight = truckLeft + truckW;
-        final double trailRightAnchor = rightPos + truckW; // extreme right where trail can extend to
+        final double trailRightAnchor =
+            rightPos + truckW; // extreme right where trail can extend to
 
         // Build the animated pill centered vertically inside the container
         return SizedBox(
@@ -780,7 +877,8 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
               width: w,
               height: pillHeight,
               // look like the original button: pill shaped
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(28.0)),
+              decoration: BoxDecoration(
+                  color: color, borderRadius: BorderRadius.circular(28.0)),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: <Widget>[
@@ -799,7 +897,11 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
                   Center(
                     child: Opacity(
                       opacity: textOpacity,
-                      child: const Text('Payer ma commande', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                      child: const Text('Payer ma commande',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 16)),
                     ),
                   ),
 
@@ -809,7 +911,8 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
                     top: (pillHeight - truckH) / 2.0,
                     width: truckW,
                     height: truckH,
-                    child: SvgPicture.asset('assets/icons/truck.svg', width: truckW, height: truckH, fit: BoxFit.contain),
+                    child: SvgPicture.asset('assets/icons/truck.svg',
+                        width: truckW, height: truckH, fit: BoxFit.contain),
                   ),
 
                   // Box (anchored LEFT) - crossfade to box_2 when truck reaches
@@ -826,8 +929,10 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
                         // rendered by flutter_svg, the framework will show nothing — but
                         // we still crossfade to box_2 when the truck arrives.
                         Opacity(
-                          opacity: _box1Opacity.value * (1.0 - _box2Opacity.value),
-                          child: Image.asset('assets/icons/box_1.png', width: boxW, height: boxH, fit: BoxFit.contain),
+                          opacity:
+                              _box1Opacity.value * (1.0 - _box2Opacity.value),
+                          child: Image.asset('assets/icons/box_1.png',
+                              width: boxW, height: boxH, fit: BoxFit.contain),
                         ),
                         // box_2 crossfades and scales down slightly as it appears so it
                         // looks like the truck is grabbing/holding it.
@@ -835,7 +940,8 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
                           opacity: _box2Opacity.value,
                           child: Builder(builder: (context) {
                             // scale down up to ~22% when fully appeared
-                            final double scale = 1.0 - (0.22 * _box2Opacity.value);
+                            final double scale =
+                                1.0 - (0.22 * _box2Opacity.value);
                             // lift slightly up to 6px to emphasize the grab
                             final double lift = -6.0 * _box2Opacity.value;
                             return Transform.translate(
@@ -843,7 +949,11 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay> with 
                               child: Transform.scale(
                                 scale: scale,
                                 alignment: Alignment.center,
-                                child: SvgPicture.asset('assets/icons/box_2.svg', width: boxW, height: boxH, fit: BoxFit.contain),
+                                child: SvgPicture.asset(
+                                    'assets/icons/box_2.svg',
+                                    width: boxW,
+                                    height: boxH,
+                                    fit: BoxFit.contain),
                               ),
                             );
                           }),
@@ -869,7 +979,11 @@ class _DashTrailPainter extends CustomPainter {
   final double centerY;
   final double progress;
 
-  _DashTrailPainter({required this.truckRight, required this.trailRightAnchor, required this.centerY, required this.progress});
+  _DashTrailPainter(
+      {required this.truckRight,
+      required this.trailRightAnchor,
+      required this.centerY,
+      required this.progress});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -898,6 +1012,8 @@ class _DashTrailPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DashTrailPainter oldDelegate) {
-    return oldDelegate.truckRight != truckRight || oldDelegate.progress != progress || oldDelegate.trailRightAnchor != trailRightAnchor;
+    return oldDelegate.truckRight != truckRight ||
+        oldDelegate.progress != progress ||
+        oldDelegate.trailRightAnchor != trailRightAnchor;
   }
 }

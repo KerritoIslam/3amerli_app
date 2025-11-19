@@ -1,5 +1,4 @@
 
-
 import 'package:flutter/material.dart';
 import 'package:amerli_app/widgets/icon_circle.dart';
 // inset shadow removed — no external dependency
@@ -42,7 +41,7 @@ class AnimatedBottomNavBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           // Use the requested gray with 80% opacity: alpha CC, rgb 80/80/80
-          color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.8),
           borderRadius: BorderRadius.circular(30),
         ),
         child: Row(
@@ -93,7 +92,7 @@ class _NavBarItemState extends State<NavBarItem> {
             boxShadow: [
               if (widget.isSelected)
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
                   blurRadius: 0.3,
                   offset: const Offset(0, -0.3),
                 )
@@ -185,7 +184,7 @@ class InnerShadow extends StatelessWidget {
             child: CustomPaint(
               painter: _InnerShadowPainter(
                 radius: radius,
-                color: color.withOpacity(strength),
+                color: color.withValues(alpha: strength),
                 blur: blur,
               ),
             ),
@@ -216,7 +215,7 @@ class _InnerShadowPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [color, color.withOpacity(0)],
+        colors: [color, color.withValues(alpha: 0)],
       ).createShader(topRect);
     canvas.drawRect(topRect, topPaint);
 
@@ -226,7 +225,7 @@ class _InnerShadowPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.bottomCenter,
         end: Alignment.topCenter,
-        colors: [color, color.withOpacity(0)],
+        colors: [color, color.withValues(alpha: 0)],
       ).createShader(bottomRect);
     canvas.drawRect(bottomRect, bottomPaint);
 
@@ -236,7 +235,7 @@ class _InnerShadowPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.centerLeft,
         end: Alignment.centerRight,
-        colors: [color, color.withOpacity(0)],
+        colors: [color, color.withValues(alpha: 0)],
       ).createShader(leftRect);
     canvas.drawRect(leftRect, leftPaint);
 
@@ -246,7 +245,7 @@ class _InnerShadowPainter extends CustomPainter {
       ..shader = LinearGradient(
         begin: Alignment.centerRight,
         end: Alignment.centerLeft,
-        colors: [color, color.withOpacity(0)],
+        colors: [color, color.withValues(alpha: 0)],
       ).createShader(rightRect);
     canvas.drawRect(rightRect, rightPaint);
 

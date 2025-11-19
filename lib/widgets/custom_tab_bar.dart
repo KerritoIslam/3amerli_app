@@ -45,62 +45,64 @@ class _CustomTabBarState extends State<CustomTabBar> {
     final inactiveStyle = widget.inactiveTextStyle ??
         Theme.of(context).textTheme.bodyMedium?.copyWith(color: widget.inactiveColor);
 
-    return LayoutBuilder(builder: (context, constraints) {
-      final totalWidth = constraints.maxWidth;
-      final tabCount = widget.tabs.length;
-      final tabWidth = totalWidth.isFinite && tabCount > 0 ? totalWidth / tabCount : 0.0;
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: LayoutBuilder(builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        final tabCount = widget.tabs.length;
+        final tabWidth = totalWidth.isFinite && tabCount > 0 ? totalWidth / tabCount : 0.0;
 
-      return Container(
-        padding: widget.padding,
-        child: Stack(
-          alignment: Alignment.bottomLeft,
-          children: [
-            // Row of tabs
-            Row(
-              children: List.generate(widget.tabs.length, (i) {
-                final isActive = i == widget.currentIndex;
-                return Expanded(
-                  child: InkWell(
-                    onTap: () => widget.onTap(i),
-                    splashFactory: NoSplash.splashFactory,
-                    child: Center(
-                      child: DefaultTextStyle.merge(
-                        style: isActive ? (activeStyle ?? const TextStyle()) : (inactiveStyle ?? const TextStyle()),
-                        child: widget.tabs[i],
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-
-            // Draw inactive segments (one per tab) with gaps between them so
-            // inactiveColor is visible as discrete ticks instead of a single bar.
-            if (tabWidth > 0)
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: widget.indicatorHeight,
-                child: Row(
-                  children: List.generate(tabCount, (i) {
-                    final segWidth = (tabWidth > AppDimensions.spacing) ? tabWidth - AppDimensions.spacing : tabWidth * 0.8;
-                    return SizedBox(
-                      width: tabWidth,
+        return Container(
+          padding: widget.padding,
+          child: Stack(
+            alignment: Alignment.bottomLeft,
+            children: [
+              // Row of tabs
+              Row(
+                children: List.generate(widget.tabs.length, (i) {
+                  final isActive = i == widget.currentIndex;
+                  return Expanded(
+                    child: InkWell(
+                      onTap: () => widget.onTap(i),
+                      splashFactory: NoSplash.splashFactory,
                       child: Center(
-                        child: Container(
-                          width: segWidth,
-                          height: widget.indicatorHeight,
-                          decoration: BoxDecoration(
-                            color: widget.inactiveColor.withOpacity(0.25),
-                            borderRadius: BorderRadius.circular(widget.indicatorHeight / 2),
-                          ),
+                        child: DefaultTextStyle.merge(
+                          style: isActive ? (activeStyle ?? const TextStyle()) : (inactiveStyle ?? const TextStyle()),
+                          child: widget.tabs[i],
                         ),
                       ),
-                    );
-                  }),
-                ),
+                    ),
+                  );
+                }),
               ),
+
+              // Draw inactive segments (one per tab) with gaps between them so
+              // inactiveColor is visible as discrete ticks instead of a single bar.
+              if (tabWidth > 0)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  height: widget.indicatorHeight,
+                  child: Row(
+                    children: List.generate(tabCount, (i) {
+                      final segWidth = (tabWidth > AppDimensions.spacing) ? tabWidth - AppDimensions.spacing : tabWidth * 0.8;
+                      return SizedBox(
+                        width: tabWidth,
+                        child: Center(
+                          child: Container(
+                            width: segWidth,
+                            height: widget.indicatorHeight,
+                            decoration: BoxDecoration(
+                              color: widget.inactiveColor.withValues(alpha: 0.25),
+                              borderRadius: BorderRadius.circular(widget.indicatorHeight / 2),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
 
             // Animated indicator (narrower than full tab width so gaps show)
             if (tabWidth > 0)
@@ -127,6 +129,7 @@ class _CustomTabBarState extends State<CustomTabBar> {
           ],
         ),
       );
-    });
+    }),
+    );
   }
 }

@@ -3,6 +3,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:amerli_app/features/success/app/pages/success_page.dart';
 import 'package:amerli_app/features/failure/app/pages/failure_page.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class PaymentWebViewPage extends StatefulWidget {
   final String checkoutUrl;
@@ -20,7 +21,7 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
   @override
   void initState() {
     super.initState();
-    
+
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
@@ -40,24 +41,26 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
           onNavigationRequest: (NavigationRequest request) {
             // Check if this is a success/failure redirect
             final url = request.url;
-            
+
             // Check for custom scheme (amerli://)
             if (url.startsWith('amerli://')) {
               _handleDeepLink(url);
               return NavigationDecision.prevent;
             }
-            
+
             // Check for HTTPS redirect patterns
-            if (url.contains('/payment/success') || url.contains('amerli.app/success')) {
+            if (url.contains('/payment/success') ||
+                url.contains('amerli.app/success')) {
               _handleDeepLink(url);
               return NavigationDecision.prevent;
             }
-            
-            if (url.contains('/payment/failure') || url.contains('amerli.app/failure')) {
+
+            if (url.contains('/payment/failure') ||
+                url.contains('amerli.app/failure')) {
               _handleDeepLink(url);
               return NavigationDecision.prevent;
             }
-            
+
             return NavigationDecision.navigate;
           },
           onWebResourceError: (WebResourceError error) {
@@ -65,7 +68,7 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
           },
         ),
       );
-    
+
     // Android-specific configuration for reCAPTCHA support
     if (_controller.platform is AndroidWebViewController) {
       AndroidWebViewController.enableDebugging(false);
@@ -81,15 +84,15 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
           },
         );
     }
-    
+
     // Load request after configuration
     _controller.loadRequest(Uri.parse(widget.checkoutUrl));
   }
 
   void _checkForRedirect(String url) {
     // Also check in onPageStarted for faster detection
-    if (url.startsWith('amerli://') || 
-        url.contains('/payment/success') || 
+    if (url.startsWith('amerli://') ||
+        url.contains('/payment/success') ||
         url.contains('/payment/failure') ||
         url.contains('amerli.app/success') ||
         url.contains('amerli.app/failure')) {
@@ -99,16 +102,16 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
 
   void _handleDeepLink(String url) {
     debugPrint('🔗 Payment redirect detected: $url');
-    
+
     // Parse the URL to extract query parameters
     final uri = Uri.parse(url);
     final params = uri.queryParameters;
-    
+
     // Determine if success or failure
     final isSuccess = url.contains('success');
-    
+
     if (!mounted) return;
-    
+
     // Pop the WebView and navigate to appropriate page
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
@@ -125,7 +128,9 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
                 date: params['date'],
                 paymentMethod: params['paymentMethod'] ?? params['payementWay'],
                 amount: params['amount'] ?? params['total'],
-                failureReason: params['reason'] ?? params['error'] ?? 'Paiement échoué',
+                failureReason: params['reason'] ??
+                    params['error'] ??
+                    AppLanguage.paymentFailed,
               ),
       ),
     );
@@ -145,30 +150,28 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
             showDialog(
               context: context,
               builder: (ctx) => AlertDialog(
-                title: const Text('Annuler le paiement'),
-                content: const Text(
-                  'Êtes-vous sûr de vouloir annuler le paiement?',
-                ),
+                title: Text(AppLanguage.cancelPayment),
+                content: Text(AppLanguage.areYouSureCancelPayment),
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.of(ctx).pop(),
-                    child: const Text('Non'),
+                    child: Text(AppLanguage.cancel),
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.of(ctx).pop();
                       Navigator.of(context).pop();
                     },
-                    child: const Text('Oui, annuler'),
+                    child: Text(AppLanguage.yesCancel),
                   ),
                 ],
               ),
             );
           },
         ),
-        title: const Text(
-          'Paiement sécurisé',
-          style: TextStyle(
+        title: Text(
+          AppLanguage.securePayment,
+          style: const TextStyle(
             color: Colors.black87,
             fontWeight: FontWeight.w700,
             fontSize: 18,

@@ -4,6 +4,7 @@ import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/core/config/injection.dart' as di;
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/entities/brand.dart';
 import '../../domain/repositories/admin_brands_repository.dart';
 import 'add_brand_page.dart';
@@ -22,7 +23,9 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
   List<Brand> _brands = [];
   bool _isLoading = false;
 
-  bool get _allSelected => _filteredBrands.isNotEmpty && _filteredBrands.every((b) => _selected[b.id] == true);
+  bool get _allSelected =>
+      _filteredBrands.isNotEmpty &&
+      _filteredBrands.every((b) => _selected[b.id] == true);
 
   void _toggleSelectAll(bool? v) {
     setState(() {
@@ -51,7 +54,7 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
       setState(() => _isLoading = false);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de chargement: $e')),
+          SnackBar(content: Text(AppLanguage.loadingError)),
         );
       }
     }
@@ -61,7 +64,9 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
 
   List<Brand> get _filteredBrands {
     if (_search.isEmpty) return _brands;
-    return _brands.where((b) => b.name.toLowerCase().contains(_search)).toList();
+    return _brands
+        .where((b) => b.name.toLowerCase().contains(_search))
+        .toList();
   }
 
   @override
@@ -86,7 +91,7 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
           });
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Marque mise à jour')),
+              SnackBar(content: Text(AppLanguage.brandUpdated)),
             );
           }
         } else {
@@ -95,14 +100,14 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
           setState(() => _brands.insert(0, savedBrand));
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Marque ajoutée')),
+              SnackBar(content: Text(AppLanguage.brandAdded)),
             );
           }
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur: $e')),
+            SnackBar(content: Text(AppLanguage.error)),
           );
         }
       }
@@ -113,13 +118,16 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (c) => AlertDialog(
-        title: const Text('Supprimer la marque'),
-        content: Text('Voulez-vous supprimer "${brand.name}" ?'),
+        title: Text(AppLanguage.delete),
+        content: Text(AppLanguage.deleteBrandConfirm(brand.name)),
         actions: [
-          TextButton(onPressed: () => Navigator.of(c).pop(false), child: const Text('Annuler')),
+          TextButton(
+              onPressed: () => Navigator.of(c).pop(false),
+              child: Text(AppLanguage.cancel)),
           TextButton(
             onPressed: () => Navigator.of(c).pop(true),
-            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+            child: Text(AppLanguage.delete,
+                style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -130,13 +138,13 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
         setState(() => _brands.removeWhere((b) => b.id == brand.id));
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Marque supprimée')),
+            SnackBar(content: Text(AppLanguage.brandDeleted)),
           );
         }
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Erreur de suppression: $e')),
+            SnackBar(content: Text(AppLanguage.deleteError)),
           );
         }
       }
@@ -167,14 +175,18 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                         shape: BoxShape.circle,
                       ),
                       alignment: Alignment.center,
-                      child: const Icon(Icons.arrow_back, size: 18, color: AppColors.brandDeep),
+                      child: const Icon(Icons.arrow_back,
+                          size: 18, color: AppColors.brandDeep),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Center(
-                      child: Text('Gérer les marques',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.brandDeep)),
+                      child: Text(AppLanguage.manageBrands,
+                          style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.brandDeep)),
                     ),
                   ),
                 ],
@@ -183,7 +195,8 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
 
             // Search & Add (use shared AppSearchbar for consistent style)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Row(
                 children: [
                   Expanded(
@@ -194,12 +207,15 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: () => _openAddPage(),
-                    icon: SvgPicture.asset('assets/icons/plus.svg', width: 14, height: 14, color: Colors.white),
-                    label: const Text('+ Ajouter'),
+                    icon: SvgPicture.asset('assets/icons/plus.svg',
+                        width: 14, height: 14, color: Colors.white),
+                    label: Text(AppLanguage.addWithPlus),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
                       elevation: 0,
                     ),
                   ),
@@ -210,10 +226,11 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
             // Table
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
                 child: Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
+                  margin: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(12),
@@ -228,7 +245,8 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                     children: [
                       // Table Header (match products table header look)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 6),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade50,
                           borderRadius: const BorderRadius.only(
@@ -249,9 +267,18 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                               ),
                             ),
                             const SizedBox(width: 6),
-                            const Expanded(child: Text('Marque', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11))),
-                            const SizedBox(width: 6),
-                            const SizedBox(width: 50, child: Center(child: Text('Actions', style: TextStyle(fontWeight: FontWeight.w700)))),
+                            Expanded(
+                                child: Text(AppLanguage.brand,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11))),
+                            SizedBox(width: 6),
+                            SizedBox(
+                                width: 50,
+                                child: Center(
+                                    child: Text(AppLanguage.actions,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w700)))),
                           ],
                         ),
                       ),
@@ -261,57 +288,82 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                         child: _isLoading
                             ? const Center(child: CircularProgressIndicator())
                             : _filteredBrands.isEmpty
-                                ? const Center(child: Padding(padding: EdgeInsets.all(32), child: Text('Aucune marque trouvée')))
+                                ? Center(
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(32),
+                                        child: Text(AppLanguage.noBrandsFound)))
                                 : ListView.separated(
                                     shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     padding: const EdgeInsets.all(12),
                                     itemCount: _filteredBrands.length,
-                          separatorBuilder: (context, index) => Divider(
-                            height: 1,
-                            thickness: 1,
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                          ),
-                          itemBuilder: (context, index) {
-                            final brand = _filteredBrands[index];
-                            final isSelected = _selected[brand.id] ?? false;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 6),
-                              child: Row(
-                                children: [
-                                  SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: Checkbox(
-                                      value: isSelected,
-                                      onChanged: (v) => setState(() => _selected[brand.id] = v ?? false),
-                                      shape: const CircleBorder(),
-                                      activeColor: AppColors.brandDeep,
+                                    separatorBuilder: (context, index) =>
+                                        Divider(
+                                      height: 1,
+                                      thickness: 1,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.12),
                                     ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Expanded(child: Text(brand.name)),
-                                  SizedBox(
-                                    width: 50,
-                                    child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        InkWell(
-                                          onTap: () => _openAddPage(edit: brand),
-                                          child: SvgPicture.asset('assets/icons/small_edit.svg', width: 16, height: 16, color: AppColors.brandDeep),
+                                    itemBuilder: (context, index) {
+                                      final brand = _filteredBrands[index];
+                                      final isSelected =
+                                          _selected[brand.id] ?? false;
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 6),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: Checkbox(
+                                                value: isSelected,
+                                                onChanged: (v) => setState(() =>
+                                                    _selected[brand.id] =
+                                                        v ?? false),
+                                                shape: const CircleBorder(),
+                                                activeColor:
+                                                    AppColors.brandDeep,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(child: Text(brand.name)),
+                                            SizedBox(
+                                              width: 50,
+                                              child: Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                children: [
+                                                  InkWell(
+                                                    onTap: () => _openAddPage(
+                                                        edit: brand),
+                                                    child: SvgPicture.asset(
+                                                        'assets/icons/small_edit.svg',
+                                                        width: 16,
+                                                        height: 16,
+                                                        color: AppColors
+                                                            .brandDeep),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  InkWell(
+                                                    onTap: () =>
+                                                        _confirmDelete(brand),
+                                                    child: SvgPicture.asset(
+                                                        'assets/icons/delete.svg',
+                                                        width: 16,
+                                                        height: 16,
+                                                        color: Colors.red),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                        const SizedBox(width: 8),
-                                        InkWell(
-                                          onTap: () => _confirmDelete(brand),
-                                          child: SvgPicture.asset('assets/icons/delete.svg', width: 16, height: 16, color: Colors.red),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                      );
+                                    },
                                   ),
                       ),
                     ],

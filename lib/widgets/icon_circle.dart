@@ -53,7 +53,7 @@ class IconCircle extends StatelessWidget {
       decoration: BoxDecoration(
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
             blurRadius: 0.3,
             offset: const Offset(0, -0.3),
           )
@@ -66,7 +66,7 @@ class IconCircle extends StatelessWidget {
             ? SvgPicture.asset(
                 asset!,
                 // pass color only when not preserving original colors
-                color: iconColor,
+                colorFilter: iconColor != null ? ColorFilter.mode(iconColor, BlendMode.srcIn) : null,
                 width: effectiveIconSize,
                 height: effectiveIconSize,
               )

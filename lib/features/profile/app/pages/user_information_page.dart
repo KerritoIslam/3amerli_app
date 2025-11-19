@@ -1,4 +1,5 @@
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/features/auth/domain/entities/user.dart';
@@ -35,13 +36,13 @@ class _UserInformationPageState extends State<UserInformationPage> {
     await showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Modifier la photo de profil'),
+        title: Text(AppLanguage.editProfilePhoto),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('Prendre une photo'),
+              title: Text(AppLanguage.takePhoto),
               onTap: () {
                 Navigator.of(ctx).pop();
                 _pickAndUploadImage(ImageSource.camera);
@@ -49,7 +50,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('Choisir depuis la galerie'),
+              title: Text(AppLanguage.chooseFromGallery),
               onTap: () {
                 Navigator.of(ctx).pop();
                 _pickAndUploadImage(ImageSource.gallery);
@@ -57,7 +58,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
             ),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Annuler'))],
+        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: Text(AppLanguage.cancel))],
       ),
     );
   }
@@ -98,8 +99,8 @@ class _UserInformationPageState extends State<UserInformationPage> {
 
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Photo de profil mise à jour avec succès'),
+          SnackBar(
+            content: Text(AppLanguage.profilePhotoUpdated),
             backgroundColor: Colors.green,
           ),
         );
@@ -110,7 +111,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
         setState(() => _uploadingImage = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erreur lors de la mise à jour: ${e.toString()}'),
+            content: Text('${AppLanguage.errorUpdatingPhoto}: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -174,7 +175,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                         'assets/icons/back_arrow.svg',
                         width: 16,
                         height: 16,
-                        color: Theme.of(context).colorScheme.onPrimary,
+                        colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.onPrimary, BlendMode.srcIn),
                         placeholderBuilder: (context) => const Icon(Icons.arrow_back, size: 16),
                       ),
                     ),
@@ -186,7 +187,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                     flex: 2,
                     child: Center(
                       child: Text(
-                        'Informations personnelles',
+                        AppLanguage.personalInformation,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                         textAlign: TextAlign.center,
                       ),
@@ -239,7 +240,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                                       width: 112,
                                       height: 112,
                                       decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.5),
+                                        color: Colors.black.withValues(alpha: 0.5),
                                         shape: BoxShape.circle,
                                       ),
                                       child: const Center(
@@ -263,7 +264,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                                         color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal,
                                       shape: BoxShape.circle,
                                       boxShadow: [
-                                        BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(0, 2)),
+                                        BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 4, offset: const Offset(0, 2)),
                                       ],
                                     ),
                                     child: Padding(
@@ -272,7 +273,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                                         'assets/icons/edit.svg',
                                         width: 8,
                                         height: 8,
-                                        color: Colors.white,
+                                        colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn),
                                         placeholderBuilder: (_) => const Icon(Icons.edit, size: 14, color: Colors.white),
                                       ),
                                     ),
@@ -286,13 +287,13 @@ class _UserInformationPageState extends State<UserInformationPage> {
                         const SizedBox(height: 20),
 
                         // Info fields (left-aligned, reduced spacing, underlined labels)
-                        _infoField(label: 'Nom de la supérette', value: _user?.supermarketName ?? '—'),
+                        _infoField(label: AppLanguage.storeNameLabel, value: _user?.supermarketName ?? '—'),
                         const SizedBox(height: 10),
-                        _infoField(label: 'Nom et prénom du représentant', value: _user?.name ?? '—'),
+                        _infoField(label: AppLanguage.representativeNameLabel, value: _user?.name ?? '—'),
                         const SizedBox(height: 10),
-                        _infoField(label: 'Numéro de téléphone', value: _user?.phoneNumber ?? '—'),
+                        _infoField(label: AppLanguage.phone, value: _user?.phoneNumber ?? '—'),
                         const SizedBox(height: 10),
-                        _infoField(label: 'Adresse complète', value: _user?.locationUrl ?? '—'),
+                        _infoField(label: AppLanguage.address, value: _user?.locationUrl ?? '—'),
 
                         const SizedBox(height: 28),
 
@@ -310,7 +311,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                               // Open an edit form — simple placeholder page
                               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const _EditUserInformationPage()));
                             },
-                            child: const Text('Modifier mes informations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                            child: Text(AppLanguage.editMyInfo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                           ),
                         ),
 
@@ -365,9 +366,9 @@ class _EditUserInformationPage extends StatelessWidget {
             child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 16, height: 16, placeholderBuilder: (_) => const Icon(Icons.arrow_back, size: 16)),
           ),
         ),
-        title: const Text('Modifier mes informations'),
+        title: Text(AppLanguage.editMyInfo),
       ),
-      body: const Center(child: Padding(padding: EdgeInsets.all(16.0), child: Text('Formulaire d\'édition (à implémenter)'))),
+      body: Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text(AppLanguage.editFormNotImplemented))),
     );
   }
 

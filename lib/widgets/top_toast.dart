@@ -138,7 +138,7 @@ class _TopToastOverlayState extends State<_TopToastOverlay> with SingleTickerPro
                         width: double.infinity,
                         child: LinearProgressIndicator(
                           value: _progress,
-                          backgroundColor: widget.backgroundColor.withOpacity(0.5),
+                          backgroundColor: widget.backgroundColor.withValues(alpha: 0.5),
                           valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                         ),
                       ),

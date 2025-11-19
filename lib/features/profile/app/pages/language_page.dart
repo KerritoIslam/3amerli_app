@@ -125,7 +125,7 @@ class _LanguagePageState extends State<LanguagePage> {
                       width: 40,
                       height: 40,
                       alignment: Alignment.center,
-                      child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 18, height: 18, color: _darkGreen, placeholderBuilder: (_) => const Icon(Icons.arrow_back, color: _darkGreen)),
+                      child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 18, height: 18, colorFilter: ColorFilter.mode(_darkGreen, BlendMode.srcIn), placeholderBuilder: (_) => const Icon(Icons.arrow_back, color: _darkGreen)),
                     ),
                   ),
                   const Spacer(),
