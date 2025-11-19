@@ -1,0 +1,123 @@
+import 'package:bloc/bloc.dart';
+import 'package:amerli_app/features/auth/repository/auth_repository_impl.dart';
+import 'sign_up_state.dart';
+import 'package:amerli_app/features/auth/app/bloc/auth_bloc.dart';
+import 'package:amerli_app/features/auth/app/bloc/auth_event.dart';
+import 'package:amerli_app/core/config/injection.dart' show sl;
+import 'package:amerli_app/features/auth/domain/entities/supermarket.dart';
+import 'package:amerli_app/core/network/api_exception.dart' show ApiException;
+
+class SignUpCubit extends Cubit<SignUpState> {
+  final AuthRepositoryImpl repository;
+
+  SignUpCubit({required this.repository}) : super(const SignUpState());
+
+  void _safeEmit(SignUpState s) {
+    if (!isClosed) emit(s);
+  }
+
+  void setPhoneNumber(String phone) {
+    if (phone.trim().isEmpty) {
+      _safeEmit(state.copyWith(status: VerificationStatus.noNumberEntered, phoneNumber: ''));
+      return;
+    }
+    _safeEmit(state.copyWith(phoneNumber: phone, status: VerificationStatus.pending));
+  }
+
+  void setCountryCode(String code) {
+    _safeEmit(state.copyWith(countryCode: code));
+  }
+
+  Future<void> sendCode() async {
+    
+    if (state.phoneNumber.trim().isEmpty) {
+      _safeEmit(state.copyWith(status: VerificationStatus.noNumberEntered));
+      return;
+    }
+    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    try {
+      
+      await repository.sendOtp(state.phoneNumber);
+      
+  _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp));
+      print("111");
+      print(state.status);
+    } catch (e) {
+    _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Failed to send code'));
+    }
+  }
+
+  Future<void> verifyOtp(String otp) async {
+    if (otp.trim().length < 4) {
+      _safeEmit(state.copyWith(errorMessage: 'Code invalide'));
+      return;
+    }
+    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    try {
+      final isRegistered = await repository.validateOtp(state.phoneNumber, otp);
+      print("Is Registered : $isRegistered");
+      
+      // If registered, read cached user and dispatch login event
+      if (isRegistered) {
+        final userModel = await repository.readCachedUser();
+        print("User Model $userModel");
+        if (userModel != null) {
+          
+          final userEntity = userModel.toEntity();
+          final authBloc = sl<AuthBloc>();
+          if (userEntity.role == 'SUPERMARKET') {
+            authBloc.add(LogInEvent(Supermarket.fromUser(userEntity)));
+          } else {
+            authBloc.add(LogInEvent(userEntity));
+          }
+        }
+  _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
+      } else {
+        print("New User Detected");
+  _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.newUser));
+      }
+      print("Verification result: ${state.result}");
+    } catch (e) {
+    _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp, errorMessage: 'Vérification échouée'));
+    }
+  }
+
+  Future<void> registerProfile(Map<String, dynamic> profile) async {
+    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    try {
+      await repository.register(profile);
+      // After registration complete, read cached user and dispatch login only if we actually have a user
+      final userModel = await repository.readCachedUser();
+      if (userModel != null) {
+        final userEntity = userModel.toEntity();
+        final authBloc = sl<AuthBloc>();
+        if (userEntity.role == 'SUPERMARKET') {
+          authBloc.add(LogInEvent(Supermarket.fromUser(userEntity)));
+        } else {
+          authBloc.add(LogInEvent(userEntity));
+        }
+        _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
+      } else {
+        // No user saved -> treat as failure
+        _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Échec de l\'enregistrement'));
+        throw Exception('Registration did not produce a user');
+      }
+    } catch (e) {
+      // Prefer ApiException message when available
+      String err = 'Échec de l\'enregistrement';
+      if (e is ApiException) err = e.message;
+      _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: err));
+      rethrow; // rethrow so UI callers (that used .then/.catchError) receive the error
+    }
+  }
+
+  void reset() {
+    _safeEmit(const SignUpState());
+  }
+
+  /// Mark that we've started navigating to the profile completion page so
+  /// the UI doesn't repeat the navigation on subsequent builds.
+  void markCompletingProfile() {
+    _safeEmit(state.copyWith(result: AuthResult.completingProfileForSignUp));
+  }
+}

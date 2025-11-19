@@ -1,0 +1,22 @@
+<View
+android:id="@+id/a867e108661"
+android:layout_width="40dp"
+android:layout_height="40dp"
+android:background="@drawable/a867e108661"
+ />
+
+<!-- drawable/a867e108661.xml -->
+<vector
+xmlns:android="http://schemas.android.com/apk/res/android"
+xmlns:aapt="http://schemas.android.com/aapt"
+android:width="40dp"
+android:height="40dp"
+android:viewportWidth="40"
+android:viewportHeight="40"
+ >
+<group>
+<clip-path
+android:pathData="M0 0H40V40H0V0Z"
+/>
+</group>
+</vector>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "223696002991",
+    "project_id": "ammeli-9ae92",
+    "storage_bucket": "ammeli-9ae92.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:223696002991:android:6220c1c0b6a84381dbd95a",
+        "android_client_info": {
+          "package_name": "com.example.amerli_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAV7spv67QAU9Mu6zf-f73nCIzXL6cE4qs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
