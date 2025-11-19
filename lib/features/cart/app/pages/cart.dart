@@ -3,6 +3,7 @@ import 'package:amerli_app/widgets/bottom_cart_summary.dart';
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
@@ -31,11 +32,14 @@ class _CartView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Center(child:  Text('Mon Panier',style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-        fontWeight: FontWeight.bold,
-        color: Theme.of(context).colorScheme.tertiaryContainer,
-      )),)),
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) {
+        return Scaffold(
+          appBar: AppBar(title: Center(child:  Text(AppLanguage.myCart,style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.tertiaryContainer,
+          )),)),
       body: Padding(
         padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
         child: BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
@@ -85,7 +89,7 @@ class _CartView extends StatelessWidget {
             }).where((p) => p.quantity > 0).toList();
 
             if (productsInCart.isEmpty) {
-              return const Center(child: Text('Votre panier est vide'));
+              return Center(child: Text(AppLanguage.emptyCart));
             }
 
             // compute total
@@ -134,6 +138,8 @@ class _CartView extends StatelessWidget {
           });
         }),
       ),
+        );
+      },
     );
   }
 }

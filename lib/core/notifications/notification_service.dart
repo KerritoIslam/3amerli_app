@@ -206,15 +206,17 @@ class NotificationService {
       // Handle notification taps when app is completely closed
       RemoteMessage? initialMessage = await messaging.getInitialMessage();
       if (initialMessage != null) {
-        if (kDebugMode)
+        if (kDebugMode) {
           print('App opened from notification: ${initialMessage.messageId}');
+        }
         if (onNotificationTap != null) {
           onNotificationTap!(initialMessage);
         }
       }
     } catch (e) {
-      if (kDebugMode)
+      if (kDebugMode) {
         print('Firebase Messaging not configured or initialization failed: $e');
+      }
     }
   }
 
@@ -226,8 +228,9 @@ class NotificationService {
 
   Future<void> _attemptTokenRegistration(String token) async {
     if (_tokenRegistrationAttempts >= _maxRetryAttempts) {
-      if (kDebugMode)
+      if (kDebugMode) {
         print('Max retry attempts reached for token registration');
+      }
       return;
     }
 
@@ -238,8 +241,9 @@ class NotificationService {
         // Queue token for later when offline
         if (!_tokenQueue.contains(token)) {
           _tokenQueue.add(token);
-          if (kDebugMode)
+          if (kDebugMode) {
             print('Token queued for registration (offline): $token');
+          }
         }
         return;
       }
@@ -254,9 +258,10 @@ class NotificationService {
       await _processTokenQueue();
     } catch (e) {
       _tokenRegistrationAttempts++;
-      if (kDebugMode)
+      if (kDebugMode) {
         print(
             'Token registration attempt $_tokenRegistrationAttempts failed: $e');
+      }
 
       if (_tokenRegistrationAttempts < _maxRetryAttempts) {
         // Exponential backoff: 2^attempt seconds, max 30 seconds
@@ -410,8 +415,9 @@ class NotificationService {
     if (response.payload != null && onNotificationTap != null) {
       try {
         final payload = response.payload!;
-        if (kDebugMode)
+        if (kDebugMode) {
           print('Local notification tapped with payload: $payload');
+        }
 
         // Proper JSON parsing
         final Map<String, dynamic> payloadData = jsonDecode(payload);

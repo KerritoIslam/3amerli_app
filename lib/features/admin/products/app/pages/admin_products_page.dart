@@ -11,6 +11,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import '../../../brands/app/pages/admin_brands_page.dart';
 import 'package:amerli_app/features/catalog/app/pages/filters_page.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class AdminProductsPage extends StatefulWidget {
   const AdminProductsPage({super.key});
@@ -67,25 +68,28 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
   void _onDeleteProduct(String id) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Supprimer le produit'),
-        content: const Text('Êtes-vous sûr de vouloir supprimer ce produit ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AdminProductsBloc>().add(AdminProductsDeleteEvent(id));
-            },
-            child: const Text(
-              'Supprimer',
-              style: TextStyle(color: Colors.red),
+      builder: (context) => ValueListenableBuilder<AppLocale>(
+        valueListenable: AppLanguage.localeNotifier,
+        builder: (context, locale, _) => AlertDialog(
+          title: Text(AppLanguage.deleteProduct),
+          content: Text(AppLanguage.deleteProductConfirm),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLanguage.cancel),
             ),
-          ),
-        ],
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.read<AdminProductsBloc>().add(AdminProductsDeleteEvent(id));
+              },
+              child: Text(
+                AppLanguage.delete,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -95,39 +99,44 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Supprimer les produits'),
-        content: Text(
-            'Êtes-vous sûr de vouloir supprimer ${_selectedProductIds.length} produit(s) ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AdminProductsBloc>().add(
-                    AdminProductsDeleteMultipleEvent(
-                        _selectedProductIds.toList()),
-                  );
-              setState(() {
-                _selectedProductIds.clear();
-              });
-            },
-            child: const Text(
-              'Supprimer',
-              style: TextStyle(color: Colors.red),
+      builder: (context) => ValueListenableBuilder<AppLocale>(
+        valueListenable: AppLanguage.localeNotifier,
+        builder: (context, locale, _) => AlertDialog(
+          title: Text(AppLanguage.deleteProducts),
+          content: Text(
+              '${AppLanguage.deleteProductsConfirm} (${_selectedProductIds.length})'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLanguage.cancel),
             ),
-          ),
-        ],
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context.read<AdminProductsBloc>().add(
+                      AdminProductsDeleteMultipleEvent(
+                          _selectedProductIds.toList()),
+                    );
+                setState(() {
+                  _selectedProductIds.clear();
+                });
+              },
+              child: Text(
+                AppLanguage.delete,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AdminProductsBloc, AdminProductsState>(
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) => BlocListener<AdminProductsBloc, AdminProductsState>(
       listener: (context, state) {
         if (state is AdminProductsError) {
           ErrorHandler.showError(context, state.message);
@@ -159,7 +168,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                           var countText = '';
                           if (state is AdminProductsLoaded) countText = ' (${state.products.length})';
                           return Text(
-                            'Produits$countText',
+                            '${AppLanguage.products}$countText',
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 22,
@@ -221,7 +230,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                         context.push('/admin/products/add');
                       },
                       icon: const Icon(Icons.add, size: 18),
-                      label: const Text('Ajouter'),
+                      label: Text(AppLanguage.add),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Colors.white,
@@ -248,7 +257,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                   child: Row(
                     children: [
                       Text(
-                        '${_selectedProductIds.length} sélectionné(s)',
+                        '${_selectedProductIds.length} ${AppLanguage.selected}',
                         style: TextStyle(
                           color: Colors.grey.shade700,
                           fontSize: 14,
@@ -258,9 +267,9 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                       TextButton.icon(
                         onPressed: _onDeleteSelected,
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        label: const Text(
-                          'Supprimer',
-                          style: TextStyle(color: Colors.red),
+                        label: Text(
+                          AppLanguage.delete,
+                          style: const TextStyle(color: Colors.red),
                         ),
                       ),
                     ],
@@ -297,7 +306,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'Aucun produit trouvé',
+                                  AppLanguage.noProductsFound,
                                   style: TextStyle(
                                     fontSize: 16,
                                     color: Colors.grey.shade600,
@@ -362,20 +371,20 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                     ),
                                   ),
                                   const SizedBox(width: 6),
-                                  const Expanded(
+                                  Expanded(
                                     flex: 4,
                                     child: Text(
-                                      'Produit',
+                                      AppLanguage.product,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 10,
                                       ),
                                     ),
                                   ),
-                                  const Expanded(
+                                  Expanded(
                                     flex: 2,
                                     child: Text(
-                                      'Prix',
+                                      AppLanguage.price,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 11,
@@ -383,10 +392,10 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
-                                  const Expanded(
+                                  Expanded(
                                     flex: 2,
                                     child: Text(
-                                      'Stock',
+                                      AppLanguage.stock,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 11,
@@ -394,10 +403,10 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                       textAlign: TextAlign.center,
                                     ),
                                   ),
-                                  const SizedBox(
+                                  SizedBox(
                                     width: 50,
                                     child: Text(
-                                      'Actions',
+                                      AppLanguage.actions,
                                       style: TextStyle(
                                         fontWeight: FontWeight.w600,
                                         fontSize: 11,
@@ -464,6 +473,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -504,8 +514,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
               context.push('/admin/categories');
             });
           },
-          child: const Text(
-            'Gérer les catégories',
+          child: Text(
+            AppLanguage.manageCategories,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -520,8 +530,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
               Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AdminBrandsPage()));
             });
           },
-          child: const Text(
-            'Gérer les marques',
+          child: Text(
+            AppLanguage.manageBrands,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -534,8 +544,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           onTap: () {
             // TODO: Implement export functionality
           },
-          child: const Text(
-            'Exporter les produits',
+          child: Text(
+            AppLanguage.exportProducts,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -548,8 +558,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           onTap: () {
             // TODO: Implement settings functionality
           },
-          child: const Text(
-            'Paramètres',
+          child: Text(
+            AppLanguage.settings,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,

@@ -3,6 +3,7 @@ import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 import 'package:amerli_app/features/catalog/app/widgets/category_grid.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
@@ -158,13 +159,18 @@ class _CatalogPageState extends State<CatalogPage> {
             child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Text('Bienvenue sur', style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
-                const SizedBox(width: 8),
-                // Use the correct asset path (logo is under assets/logo/ in the project)
-                SizedBox(height: 32 , width: 116, child: Image.asset('assets/logo/full_logo.png', width: 116, height: 116)),
-              ],
+            ValueListenableBuilder<AppLocale>(
+              valueListenable: AppLanguage.localeNotifier,
+              builder: (context, locale, _) {
+                return Row(
+                  children: [
+                    Text(AppLanguage.welcomeTo, style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 24)),
+                    const SizedBox(width: 8),
+                    // Use the correct asset path (logo is under assets/logo/ in the project)
+                    SizedBox(height: 32 , width: 116, child: Image.asset('assets/logo/full_logo.png', width: 116, height: 116)),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 15),
 

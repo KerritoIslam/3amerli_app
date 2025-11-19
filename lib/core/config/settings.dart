@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../utils/constants/app_language.dart';
+
 /// App settings stored in SharedPreferences.
 ///
 /// - themeMode is stored as int: 0 = system, 1 = light, 2 = dark
@@ -80,6 +82,15 @@ class Settings {
   Future<void> setLanguage(String code) async {
     languageNotifier.value = code;
     await _prefs.setString(_kLanguage, code);
+    
+    // Update AppLanguage.current when language changes
+    if (code == 'fr') {
+      AppLanguage.current = AppLocale.fr;
+    } else if (code == 'ar') {
+      AppLanguage.current = AppLocale.ar;
+    } else {
+      AppLanguage.current = AppLocale.en;
+    }
   }
 
   /// Convenience: toggle between light/dark (does not change system)

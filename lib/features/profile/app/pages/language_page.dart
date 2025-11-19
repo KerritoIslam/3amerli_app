@@ -1,43 +1,108 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class LanguagePage extends StatelessWidget {
+import '../../../../core/config/settings.dart';
+import '../../../../core/config/injection.dart' as di;
+import '../../../../utils/constants/app_language.dart';
+
+class LanguagePage extends StatefulWidget {
   const LanguagePage({super.key});
 
+  @override
+  State<LanguagePage> createState() => _LanguagePageState();
+}
+
+class _LanguagePageState extends State<LanguagePage> {
   static const Color _darkGreen = Color(0xFF083B2E);
 
+  @override
+  void initState() {
+    super.initState();
+    // Listen to language changes to update the UI
+    AppLanguage.localeNotifier.addListener(_onLanguageChanged);
+  }
+
+  @override
+  void dispose() {
+    AppLanguage.localeNotifier.removeListener(_onLanguageChanged);
+    super.dispose();
+  }
+
+  void _onLanguageChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String _getLanguageCode() {
+    final current = AppLanguage.current;
+    switch (current) {
+      case AppLocale.fr:
+        return 'FR';
+      case AppLocale.ar:
+        return 'AR';
+      case AppLocale.en:
+        return 'EN';
+    }
+  }
+
   void _openLanguageSelector(BuildContext context) {
+    final settings = di.sl<Settings>();
+    
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Choisir la langue'),
+        title: Text(AppLanguage.selectLanguage),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('Français (FR)'),
-              onTap: () {
+              leading: const Text('🇫🇷', style: TextStyle(fontSize: 24)),
+              title: Text(AppLanguage.french),
+              onTap: () async {
                 Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Langue définie sur FR')));
+                await settings.setLanguage('fr');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLanguage.languageUpdated)),
+                  );
+                }
               },
             ),
             ListTile(
-              title: const Text('English (EN)'),
-              onTap: () {
+              leading: const Text('🇬🇧', style: TextStyle(fontSize: 24)),
+              title: Text(AppLanguage.english),
+              onTap: () async {
                 Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Language set to EN')));
+                await settings.setLanguage('en');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLanguage.languageUpdated)),
+                  );
+                }
               },
             ),
             ListTile(
-              title: const Text('العربية (AR)'),
-              onTap: () {
+              leading: const Text('🇸🇦', style: TextStyle(fontSize: 24)),
+              title: Text(AppLanguage.arabic),
+              onTap: () async {
                 Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم تغيير اللغة إلى العربية')));
+                await settings.setLanguage('ar');
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(AppLanguage.languageUpdated)),
+                  );
+                }
               },
             ),
           ],
         ),
-        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Fermer'))],
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(AppLanguage.close),
+          ),
+        ],
       ),
     );
   }
@@ -64,7 +129,7 @@ class LanguagePage extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Center(child: Text('Language', style: const TextStyle(fontFamily: 'Geist', fontWeight: FontWeight.w700, fontSize: 20, color: _darkGreen))),
+                  Center(child: Text(AppLanguage.language, style: const TextStyle(fontFamily: 'Geist', fontWeight: FontWeight.w700, fontSize: 20, color: _darkGreen))),
                   const Spacer(flex: 2),
                 ],
               ),
@@ -90,13 +155,13 @@ class LanguagePage extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Expanded(child: Text('Modifier la langue', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
+                      Expanded(child: Text(AppLanguage.selectLanguage, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
                       Container(
                         width: 48,
                         height: 28,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(12)),
-                        child: const Text('FR', style: TextStyle(fontWeight: FontWeight.w700, color: _darkGreen)),
+                        child: Text(_getLanguageCode(), style: const TextStyle(fontWeight: FontWeight.w700, color: _darkGreen)),
                       )
                     ],
                   ),

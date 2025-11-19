@@ -70,14 +70,14 @@ class _MyAppState extends State<MyApp> {
     _settings = di.sl<Settings>();
     _themeMode = _settings.themeModeNotifier.value;
 
+    // Initialize router once in initState
+    final authBloc = di.sl<AuthBloc>();
+    final localStorage = di.sl<LocalStorage>();
+    _router = createRouter(authBloc: authBloc, localStorage: localStorage);
+
     // Apply language and listen for changes
     _applyLanguage(_settings.language);
-    _settings.languageNotifier.addListener(() {
-      _applyLanguage(_settings.language);
-      if (mounted) {
-        setState(() {});
-      }
-    });
+    _settings.languageNotifier.addListener(_onLanguageChanged);
 
     // Listen for theme changes
     _settings.themeModeNotifier.addListener(() {
@@ -112,18 +112,22 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
+  void _onLanguageChanged() {
+    // Update AppLanguage without triggering setState to avoid unnecessary rebuilds
+    // The ValueListenableBuilder in build() will handle the UI update
+    _applyLanguage(_settings.language);
+  }
+
   @override
   void dispose() {
-    // Settings not disposed here as it's a singleton; we only remove listeners if needed.
-    // Note: ValueNotifier listeners added above are lambdas; no direct handle to remove.
+    // Remove language listener to prevent memory leaks
+    _settings.languageNotifier.removeListener(_onLanguageChanged);
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final authBloc = di.sl<AuthBloc>();
-    final localStorage = di.sl<LocalStorage>();
-    _router = createRouter(authBloc: authBloc, localStorage: localStorage);
 
     // Attempt auto-auth on startup: if tokens exist, try refresh and dispatch login
     Future.microtask(() async {
@@ -174,20 +178,44 @@ class _MyAppState extends State<MyApp> {
       }
     });
     // Provide app-scoped blocs at the root so children can use context.read<T>()
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: di.sl<CatalogBloc>()),
-        BlocProvider.value(value: di.sl<AuthBloc>()),
-        BlocProvider.value(value: di.sl<NotificationsBloc>()),
-      ],
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: '3amerli',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: _themeMode,
-        routerConfig: _router,
-      ),
+    // Wrap everything in ValueListenableBuilder to force complete rebuild on language change
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, currentLocale, _) {
+        // Use key on MultiBlocProvider to force complete widget tree rebuild
+        return MultiBlocProvider(
+          key: ValueKey('app_locale_${currentLocale.name}'),
+          providers: [
+            BlocProvider.value(value: di.sl<CatalogBloc>()),
+            BlocProvider.value(value: di.sl<AuthBloc>()),
+            BlocProvider.value(value: di.sl<NotificationsBloc>()),
+          ],
+          child: Directionality(
+            textDirection: currentLocale == AppLocale.ar 
+                ? TextDirection.rtl 
+                : TextDirection.ltr,
+            child: MaterialApp.router(
+              key: ValueKey('material_app_${currentLocale.name}'), // Force complete rebuild on language change
+              debugShowCheckedModeBanner: false,
+              title: '3amerli',
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: _themeMode,
+              routerConfig: _router,
+              locale: Locale(currentLocale.name),
+              // Ensure RTL support for Arabic - double wrap for maximum compatibility
+              builder: (context, child) {
+                return Directionality(
+                  textDirection: currentLocale == AppLocale.ar 
+                      ? TextDirection.rtl 
+                      : TextDirection.ltr,
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 

@@ -45,8 +45,8 @@ class _AdminPageState extends State<AdminPage> {
     final navItems = [
       NavItem(asset: "assets/icons/home.svg", label: 'Dashboard'),
       NavItem(asset: "assets/icons/orders.svg", label: 'Commandes'),
-      NavItem(asset: "assets/icons/panier.svg", label: 'Produits'),
-      NavItem(asset: "assets/icons/profil.svg", label: 'Utilisateurs'),
+      NavItem(asset: "assets/icons/bills.svg", label: 'Produits'),
+      NavItem(asset: "assets/icons/users.svg", label: 'Utilisateurs'),
     ];
 
     return MultiBlocProvider(

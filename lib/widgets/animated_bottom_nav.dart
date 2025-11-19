@@ -34,22 +34,26 @@ class AnimatedBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 28 , vertical: 13),
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      decoration: BoxDecoration(
-        // Use the requested gray with 80% opacity: alpha CC, rgb 80/80/80
-        color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
-        borderRadius: BorderRadius.circular(30),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(
-          items.length,
-          (index) => NavBarItem(
-            item: items[index],
-            isSelected: selectedIndex == index,
-            onTap: () => onItemSelected(index),
+    // Force LTR direction for bottom nav bar regardless of app language
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 28 , vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        decoration: BoxDecoration(
+          // Use the requested gray with 80% opacity: alpha CC, rgb 80/80/80
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(
+            items.length,
+            (index) => NavBarItem(
+              item: items[index],
+              isSelected: selectedIndex == index,
+              onTap: () => onItemSelected(index),
+            ),
           ),
         ),
       ),

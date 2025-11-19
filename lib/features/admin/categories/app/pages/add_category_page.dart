@@ -7,6 +7,8 @@ import 'dart:io';
 import '../../domain/entities/category.dart';
 import '../bloc/admin_categories_bloc.dart';
 import '../bloc/admin_categories_event.dart';
+import '../../domain/repositories/admin_categories_repository.dart';
+import 'package:amerli_app/core/config/injection.dart' as di;
 
 class AddCategoryPage extends StatefulWidget {
   final String? categoryId;
@@ -24,6 +26,55 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     TextEditingController(),
   ];
   String? _imagePath;
+  late final AdminCategoriesRepository _categoriesRepository;
+  bool _isLoadingCategory = false;
+  Category? _existingCategory;
+
+  @override
+  void initState() {
+    super.initState();
+    _categoriesRepository = di.sl<AdminCategoriesRepository>();
+    if (widget.categoryId != null) {
+      _loadCategoryData();
+    }
+  }
+
+  Future<void> _loadCategoryData() async {
+    if (widget.categoryId == null) return;
+    
+    setState(() => _isLoadingCategory = true);
+    try {
+      final category = await _categoriesRepository.getCategory(widget.categoryId!);
+      final subCategories = await _categoriesRepository.getSubCategories(categoryId: widget.categoryId!);
+      
+      setState(() {
+        _existingCategory = category;
+        // Pre-fill form fields
+        _nameController.text = category.name;
+        _imagePath = category.imageUrl;
+        
+        // Load subcategories
+        _subCategoryControllers.clear();
+        if (subCategories.isEmpty) {
+          _subCategoryControllers.add(TextEditingController());
+        } else {
+          for (var subCat in subCategories) {
+            final controller = TextEditingController(text: subCat.name);
+            _subCategoryControllers.add(controller);
+          }
+        }
+        
+        _isLoadingCategory = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingCategory = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de chargement de la catégorie: $e')),
+        );
+      }
+    }
+  }
 
   @override
   void dispose() {

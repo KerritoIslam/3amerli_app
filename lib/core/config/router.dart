@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kDebugMode;
+import '../../utils/constants/app_language.dart';
 // import 'package:amerli_app/features/auth/app/pages/complete_profile_page.dart';
 import 'package:amerli_app/features/auth/app/pages/sign_up_page.dart';
 import 'package:amerli_app/features/home/app/pages/home_page.dart';
@@ -62,10 +63,39 @@ class _StreamChangeNotifier extends ChangeNotifier {
   }
 }
 
+// Combined notifier that listens to multiple ChangeNotifiers
+class _CombinedChangeNotifier extends ChangeNotifier {
+  final List<ChangeNotifier> _notifiers;
+  final List<VoidCallback> _listeners = [];
+
+  _CombinedChangeNotifier(this._notifiers) {
+    for (final notifier in _notifiers) {
+      void listener() => notifyListeners();
+      notifier.addListener(listener);
+      _listeners.add(listener);
+    }
+  }
+
+  @override
+  void dispose() {
+    for (int i = 0; i < _notifiers.length; i++) {
+      _notifiers[i].removeListener(_listeners[i]);
+    }
+    super.dispose();
+  }
+}
+
 GoRouter createRouter(
     {required AuthBloc authBloc, required LocalStorage localStorage}) {
   // Convert the authBloc stream into a ChangeNotifier GoRouter can listen to
-  final refresh = _StreamChangeNotifier(authBloc.stream);
+  final authRefresh = _StreamChangeNotifier(authBloc.stream);
+  
+  // Also listen to language changes to refresh routes when language changes
+  // Create a combined notifier that listens to both auth and language changes
+  final combinedRefresh = _CombinedChangeNotifier([
+    authRefresh,
+    AppLanguage.localeNotifier, // Listen to language changes
+  ]);
 
   return GoRouter(
     // Start the app at the authentication entrypoint. The previous root
@@ -73,7 +103,7 @@ GoRouter createRouter(
     // screen until a redirect happened; using '/auth' makes the initial
     // visible page explicit and avoids a blank frame on startup.
     initialLocation: '/auth',
-    refreshListenable: refresh,
+    refreshListenable: combinedRefresh,
     redirect: (context, state) {
       final loc = state.uri.path;
       final fullUri = state.uri.toString();

@@ -80,7 +80,7 @@ class _CategoryGridState extends State<CategoryGrid> {
                       )
                     : null,
               );
-            }).toList(),
+            }),
             // Add "..." as plain text in the 4th row if there are more categories
             if (widget.showMoreIndicator)
               Padding(

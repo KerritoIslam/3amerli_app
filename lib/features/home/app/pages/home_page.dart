@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:amerli_app/widgets/animated_bottom_nav.dart';
 import 'package:amerli_app/features/catalog/app/pages/catalog_page.dart';
 import 'package:amerli_app/features/profile/app/pages/profile_page.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -36,12 +37,15 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final navItems = [
-  NavItem(asset: "assets/icons/home.svg", label: 'Accueil'),
-  NavItem(asset: "assets/icons/panier.svg", label: 'Panier'),
-  NavItem(asset: "assets/icons/orders.svg", label: 'Commandes'),
-  NavItem(asset: "assets/icons/profil.svg", label: 'Profil'),
-    ];
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) {
+        final navItems = [
+          NavItem(asset: "assets/icons/home.svg", label: AppLanguage.home),
+          NavItem(asset: "assets/icons/panier.svg", label: AppLanguage.cart),
+          NavItem(asset: "assets/icons/orders.svg", label: AppLanguage.ordersNav),
+          NavItem(asset: "assets/icons/profil.svg", label: AppLanguage.profile),
+        ];
 
     return Scaffold(
       // Prevent scaffold from resizing when keyboard appears
@@ -88,6 +92,8 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
+        );
+      },
     );
   }
 }

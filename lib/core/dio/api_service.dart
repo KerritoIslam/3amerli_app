@@ -16,7 +16,19 @@ class ApiService {
     // Ensure validateStatus is set even if dio instance is provided
     _dio.options.validateStatus = (status) => status != null && status < 500;
 
+    // Register auth interceptor first (must be before logging to ensure token is available)
+    if (authService != null) {
+      _dio.interceptors.add(AuthInterceptor(authService: authService, dio: _dio));
+    } else {
+      // default headers
+      _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
+        options.headers['Accept'] = 'application/json';
+        return handler.next(options);
+      }));
+    }
+
     // Add concise and colorized status logger for every request/response/error
+    // Added after auth interceptor so authorization header is available
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -28,8 +40,9 @@ class ApiService {
             final path = options.path;
             final qp = options.queryParameters.isNotEmpty ? options.queryParameters : null;
             final data = options.data;
+            final authHeader = options.headers['Authorization'];
             // ignore: avoid_print
-            print('$yellow[HTTP REQUEST] $method $path | query:$qp | data:$data$reset');
+            print('$yellow[HTTP REQUEST] $method $path | query:$qp | data:$data | auth:${authHeader ?? 'none'}$reset');
           } catch (_) {}
           return handler.next(options);
         },
@@ -62,8 +75,9 @@ class ApiService {
           try {
             final qp = error.requestOptions.queryParameters.isNotEmpty ? error.requestOptions.queryParameters : null;
             final reqData = error.requestOptions.data;
+            final authHeader = error.requestOptions.headers['Authorization'];
             // ignore: avoid_print
-            print('$yellow[HTTP ERROR - REQUEST] $method $path | query:$qp | data:$reqData$reset');
+            print('$yellow[HTTP ERROR - REQUEST] $method $path | query:$qp | data:$reqData | auth:${authHeader ?? 'none'}$reset');
           } catch (_) {}
 
           // Response info (green)
@@ -85,17 +99,6 @@ class ApiService {
 
     // Optional: verbose Dio logging (kept for deeper debugging)
     _dio.interceptors.add(LogInterceptor(request: true, requestBody: true, responseBody: false, responseHeader: false));
-
-    // Register auth interceptor if provided
-    if (authService != null) {
-      _dio.interceptors.add(AuthInterceptor(authService: authService, dio: _dio));
-    } else {
-      // default headers
-      _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
-        options.headers['Accept'] = 'application/json';
-        return handler.next(options);
-      }));
-    }
   }
 
   Dio get client => _dio;

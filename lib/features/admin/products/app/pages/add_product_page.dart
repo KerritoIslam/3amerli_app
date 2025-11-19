@@ -13,6 +13,7 @@ import 'package:amerli_app/features/admin/categories/domain/repositories/admin_c
 import 'package:amerli_app/features/admin/categories/domain/entities/category.dart';
 import 'package:amerli_app/features/admin/brands/domain/repositories/admin_brands_repository.dart';
 import 'package:amerli_app/features/admin/brands/domain/entities/brand.dart';
+import '../../domain/repositories/admin_products_repository.dart';
 // import 'package:amerli_app/utils/constants/app_colors.dart';
 
 class AddProductPage extends StatefulWidget {
@@ -51,9 +52,12 @@ class _AddProductPageState extends State<AddProductPage> {
   bool _isLoadingData = false;
   late final AdminCategoriesRepository _categoriesRepository;
   late final AdminBrandsRepository _brandsRepository;
+  late final AdminProductsRepository _productsRepository;
   final List<String> _specifications = [];
   final TextEditingController _specController = TextEditingController();
   DateTime? _expirationDate;
+  bool _isLoadingProduct = false;
+  Product? _existingProduct;
 
   // Step 2 fields
   final TextEditingController _priceController = TextEditingController();
@@ -68,7 +72,17 @@ class _AddProductPageState extends State<AddProductPage> {
     super.initState();
     _categoriesRepository = di.sl<AdminCategoriesRepository>();
     _brandsRepository = di.sl<AdminBrandsRepository>();
-    _loadCategoriesAndBrands();
+    _productsRepository = di.sl<AdminProductsRepository>();
+    _initializeData();
+  }
+
+  Future<void> _initializeData() async {
+    // Load categories and brands first
+    await _loadCategoriesAndBrands();
+    // Then load product data if editing
+    if (widget.productId != null) {
+      await _loadProductData();
+    }
   }
 
   Future<void> _loadCategoriesAndBrands() async {
@@ -86,6 +100,55 @@ class _AddProductPageState extends State<AddProductPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur de chargement: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadProductData() async {
+    if (widget.productId == null) return;
+    
+    setState(() => _isLoadingProduct = true);
+    try {
+      final product = await _productsRepository.getProductById(widget.productId!);
+      setState(() {
+        _existingProduct = product;
+        // Pre-fill form fields
+        _nameController.text = product.name;
+        // Find brand ID by name
+        final brand = _brands.firstWhere(
+          (b) => b.name == product.brand,
+          orElse: () => Brand(id: '', name: ''),
+        );
+        if (brand.id.isNotEmpty) _selectedBrandId = brand.id;
+        
+        _quantityController.text = product.quantityPerLot.toString();
+        
+        // Find category ID by name
+        final category = _categories.firstWhere(
+          (c) => c.name == product.category,
+          orElse: () => Category(id: '', name: '', description: '', imageUrl: null, productCount: 0, createdAt: DateTime.now(), updatedAt: DateTime.now()),
+        );
+        if (category.id.isNotEmpty) _selectedCategoryId = category.id;
+        
+        _specifications.clear();
+        _specifications.addAll(product.specifications);
+        _expirationDate = product.expirationDate;
+        _priceController.text = product.pricePerLot.toString();
+        _availableQuantityController.text = product.availableQuantity.toString();
+        
+        // Add existing product images (URLs) to the images list
+        _images.clear();
+        _images.addAll(product.images);
+        _mainImageIndex = product.mainImageIndex;
+        
+        _isLoadingProduct = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingProduct = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur de chargement du produit: $e')),
         );
       }
     }
@@ -191,11 +254,21 @@ class _AddProductPageState extends State<AddProductPage> {
       final String productId = widget.productId ??
           'PRD${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
+      // Get brand and category NAMES from selected IDs
+      final String brandName = _brands.firstWhere(
+        (b) => b.id == _selectedBrandId,
+        orElse: () => Brand(id: '', name: ''),
+      ).name;
+      final String categoryName = _categories.firstWhere(
+        (c) => c.id == _selectedCategoryId,
+        orElse: () => Category(id: '', name: '', description: '', imageUrl: null, productCount: 0, createdAt: DateTime.now(), updatedAt: DateTime.now()),
+      ).name;
+
       final product = Product(
         id: productId,
         name: _nameController.text,
-        category: _selectedCategoryId ?? '', // Use category ID (can be empty for edit)
-        brand: _selectedBrandId ?? '', // Use brand ID (can be empty for edit)
+        category: categoryName, // Use category NAME
+        brand: brandName, // Use brand NAME
         quantityPerLot: int.tryParse(_quantityController.text) ?? 0,
         specifications: _specifications,
         expirationDate: _expirationDate,

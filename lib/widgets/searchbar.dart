@@ -31,15 +31,17 @@ class _AppSearchbarState extends State<AppSearchbar>
 
   @override
   Widget build(BuildContext context) {
-    return AppTextField(
-      
-      trailing: InkWell(
-        onTap: widget.onFilterTap ?? () => context.push('/filters'),
-        child: SvgPicture.asset("assets/icons/filter_icon.svg",color: Theme.of(context).colorScheme.primary),
+    // Force LTR direction for search bar regardless of app language
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: AppTextField(
+        trailing: InkWell(
+          onTap: widget.onFilterTap ?? () => context.push('/filters'),
+          child: SvgPicture.asset("assets/icons/filter_icon.svg",color: Theme.of(context).colorScheme.primary),
+        ),
+        prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg",color: Theme.of(context).colorScheme.primary),
+        onChanged: widget.onChanged,
       ),
-      prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg",color: Theme.of(context).colorScheme.primary),
-      onChanged: widget.onChanged,
-      
     );
   }
 }
