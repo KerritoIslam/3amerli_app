@@ -128,45 +128,48 @@ class _InvoicesPageState extends State<InvoicesPage> {
             const SizedBox(height: 8),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Row(
-                children: [
-                  InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: SvgPicture.asset(
-                        'assets/icons/back_arrow.svg',
-                        width: 16,
-                        height: 16,
-                        color: Theme.of(context).colorScheme.onPrimary,
-                        placeholderBuilder: (context) => Icon(
-                          Icons.arrow_back,
-                          size: 16,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.tertiaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset(
+                          'assets/icons/back_arrow.svg',
+                          width: 16,
+                          height: 16,
                           color: Theme.of(context).colorScheme.onPrimary,
+                          placeholderBuilder: (context) => Icon(
+                            Icons.arrow_back,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        'Mes Factures',
-                        style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          'Mes Factures',
+                          style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
                       ),
                     ),
-                  ),
 
-                  // balance spacing with an invisible box same as back button
-                  const SizedBox(width: 40, height: 40),
-                ],
+                    // balance spacing with an invisible box same as back button
+                    const SizedBox(width: 40, height: 40),
+                  ],
+                ),
               ),
             ),
 

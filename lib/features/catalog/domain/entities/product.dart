@@ -23,6 +23,14 @@ class Product extends Equatable {
   final bool isFavorit;
   // Quantity of this product currently in the cart
   final int quantity;
+  // Love/favorite count from other users
+  final int? loveCount;
+  // Quantity per batch for bulk orders
+  final int? quantityPerBatch;
+  // Product specifications list
+  final List<String>? specifications;
+  // Category name
+  final String? category;
 
   const Product({
     required this.id,
@@ -32,14 +40,36 @@ class Product extends Equatable {
     required this.stock,
     this.sellerId,
     this.soldBy,
-  this.sellerName,
+    this.sellerName,
     this.pics = const [],
     this.brand,
     this.markId,
     this.isFavorit = false,
     this.quantity = 0,
+    this.loveCount,
+    this.quantityPerBatch,
+    this.specifications,
+    this.category,
   });
 
   @override
-  List<Object?> get props => [id, name, description, price, stock, sellerId, soldBy, sellerName, pics, brand, markId, isFavorit, quantity];
+  List<Object?> get props => [
+        id,
+        name,
+        description,
+        price,
+        stock,
+        sellerId,
+        soldBy,
+        sellerName,
+        pics,
+        brand,
+        markId,
+        isFavorit,
+        quantity,
+        loveCount,
+        quantityPerBatch,
+        specifications,
+        category
+      ];
 }

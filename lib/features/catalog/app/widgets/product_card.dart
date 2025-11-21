@@ -49,6 +49,7 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   void initState() {
+    print("the image url is : 123123 : ${widget.imageUrl}");
     super.initState();
     _quantity = 1;
     _localFavorite = widget.isFavorite;

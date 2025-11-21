@@ -19,7 +19,7 @@ import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
 import 'package:amerli_app/features/auth/domain/entities/user.dart';
 import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
-import 'package:amerli_app/features/profile/app/pages/user_information_page.dart';
+
 import 'package:amerli_app/features/profile/app/pages/support_and_aide_page.dart';
 import 'package:amerli_app/features/profile/app/pages/language_page.dart';
 import 'package:amerli_app/features/profile/app/pages/invoices_page.dart';
@@ -267,8 +267,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             } catch (_) {}
                           }
 
-                          Navigator.of(context).push(MaterialPageRoute(
-                              builder: (_) => UserInformationPage(user: user)));
+                          context.push('/profile/info', extra: user);
                         } catch (_) {}
                       },
                     ),

@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:amerli_app/widgets/icon_circle.dart';
 // inset shadow removed — no external dependency
@@ -6,11 +5,13 @@ import 'package:amerli_app/widgets/icon_circle.dart';
 class NavItem {
   /// SVG asset path to use for the icon. If null, [dataIcon] will be used.
   final String? asset;
+
   /// Fallback IconData when [asset] is null.
   final IconData? dataIcon;
   final String label;
 
-  NavItem({this.asset, this.dataIcon, required this.label}) : assert(asset != null || dataIcon != null);
+  NavItem({this.asset, this.dataIcon, required this.label})
+      : assert(asset != null || dataIcon != null);
 }
 
 /// A simple animated bottom navigation bar.
@@ -33,11 +34,11 @@ class AnimatedBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Force LTR direction for bottom nav bar regardless of app language
+    // Allow bottom nav bar to respect app's text direction (RTL in Arabic)
     return Directionality(
-      textDirection: TextDirection.ltr,
+      textDirection: Directionality.of(context),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 28 , vertical: 13),
+        margin: const EdgeInsets.symmetric(horizontal: 28, vertical: 13),
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
         decoration: BoxDecoration(
           // Use the requested gray with 80% opacity: alpha CC, rgb 80/80/80
@@ -87,19 +88,23 @@ class _NavBarItemState extends State<NavBarItem> {
       child: Builder(builder: (context) {
         final animated = Container(
           height: 40,
-          padding: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
             boxShadow: [
               if (widget.isSelected)
                 BoxShadow(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.5),
                   blurRadius: 0.3,
                   offset: const Offset(0, -0.3),
                 )
             ],
             // Show the selected background instantly when selected so
             // its color doesn't animate/darken during the label expansion.
-            color: widget.isSelected ? Theme.of(context).colorScheme.onPrimary : Colors.transparent,
+            color: widget.isSelected
+                ? Theme.of(context).colorScheme.onPrimary
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(25),
           ),
           child: Row(
@@ -107,7 +112,10 @@ class _NavBarItemState extends State<NavBarItem> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               // Circular red background with white icon (always red per request)
-              IconCircle(asset: widget.item.asset, dataIcon: widget.item.dataIcon, isSelected: widget.isSelected),
+              IconCircle(
+                  asset: widget.item.asset,
+                  dataIcon: widget.item.dataIcon,
+                  isSelected: widget.isSelected),
 
               // Animated label that appears when selected. The label's
               // container height is fixed to the circle diameter so the
@@ -118,14 +126,16 @@ class _NavBarItemState extends State<NavBarItem> {
                 alignment: Alignment.centerLeft,
                 child: widget.isSelected
                     ? Padding(
-                        padding: const EdgeInsets.only(left: 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: SizedBox(
                           height: 40,
                           child: Center(
                             child: Text(
                               widget.item.label,
                               style: TextStyle(
-                                color: Theme.of(context).colorScheme.tertiaryContainer,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .tertiaryContainer,
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
@@ -200,11 +210,13 @@ class _InnerShadowPainter extends CustomPainter {
   final Color color;
   final double blur;
 
-  _InnerShadowPainter({required this.radius, required this.color, required this.blur});
+  _InnerShadowPainter(
+      {required this.radius, required this.color, required this.blur});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final rrect = RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius));
+    final rrect =
+        RRect.fromRectAndRadius(Offset.zero & size, Radius.circular(radius));
     // Clip to rounded rect so gradients don't paint outside.
     canvas.save();
     canvas.clipRRect(rrect);
@@ -254,7 +266,9 @@ class _InnerShadowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _InnerShadowPainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.radius != radius || oldDelegate.blur != blur;
+    return oldDelegate.color != color ||
+        oldDelegate.radius != radius ||
+        oldDelegate.blur != blur;
   }
 }
 

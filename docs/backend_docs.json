@@ -1368,7 +1368,7 @@
                     "description": "The quantity of the product per batch.",
                     "example": 20
                   },
-                  "specifications": {
+                  "specification": {
                     "type": "string",
                     "description": "Optional: Product specifications, submitted as a single comma-separated string (e.g., \"Color: Blue, Weight: 2kg\").",
                     "example": "Material: Plastic, Screen: 6.1 inch"
@@ -1933,6 +1933,11 @@
                     "type": "string",
                     "format": "binary",
                     "description": "Category picture file"
+                  },
+                  "parentId": {
+                    "type": "number",
+                    "description": "Parent category ID (optional)",
+                    "example": 1
                   }
                 },
                 "required": [
@@ -4047,15 +4052,13 @@
             "example": true,
             "description": "Whether the product is loved (favorited) by the current user"
           },
-          "picture": {
-            "type": "string",
+          "pictures": {
             "example": "https://example.com/image.png",
-            "description": "URL of the main picture of the product"
-          },
-          "buyerCount": {
-            "type": "number",
-            "example": 10,
-            "description": "Number of buyers for the product"
+            "description": "URL of the main picture of the product",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -4065,8 +4068,7 @@
           "brand",
           "category",
           "isLoved",
-          "picture",
-          "buyerCount"
+          "pictures"
         ]
       },
       "PaginatedProductResDtoResponse": {
@@ -4134,6 +4136,17 @@
           },
           "loveCount": {
             "type": "number"
+          },
+          "quantityPerBatch": {
+            "type": "number",
+            "example": 12,
+            "description": "quantity Per Batch of the product"
+          },
+          "specifications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -4145,7 +4158,9 @@
           "brand",
           "category",
           "pictures",
-          "loveCount"
+          "loveCount",
+          "quantityPerBatch",
+          "specifications"
         ]
       },
       "CreateProductDto": {
@@ -4188,7 +4203,7 @@
             "description": "Quantity produced per batch",
             "example": 20
           },
-          "specifications": {
+          "specification": {
             "description": "An array of strings for product specifications",
             "example": [
               "Material: Steel",
@@ -4254,10 +4269,15 @@
             "example": 129.99,
             "description": "Price of the product"
           },
-          "picture": {
-            "type": "string",
-            "example": "https://example.com/image.png",
-            "description": "URL of the main picture of the product"
+          "pictures": {
+            "example": [
+              "https://example.com/image.png"
+            ],
+            "description": "URL of the main picture of the product",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "brand": {
             "type": "string",
@@ -4285,7 +4305,7 @@
           "id",
           "name",
           "price",
-          "picture",
+          "pictures",
           "brand",
           "category",
           "createdAt",
@@ -4338,10 +4358,15 @@
             "example": "Nike",
             "description": "Brand label of the product"
           },
-          "picture": {
-            "type": "string",
-            "example": "https://example.com/image.png",
-            "description": "URL of the main picture of the product"
+          "pictures": {
+            "example": [
+              "https://example.com/image.png"
+            ],
+            "description": "URL of the main picture of the product",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "category": {
             "type": "string",
@@ -4355,7 +4380,7 @@
           "name",
           "price",
           "brand",
-          "picture",
+          "pictures",
           "category"
         ]
       },
@@ -5076,7 +5101,8 @@
               "Low Stock",
               "Status Update",
               "Expiring Soon",
-              "Admin Alerts"
+              "Admin Alerts",
+              "Test"
             ],
             "example": "Orders"
           }
@@ -5178,7 +5204,8 @@
               "Low Stock",
               "Status Update",
               "Expiring Soon",
-              "Admin Alerts"
+              "Admin Alerts",
+              "Test"
             ],
             "example": "Orders"
           },

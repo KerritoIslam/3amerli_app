@@ -1235,6 +1235,56 @@ class AppLanguage {
       AppLocale.fr: 'Supplémentaire',
       AppLocale.ar: 'إضافي',
     },
+    'details': {
+      AppLocale.en: 'Details',
+      AppLocale.fr: 'Détails',
+      AppLocale.ar: 'التفاصيل',
+    },
+    'soldBy': {
+      AppLocale.en: 'Package',
+      AppLocale.fr: 'Colis',
+      AppLocale.ar: 'الحزمة',
+    },
+    'unknown': {
+      AppLocale.en: 'Unknown',
+      AppLocale.fr: 'Inconnu',
+      AppLocale.ar: 'غير معروف',
+    },
+    'currency': {
+      AppLocale.en: 'DZD',
+      AppLocale.fr: 'DZD',
+      AppLocale.ar: 'دج',
+    },
+    'units': {
+      AppLocale.en: 'units',
+      AppLocale.fr: 'unités',
+      AppLocale.ar: 'وحدة',
+    },
+    'deliveredIn48h': {
+      AppLocale.en: 'Delivered in 48h',
+      AppLocale.fr: 'Livré en 48h',
+      AppLocale.ar: 'التوصيل خلال 48 ساعة',
+    },
+    'specifications': {
+      AppLocale.en: 'Specifications',
+      AppLocale.fr: 'Spécifications',
+      AppLocale.ar: 'المواصفات',
+    },
+    'productAddedToCart': {
+      AppLocale.en: 'Product added to cart',
+      AppLocale.fr: 'Votre produit a bien été ajouté au panier',
+      AppLocale.ar: 'تمت إضافة المنتج إلى السلة',
+    },
+    'removedFromFavorites': {
+      AppLocale.en: 'removed from favorites',
+      AppLocale.fr: 'retiré des favoris',
+      AppLocale.ar: 'تمت الإزالة من المفضلة',
+    },
+    'addedToFavorites': {
+      AppLocale.en: 'added to favorites',
+      AppLocale.fr: 'ajouté aux favoris',
+      AppLocale.ar: 'تمت الإضافة إلى المفضلة',
+    },
   };
 
   static String _t(String key) => _translations[key]?[current] ?? key;
@@ -1506,4 +1556,14 @@ class AppLanguage {
   static String get cannotOpenMailClient => _t('cannotOpenMailClient');
   static String get personalInformation => _t('personalInformation');
   static String get additional => _t('additional');
+  static String get details => _t('details');
+  static String get soldBy => _t('soldBy');
+  static String get unknown => _t('unknown');
+  static String get currency => _t('currency');
+  static String get units => _t('units');
+  static String get deliveredIn48h => _t('deliveredIn48h');
+  static String get specifications => _t('specifications');
+  static String get productAddedToCart => _t('productAddedToCart');
+  static String get removedFromFavorites => _t('removedFromFavorites');
+  static String get addedToFavorites => _t('addedToFavorites');
 }

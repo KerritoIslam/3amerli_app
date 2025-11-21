@@ -44,6 +44,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart'
     as fav_feature;
 import 'package:amerli_app/features/auth/sign_up/sign_up_cubit.dart';
+import '../../features/splash/splash_screen.dart';
+import '../../features/profile/app/pages/user_information_page.dart';
+import '../../features/profile/app/pages/edit_user_information_page.dart';
+import 'package:amerli_app/features/auth/domain/entities/user.dart';
+
 
 // Use GoRouter's built-in GoRouterRefreshStream helper which converts a Stream
 // into a ChangeNotifier that GoRouter can listen to.
@@ -98,11 +103,8 @@ GoRouter createRouter(
   ]);
 
   return GoRouter(
-    // Start the app at the authentication entrypoint. The previous root
-    // (`/`) returned a `SizedBox.shrink()` which produced a black/empty
-    // screen until a redirect happened; using '/auth' makes the initial
-    // visible page explicit and avoids a blank frame on startup.
-    initialLocation: '/auth',
+    // Start the app at the splash screen
+    initialLocation: '/splash',
     refreshListenable: combinedRefresh,
     redirect: (context, state) {
       final loc = state.uri.path;
@@ -124,6 +126,7 @@ GoRouter createRouter(
       // Define which paths are non-protected (allowed when unauthenticated).
       final nonProtected = <String>{
         '/',
+        '/splash',
         '/auth',
         '/complete-profile',
         '/payment/success', // Allow deep link access
@@ -200,6 +203,18 @@ GoRouter createRouter(
       return null;
     },
     routes: [
+      // Splash screen route
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) {
+          return SplashScreen(
+            onAnimationComplete: () {
+              // Navigate to auth after animation completes
+              context.go('/auth');
+            },
+          );
+        },
+      ),
       // Special handler for root path "/" - handles custom scheme deep links
       GoRoute(
         path: '/',
@@ -326,6 +341,20 @@ GoRouter createRouter(
           builder: (context, state) => const NotificationsPage()),
       GoRoute(
           path: '/profile', builder: (context, state) => const ProfilePage()),
+      GoRoute(
+        path: '/profile/info',
+        builder: (context, state) {
+          final user = state.extra as User?;
+          return UserInformationPage(user: user);
+        },
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (context, state) {
+          final user = state.extra as User?;
+          return EditUserInformationPage(user: user);
+        },
+      ),
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
       GoRoute(
         path: '/admin/products/add',

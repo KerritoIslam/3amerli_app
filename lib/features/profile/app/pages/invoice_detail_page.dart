@@ -42,22 +42,25 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: Row(
-                children: [
-                  InkWell(
-                    onTap: () => Navigator.of(context).maybePop(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      alignment: Alignment.center,
-                      child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 18, height: 18, color: _darkGreen, placeholderBuilder: (_) => const Icon(Icons.arrow_back, color: _darkGreen)),
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 18, height: 18, color: _darkGreen, placeholderBuilder: (_) => const Icon(Icons.arrow_back, color: _darkGreen)),
+                      ),
                     ),
-                  ),
-                  const Spacer(),
-                  Center(child: Text(widget.invoiceId, style: const TextStyle(fontFamily: 'Geist', fontWeight: FontWeight.w700, fontSize: 20, color: _darkGreen))),
-                  const Spacer(flex: 2),
-                ],
+                    const Spacer(),
+                    Center(child: Text(widget.invoiceId, style: const TextStyle(fontFamily: 'Geist', fontWeight: FontWeight.w700, fontSize: 20, color: _darkGreen))),
+                    const Spacer(flex: 2),
+                  ],
+                ),
               ),
             ),
 

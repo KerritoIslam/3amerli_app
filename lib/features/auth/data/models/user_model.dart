@@ -1,5 +1,6 @@
 import '../../domain/entities/user.dart';
 import 'package:amerli_app/utils/image_resolver.dart';
+import 'address_model.dart';
 
 class UserModel {
   final int id;
@@ -11,6 +12,8 @@ class UserModel {
   final String? profilePic;
   final String role;
 
+  final List<AddressModel>? addresses;
+
   UserModel({
     required this.id,
     required this.phoneNumber,
@@ -20,6 +23,7 @@ class UserModel {
     this.supermarketName,
     required this.profilePic,
     required this.role,
+    this.addresses,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json)  {
@@ -32,6 +36,9 @@ class UserModel {
     final supermarketName = json['supermarketName'] as String?;
     final profilePic = json['profilePic'] as String?;
     final role = (json['role'] as String?) ?? '';
+    final addresses = (json['addresses'] as List?)
+        ?.map((e) => AddressModel.fromJson(e as Map<String, dynamic>))
+        .toList();
 
     return UserModel(
       id: id,
@@ -42,6 +49,7 @@ class UserModel {
       supermarketName: supermarketName,
       profilePic: profilePic,
       role: role,
+      addresses: addresses,
     );
   }
 
@@ -54,6 +62,7 @@ class UserModel {
         'supermarketName': supermarketName,
         'profilePic': profilePic,
         'role': role,
+        'addresses': addresses?.map((e) => e.toJson()).toList(),
       };
 
   User toEntity()  {
@@ -68,6 +77,7 @@ class UserModel {
       supermarketName: supermarketName,
       profilePic: resolvedPic,
       role: role,
+      addresses: addresses,
     );
   }
 }

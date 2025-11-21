@@ -29,6 +29,12 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
+  Future<User> updateProfile(Map<String, dynamic> data) async {
+    final userModel = await remoteDataSource.updateProfile(data);
+    return userModel.toEntity();
+  }
+
+  @override
   Future<List<Map<String, dynamic>>> getAddresses() async {
     return await remoteDataSource.getAddresses();
   }

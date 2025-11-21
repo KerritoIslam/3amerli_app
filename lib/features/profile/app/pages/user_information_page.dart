@@ -8,7 +8,10 @@ import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/features/auth/data/datasources/profile_remote_datasource.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_bloc.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_event.dart';
+import 'package:go_router/go_router.dart';
 import 'package:amerli_app/features/auth/app/bloc/profile_state.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
 
 class UserInformationPage extends StatefulWidget {
   final User? user;
@@ -122,80 +125,78 @@ class _UserInformationPageState extends State<UserInformationPage> {
 
   @override
   Widget build(BuildContext context) {
-    // Try to get latest user from ProfileBloc
-    User? latestUser = widget.user;
-    try {
-      final profileBloc = sl<ProfileBloc>();
-      final state = profileBloc.state;
-      if (state is ProfileLoaded) {
-        latestUser = state.user;
-      }
-    } catch (_) {
-      // ProfileBloc not available, use widget.user
-    }
+    return BlocBuilder<ProfileBloc, ProfileState>(
+      builder: (context, state) {
+        User? latestUser = widget.user;
+        if (state is ProfileLoaded) {
+          latestUser = state.user;
+        }
 
-    // initialize local user & image from latest user if not set
-    _user ??= latestUser;
-    
-    // Always update imageUrl if we have a newer profilePic from the user
-    if (latestUser?.profilePic != null && 
-        latestUser!.profilePic!.isNotEmpty && 
-        (latestUser.profilePic!.startsWith('http://') || latestUser.profilePic!.startsWith('https://'))) {
-      _imageUrl = latestUser.profilePic;
-    } else {
-      _imageUrl ??= '';
-    }
-    
-    final hasValidImage = _imageUrl != null && _imageUrl!.isNotEmpty;
+        // Update local user reference
+        _user = latestUser;
+        
+        // Always update imageUrl if we have a newer profilePic from the user
+        if (latestUser?.profilePic != null && 
+            latestUser!.profilePic!.isNotEmpty && 
+            (latestUser.profilePic!.startsWith('http://') || latestUser.profilePic!.startsWith('https://'))) {
+          _imageUrl = latestUser.profilePic;
+        } else {
+          _imageUrl ??= '';
+        }
+        
+        final hasValidImage = _imageUrl != null && _imageUrl!.isNotEmpty;
 
-    // Layout matches requested design: centered, scrollable, with avatar + edit
-    return Scaffold(
-      backgroundColor: Colors.white,
+        // Layout matches requested design: centered, scrollable, with avatar + edit
+        return Scaffold(
+          backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
           children: [
             // Header
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  // Back button matching product details style
-                  InkWell(
-                    onTap: () => Navigator.of(context).maybePop(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: SvgPicture.asset(
-                        'assets/icons/back_arrow.svg',
-                        width: 16,
-                        height: 16,
-                        colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.onPrimary, BlendMode.srcIn),
-                        placeholderBuilder: (context) => const Icon(Icons.arrow_back, size: 16),
-                      ),
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  Expanded(
-                    flex: 2,
-                    child: Center(
-                      child: Text(
-                        AppLanguage.personalInformation,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.center,
+              child: Directionality(
+                textDirection: TextDirection.ltr,
+                child: Row(
+                  children: [
+                    // Back button matching product details style
+                    InkWell(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.tertiaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset(
+                          'assets/icons/back_arrow.svg',
+                          width: 16,
+                          height: 16,
+                          colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.onPrimary, BlendMode.srcIn),
+                          placeholderBuilder: (context) => const Icon(Icons.arrow_back, size: 16),
+                        ),
                       ),
                     ),
-                  ),
 
-                  const Spacer(flex: 1),
-                ],
+                    const Spacer(),
+
+                    Expanded(
+                      flex: 2,
+                      child: Center(
+                        child: Text(
+                          AppLanguage.personalInformation,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+
+                    const Spacer(flex: 1),
+                  ],
+                ),
               ),
             ),
 
@@ -293,7 +294,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                         const SizedBox(height: 10),
                         _infoField(label: AppLanguage.phone, value: _user?.phoneNumber ?? '—'),
                         const SizedBox(height: 10),
-                        _infoField(label: AppLanguage.address, value: _user?.locationUrl ?? '—'),
+                        _infoField(label: AppLanguage.address, value: _user?.address ?? '—'),
 
                         const SizedBox(height: 28),
 
@@ -309,7 +310,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
                             ),
                             onPressed: () {
                               // Open an edit form — simple placeholder page
-                              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const _EditUserInformationPage()));
+                              context.push('/profile/edit', extra: _user);
                             },
                             child: Text(AppLanguage.editMyInfo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                           ),
@@ -325,6 +326,8 @@ class _UserInformationPageState extends State<UserInformationPage> {
           ],
         ),
       ),
+    );
+      },
     );
   }
 
@@ -342,34 +345,4 @@ class _UserInformationPageState extends State<UserInformationPage> {
       ],
     );
   }
-
-}
-
-// Simple placeholder edit page — replace with your real edit flow or a Bloc-backed form
-class _EditUserInformationPage extends StatelessWidget {
-  const _EditUserInformationPage();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-        leading: InkWell(
-          onTap: () => Navigator.of(context).maybePop(),
-          borderRadius: BorderRadius.circular(24),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.tertiaryContainer, shape: BoxShape.circle),
-            alignment: Alignment.center,
-            child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 16, height: 16, placeholderBuilder: (_) => const Icon(Icons.arrow_back, size: 16)),
-          ),
-        ),
-        title: Text(AppLanguage.editMyInfo),
-      ),
-      body: Center(child: Padding(padding: const EdgeInsets.all(16.0), child: Text(AppLanguage.editFormNotImplemented))),
-    );
-  }
-
 }

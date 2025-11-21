@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'features/catalog/app/bloc/catalog_bloc.dart';
 import 'features/auth/app/bloc/auth_bloc.dart';
 import 'features/auth/app/bloc/auth_event.dart';
+import 'features/auth/app/bloc/profile_bloc.dart';
 import 'features/auth/repository/auth_repository_impl.dart';
 import 'core/auth/auth_service.dart';
 import 'features/auth/domain/entities/supermarket.dart';
@@ -189,6 +190,7 @@ class _MyAppState extends State<MyApp> {
             BlocProvider.value(value: di.sl<CatalogBloc>()),
             BlocProvider.value(value: di.sl<AuthBloc>()),
             BlocProvider.value(value: di.sl<NotificationsBloc>()),
+            BlocProvider(create: (_) => di.sl<ProfileBloc>()),
           ],
           child: Directionality(
             textDirection: currentLocale == AppLocale.ar 
