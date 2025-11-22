@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/config/settings.dart';
 import '../../../../core/config/injection.dart' as di;
 import '../../../../utils/constants/app_language.dart';
+import '../../../../core/utils/top_toast.dart';
 
 class LanguagePage extends StatefulWidget {
   const LanguagePage({super.key});
@@ -48,7 +49,7 @@ class _LanguagePageState extends State<LanguagePage> {
 
   void _openLanguageSelector(BuildContext context) {
     final settings = di.sl<Settings>();
-    
+
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -63,9 +64,7 @@ class _LanguagePageState extends State<LanguagePage> {
                 Navigator.of(ctx).pop();
                 await settings.setLanguage('fr');
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLanguage.languageUpdated)),
-                  );
+                  TopToast.show(context, AppLanguage.languageUpdated);
                 }
               },
             ),
@@ -76,9 +75,7 @@ class _LanguagePageState extends State<LanguagePage> {
                 Navigator.of(ctx).pop();
                 await settings.setLanguage('en');
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLanguage.languageUpdated)),
-                  );
+                  TopToast.show(context, AppLanguage.languageUpdated);
                 }
               },
             ),
@@ -89,9 +86,7 @@ class _LanguagePageState extends State<LanguagePage> {
                 Navigator.of(ctx).pop();
                 await settings.setLanguage('ar');
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(AppLanguage.languageUpdated)),
-                  );
+                  TopToast.show(context, AppLanguage.languageUpdated);
                 }
               },
             ),
@@ -127,11 +122,24 @@ class _LanguagePageState extends State<LanguagePage> {
                         width: 40,
                         height: 40,
                         alignment: Alignment.center,
-                        child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 18, height: 18, colorFilter: ColorFilter.mode(_darkGreen, BlendMode.srcIn), placeholderBuilder: (_) => const Icon(Icons.arrow_back, color: _darkGreen)),
+                        child: SvgPicture.asset('assets/icons/back_arrow.svg',
+                            width: 18,
+                            height: 18,
+                            colorFilter:
+                                ColorFilter.mode(_darkGreen, BlendMode.srcIn),
+                            placeholderBuilder: (_) => const Icon(
+                                Icons.arrow_back,
+                                color: _darkGreen)),
                       ),
                     ),
                     const Spacer(),
-                    Center(child: Text(AppLanguage.language, style: const TextStyle(fontFamily: 'Geist', fontWeight: FontWeight.w700, fontSize: 20, color: _darkGreen))),
+                    Center(
+                        child: Text(AppLanguage.language,
+                            style: const TextStyle(
+                                fontFamily: 'Geist',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 20,
+                                color: _darkGreen))),
                     const Spacer(flex: 2),
                   ],
                 ),
@@ -146,25 +154,40 @@ class _LanguagePageState extends State<LanguagePage> {
                 child: Container(
                   width: double.infinity,
                   margin: const EdgeInsets.only(top: 40),
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(16),
                     // Use the requested dual shadows to match the design
                     boxShadow: const [
-                      BoxShadow(color: Color(0x1F000000), offset: Offset(4, 4), blurRadius: 8),
-                      BoxShadow(color: Color(0x1F000000), offset: Offset(-4, -4), blurRadius: 8),
+                      BoxShadow(
+                          color: Color(0x1F000000),
+                          offset: Offset(4, 4),
+                          blurRadius: 8),
+                      BoxShadow(
+                          color: Color(0x1F000000),
+                          offset: Offset(-4, -4),
+                          blurRadius: 8),
                     ],
                   ),
                   child: Row(
                     children: [
-                      Expanded(child: Text(AppLanguage.selectLanguage, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500))),
+                      Expanded(
+                          child: Text(AppLanguage.selectLanguage,
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.w500))),
                       Container(
                         width: 48,
                         height: 28,
                         alignment: Alignment.center,
-                        decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(12)),
-                        child: Text(_getLanguageCode(), style: const TextStyle(fontWeight: FontWeight.w700, color: _darkGreen)),
+                        decoration: BoxDecoration(
+                            color: const Color(0xFFF3F4F6),
+                            borderRadius: BorderRadius.circular(12)),
+                        child: Text(_getLanguageCode(),
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: _darkGreen)),
                       )
                     ],
                   ),

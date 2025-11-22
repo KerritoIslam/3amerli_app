@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/features/orders/presentation/pages/order_tracking_page.dart';
 import 'package:amerli_app/features/orders/domain/entities/order.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 /// Minimal, clean SuccessPage implementation.
 class SuccessPage extends StatefulWidget {
@@ -183,11 +184,8 @@ class _SuccessPageState extends State<SuccessPage>
                                 ),
                               );
                             } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text(AppLanguage.orderNotAvailable)),
-                              );
+                              TopToast.show(
+                                  context, AppLanguage.orderNotAvailable);
                             }
                           },
                           style: OutlinedButton.styleFrom(
@@ -263,11 +261,10 @@ class _SuccessPageState extends State<SuccessPage>
                           return widget.onInvoiceTap!.call();
                         }
                         if (widget.invoiceUrl != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(AppLanguage.openingInvoice)));
+                          TopToast.show(context, AppLanguage.openingInvoice);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(AppLanguage.invoiceNotAvailable)));
+                          TopToast.show(
+                              context, AppLanguage.invoiceNotAvailable);
                         }
                       },
                       child: Text(AppLanguage.downloadOrViewInvoice,

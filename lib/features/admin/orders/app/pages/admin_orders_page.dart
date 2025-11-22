@@ -8,6 +8,9 @@ import '../../domain/entities/admin_order.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:amerli_app/core/utils/csv_export_helper.dart';
 
 class AdminOrdersPage extends StatefulWidget {
   const AdminOrdersPage({super.key});
@@ -20,71 +23,117 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedOrderIds = {};
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    context.read<AdminOrdersBloc>().add(AdminOrdersLoadEvent());
+    context
+        .read<AdminOrdersBloc>()
+        .add(AdminOrdersLoadEvent(page: 1, limit: 20));
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+
+    if (currentScroll >= maxScroll - 200) {
+      final state = context.read<AdminOrdersBloc>().state;
+      if (state is AdminOrdersLoaded && state.hasMore && !state.isLoadingMore) {
+        context.read<AdminOrdersBloc>().add(AdminOrdersLoadEvent(
+            query: state.query, page: state.currentPage + 1, limit: 20));
+      }
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _onSearch(String query) {
-    context.read<AdminOrdersBloc>().add(AdminOrdersLoadEvent(query: query.isEmpty ? null : query));
+    context.read<AdminOrdersBloc>().add(AdminOrdersLoadEvent(
+        query: query.isEmpty ? null : query, page: 1, limit: 20));
   }
 
-  void _onExportCSV() {
-    // TODO: Implement export functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Export CSV fonctionnalité à venir')),
-    );
+  Future<void> _onExportCSV() async {
+    final state = context.read<AdminOrdersBloc>().state;
+    if (state is! AdminOrdersLoaded || state.orders.isEmpty) {
+      TopToast.show(context, AppLanguage.noOrdersFound, isError: true);
+      return;
+    }
+
+    try {
+      final headers = [
+        'ID',
+        'Order Number',
+        'Customer',
+        'Store',
+        'Phone',
+        'Date',
+        'Status',
+        'Total',
+        'Items Count',
+        'Payment Method'
+      ];
+
+      final data = state.orders.map((order) {
+        return [
+          order.id,
+          order.orderNumber,
+          order.customerName,
+          order.storeName,
+          order.customerPhone,
+          order.orderDate.toString(),
+          order.status,
+          order.totalAmount,
+          order.itemsCount,
+          order.paymentMethod,
+        ];
+      }).toList();
+
+      await CsvExportHelper.exportToCsv(
+        fileName: 'orders_export_${DateTime.now().millisecondsSinceEpoch}',
+        headers: headers,
+        data: data,
+      );
+    } catch (e) {
+      if (mounted) {
+        TopToast.show(context, 'Erreur lors de l\'exportation CSV',
+            isError: true);
+      }
+    }
   }
 
+  /*
   void _onDeleteSelected() {
-    if (_selectedOrderIds.isEmpty) return;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Supprimer les commandes'),
-        content: Text(
-            'Êtes-vous sûr de vouloir supprimer ${_selectedOrderIds.length} commande(s) ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Implement delete multiple orders
-              setState(() {
-                _selectedOrderIds.clear();
-              });
-            },
-            child: const Text(
-              'Supprimer',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
-    );
+    // ... implementation ...
   }
+  */
 
   Color _getStatusColor(String status) {
     final s = status.toLowerCase();
     // handle multiple languages and uppercase codes from backend
-    if (s.contains('en attente') || s.contains('pending') || s.contains('confirmation') || s.contains('confirm')) {
+    if (s.contains('en attente') ||
+        s.contains('pending') ||
+        s.contains('confirmation') ||
+        s.contains('confirm')) {
       return const Color(0xFFFFC555);
     }
-    if (s.contains('préparation') || s.contains('preparation') || s.contains('preparing')) {
+    if (s.contains('préparation') ||
+        s.contains('preparation') ||
+        s.contains('preparing')) {
       return const Color(0xFF59A8D4);
     }
-    if (s.contains('livré') || s.contains('livree') || s.contains('deliv') || s.contains('delivered')) {
+    if (s.contains('livré') ||
+        s.contains('livree') ||
+        s.contains('deliv') ||
+        s.contains('delivered')) {
       return const Color(0xFF4AA785);
     }
     if (s.contains('annul') || s.contains('canceled') || s.contains('cancel')) {
@@ -96,284 +145,322 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AdminOrdersBloc, AdminOrdersState>(
-      listener: (context, state) {
-        if (state is AdminOrdersError) {
-          ErrorHandler.showError(context, state.message);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Commandes',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) =>
+          BlocListener<AdminOrdersBloc, AdminOrdersState>(
+        listener: (context, state) {
+          if (state is AdminOrdersError) {
+            ErrorHandler.showError(context, state.message);
+          }
+          if (state is AdminOrdersLoaded) {
+            if (state.message != null) {
+              TopToast.show(context, state.message!);
+            }
+            if (state.errorMessage != null) {
+              TopToast.show(context, state.errorMessage!, isError: true);
+            }
+          }
+          if (state is AdminOrdersOperationSuccess) {
+            TopToast.show(context, state.message);
+            // Refresh list
+            context
+                .read<AdminOrdersBloc>()
+                .add(AdminOrdersLoadEvent(page: 1, limit: 20));
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Column(
+              children: [
+                // Header
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Text(
+                    AppLanguage.orders,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
-              ),
 
-              // Search and Export Row
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    // Search Field
-                    Expanded(
-                      child: SizedBox(
-                        height: 40,
-                        child: AppSearchbar(
-                          onChanged: _onSearch,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-
-                    // Export Button
-                    ElevatedButton(
-                      onPressed: _onExportCSV,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Exporter CVS',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Delete Selected Button (visible when items are selected)
-              if (_selectedOrderIds.isNotEmpty)
+                // Search and Export Row
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Row(
                     children: [
-                      Text(
-                        '${_selectedOrderIds.length} sélectionné(s)',
-                        style: TextStyle(
-                          color: Colors.grey.shade700,
-                          fontSize: 14,
+                      // Search Field
+                      Expanded(
+                        child: SizedBox(
+                          height: 40,
+                          child: AppSearchbar(
+                            onChanged: _onSearch,
+                          ),
                         ),
                       ),
-                      const Spacer(),
-                      TextButton.icon(
-                        onPressed: _onDeleteSelected,
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        label: const Text(
-                          'Supprimer',
-                          style: TextStyle(color: Colors.red),
+                      const SizedBox(width: 8),
+
+                      // Export Button
+                      ElevatedButton(
+                        onPressed: _onExportCSV,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 10),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          AppLanguage.exportCSV,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 16),
 
-              // Orders Table
-              Expanded(
-                child: SingleChildScrollView(
-                  child: BlocBuilder<AdminOrdersBloc, AdminOrdersState>(
-                    builder: (context, state) {
-                      if (state is AdminOrdersLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (state is AdminOrdersLoaded) {
-                        if (state.orders.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.shopping_bag_outlined,
-                                  size: 64,
-                                  color: Colors.grey.shade400,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Aucune commande trouvée',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(12),
-                              topRight: Radius.circular(12),
-                            ),
-                            border: Border.all(
-                              color: Theme.of(context).colorScheme.primary,
-                              width: 1,
-                            ),
+                // Delete Selected Button (visible when items are selected)
+                if (_selectedOrderIds.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Text(
+                          '${_selectedOrderIds.length} ${AppLanguage.selectedCount}',
+                          style: TextStyle(
+                            color: Colors.grey.shade700,
+                            fontSize: 14,
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                            // Table Header
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade50,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(12),
-                                  topRight: Radius.circular(12),
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  // Select All Checkbox
-                                  SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: Checkbox(
-                                      value: _selectedOrderIds.length ==
-                                          state.orders.length,
-                                      onChanged: (value) {
-                                        setState(() {
-                                          if (value == true) {
-                                            _selectedOrderIds.addAll(
-                                              state.orders.map((o) => o.id),
-                                            );
-                                          } else {
-                                            _selectedOrderIds.clear();
-                                          }
-                                        });
-                                      },
-                                      shape: const CircleBorder(),
-                                      activeColor: AppColors.brandDeep,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  SizedBox(
-                                    width: 80,
-                                    child: const Text(
-                                      'N° Commande',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ),
-                                  const Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      'Client',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 10,
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    flex: 2,
-                                    child: Text(
-                                      'Statut',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 10,
-                                      ),
-                                      textAlign: TextAlign.start,
-                                    ),
-                                  ),
-                                  const SizedBox(
-                                    width: 40,
-                                    child: Text(
-                                      'Actions',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 10,
-                                      ),
-                                      textAlign: TextAlign.start,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Orders List
-                            Flexible(
-                              child: ListView.separated(
-                                shrinkWrap: true,
-                                physics: const NeverScrollableScrollPhysics(),
-                                itemCount: state.orders.length,
-                                separatorBuilder: (context, index) => Divider(
-                                  height: 1,
-                                  thickness: 1,
-                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
-                                ),
-                                itemBuilder: (context, index) {
-                                  final order = state.orders[index];
-                                  final isSelected = _selectedOrderIds.contains(order.id);
-                                  
-                                  return _OrderRow(
-                                    order: order,
-                                    isSelected: isSelected,
-                                    statusColor: _getStatusColor(order.status),
-                                    onSelectChanged: (value) {
-                                      setState(() {
-                                        if (value == true) {
-                                          _selectedOrderIds.add(order.id);
-                                        } else {
-                                          _selectedOrderIds.remove(order.id);
-                                        }
-                                      });
-                                    },
-                                    onView: () {
-                                      context.push('/admin/orders/${order.id}');
-                                    },
-                                    onCancel: () {
-                                      // TODO: Implement cancel order
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          ],
                         ),
-                      );
-                    }
+                      ],
+                    ),
+                  ),
 
-                    return const SizedBox.shrink();
-                  },
+                const SizedBox(height: 8),
+
+                // Orders Table
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      context
+                          .read<AdminOrdersBloc>()
+                          .add(AdminOrdersLoadEvent(page: 1, limit: 20));
+                    },
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (scrollInfo) {
+                        if (scrollInfo is ScrollEndNotification &&
+                            scrollInfo.metrics.pixels >=
+                                scrollInfo.metrics.maxScrollExtent - 200) {
+                          final state = context.read<AdminOrdersBloc>().state;
+                          if (state is AdminOrdersLoaded &&
+                              state.hasMore &&
+                              !state.isLoadingMore) {
+                            context.read<AdminOrdersBloc>().add(
+                                AdminOrdersLoadEvent(
+                                    query: state.query,
+                                    page: state.currentPage + 1,
+                                    limit: 20));
+                          }
+                        }
+                        return false;
+                      },
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: BlocBuilder<AdminOrdersBloc, AdminOrdersState>(
+                          builder: (context, state) {
+                            if (state is AdminOrdersLoading) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
+
+                            if (state is AdminOrdersLoaded) {
+                              if (state.orders.isEmpty) {
+                                return Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.shopping_bag_outlined,
+                                        size: 64,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        AppLanguage.noOrdersFound,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }
+
+                              return Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(12),
+                                    topRight: Radius.circular(12),
+                                  ),
+                                  border: Border.all(
+                                    color:
+                                        Theme.of(context).colorScheme.primary,
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    // Table Header
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 6,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey.shade50,
+                                        borderRadius: const BorderRadius.only(
+                                          topLeft: Radius.circular(12),
+                                          topRight: Radius.circular(12),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 80,
+                                            child: Text(
+                                              AppLanguage.orderNumber,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: Text(
+                                              AppLanguage.client,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 10,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            flex: 2,
+                                            child: Text(
+                                              AppLanguage.status,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 10,
+                                              ),
+                                              textAlign: TextAlign.start,
+                                            ),
+                                          ),
+                                          SizedBox(
+                                            width: 40,
+                                            child: Text(
+                                              AppLanguage.actions,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 10,
+                                              ),
+                                              textAlign: TextAlign.start,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // Orders List
+                                    ListView.separated(
+                                      shrinkWrap: true,
+                                      physics:
+                                          const NeverScrollableScrollPhysics(),
+                                      itemCount: state.orders.length,
+                                      separatorBuilder: (context, index) =>
+                                          Divider(
+                                        height: 1,
+                                        thickness: 1,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withValues(alpha: 0.12),
+                                      ),
+                                      itemBuilder: (context, index) {
+                                        final order = state.orders[index];
+                                        final isSelected = _selectedOrderIds
+                                            .contains(order.id);
+
+                                        return _OrderRow(
+                                          order: order,
+                                          isSelected: isSelected,
+                                          statusColor:
+                                              _getStatusColor(order.status),
+                                          onSelectChanged: (value) {
+                                            setState(() {
+                                              if (value == true) {
+                                                _selectedOrderIds.add(order.id);
+                                              } else {
+                                                _selectedOrderIds
+                                                    .remove(order.id);
+                                              }
+                                            });
+                                          },
+                                          onView: () {
+                                            context.push(
+                                                '/admin/orders/${order.id}');
+                                          },
+                                          onIncrementStatus: () {
+                                            context.read<AdminOrdersBloc>().add(
+                                                  AdminOrdersIncrementStatusEvent(
+                                                      order.id),
+                                                );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                    if (state.isLoadingMore)
+                                      const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: Center(
+                                            child: CircularProgressIndicator()),
+                                      ),
+                                    const SizedBox(
+                                        height:
+                                            80), // Padding for bottom nav bar
+                                  ],
+                                ),
+                              );
+                            }
+
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -387,7 +474,7 @@ class _OrderRow extends StatelessWidget {
   final Color statusColor;
   final ValueChanged<bool?> onSelectChanged;
   final VoidCallback onView;
-  final VoidCallback onCancel;
+  final VoidCallback onIncrementStatus;
 
   const _OrderRow({
     required this.order,
@@ -395,7 +482,7 @@ class _OrderRow extends StatelessWidget {
     required this.statusColor,
     required this.onSelectChanged,
     required this.onView,
-    required this.onCancel,
+    required this.onIncrementStatus,
   });
 
   @override
@@ -404,19 +491,6 @@ class _OrderRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Row(
         children: [
-          // Checkbox
-          SizedBox(
-            width: 18,
-            height: 18,
-            child: Checkbox(
-              value: isSelected,
-              onChanged: onSelectChanged,
-              shape: const CircleBorder(),
-              activeColor: AppColors.brandDeep,
-            ),
-          ),
-          const SizedBox(width: 6),
-
           // Order Number
           SizedBox(
             width: 80,
@@ -491,21 +565,23 @@ class _OrderRow extends StatelessWidget {
                 InkWell(
                   onTap: onView,
                   child: Icon(
-                      Icons.visibility_outlined,
+                    Icons.visibility_outlined,
+                    size: 14,
+                    color: AppColors.brandDeep,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Increment Status Button
+                if (!order.status.toLowerCase().contains('livré') &&
+                    !order.status.toLowerCase().contains('delivered'))
+                  InkWell(
+                    onTap: onIncrementStatus,
+                    child: Icon(
+                      Icons.arrow_circle_up,
                       size: 14,
                       color: AppColors.brandDeep,
                     ),
-                ),
-                const SizedBox(width: 4),
-                // Cancel Button
-                InkWell(
-                  onTap: onCancel,
-                  child: const Icon(
-                    Icons.close,
-                    size: 14,
-                    color: Colors.red,
                   ),
-                ),
               ],
             ),
           ),

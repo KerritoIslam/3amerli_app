@@ -30,7 +30,8 @@ class _AddBrandPageState extends State<AddBrandPage> {
 
   void _save() {
     if (!_formKey.currentState!.validate()) return;
-    final id = widget.edit?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
+    final id =
+        widget.edit?.id ?? DateTime.now().millisecondsSinceEpoch.toString();
     final brand = Brand(id: id, name: _nameController.text.trim());
     Navigator.of(context).pop(brand);
   }
@@ -64,8 +65,12 @@ class _AddBrandPageState extends State<AddBrandPage> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Center(
-                      child: Text(widget.edit == null ? 'Ajouter une marque' : 'Modifier la marque',
-                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      child: Text(
+                          widget.edit == null
+                              ? 'Ajouter une marque'
+                              : 'Modifier la marque',
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -80,9 +85,14 @@ class _AddBrandPageState extends State<AddBrandPage> {
                   // Icon moved above the field (instead of inside it)
                   Row(
                     children: [
-                      SvgPicture.asset('assets/icons/small_edit.svg', width: 16, height: 16, color: AppColors.brandDeep),
+                      SvgPicture.asset('assets/icons/small_edit.svg',
+                          width: 16,
+                          height: 16,
+                          colorFilter: ColorFilter.mode(
+                              AppColors.brandDeep, BlendMode.srcIn)),
                       const SizedBox(width: 8),
-                      const Text('Nom de la marque *', style: TextStyle(fontWeight: FontWeight.w600)),
+                      const Text('Nom de la marque *',
+                          style: TextStyle(fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -93,7 +103,8 @@ class _AddBrandPageState extends State<AddBrandPage> {
                       hintText: 'Entrez le nom',
                       // label is shown above manually, keep the field compact
                       labelText: null,
-                      validator: (v) => (v ?? '').trim().isEmpty ? 'Le nom est requis' : null,
+                      validator: (v) =>
+                          (v ?? '').trim().isEmpty ? 'Le nom est requis' : null,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -104,10 +115,13 @@ class _AddBrandPageState extends State<AddBrandPage> {
                       ElevatedButton(
                         onPressed: _save,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
                           elevation: 0,
                         ),
                         child: const Text('Enregistrer'),

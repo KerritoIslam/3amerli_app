@@ -12,6 +12,8 @@ import 'package:geocoding/geocoding.dart';
 import '../../../../utils/constants/app_dimensions.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+
 class CompleteProfilePage extends StatefulWidget {
   const CompleteProfilePage({super.key});
 
@@ -113,9 +115,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
         permission = await Geolocator.checkPermission();
       } on NoSuchMethodError {
         setState(() => _isFetchingLocation = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(AppLanguage.locationPluginUnavailable),
-        ));
+        TopToast.show(context, AppLanguage.locationPluginUnavailable);
         return;
       }
       if (permission == LocationPermission.denied) {
@@ -124,8 +124,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
 
       if (permission == LocationPermission.denied) {
         setState(() => _isFetchingLocation = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLanguage.locationPermissionDenied)));
+        TopToast.show(context, AppLanguage.locationPermissionDenied);
         return;
       }
 
@@ -185,8 +184,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
     } catch (e, st) {
       // ignore or show error
       debugPrint('Location fetch error: $e\n$st');
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLanguage.unableToGetLocation)));
+      TopToast.show(context, AppLanguage.unableToGetLocation);
     } finally {
       setState(() => _isFetchingLocation = false);
     }

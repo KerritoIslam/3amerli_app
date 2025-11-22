@@ -62,14 +62,12 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late final Settings _settings;
-  late ThemeMode _themeMode;
   late final GoRouter _router;
 
   @override
   void initState() {
     super.initState();
     _settings = di.sl<Settings>();
-    _themeMode = _settings.themeModeNotifier.value;
 
     // Initialize router once in initState
     final authBloc = di.sl<AuthBloc>();
@@ -81,13 +79,13 @@ class _MyAppState extends State<MyApp> {
     _settings.languageNotifier.addListener(_onLanguageChanged);
 
     // Listen for theme changes
-    _settings.themeModeNotifier.addListener(() {
-      if (mounted) {
-        setState(() {
-          _themeMode = _settings.themeModeNotifier.value;
-        });
-      }
-    });
+    // _settings.themeModeNotifier.addListener(() {
+    //   if (mounted) {
+    //     setState(() {
+    //       _themeMode = _settings.themeModeNotifier.value;
+    //     });
+    //   }
+    // });
 
     // Setup notifications
     _setupNotifications();
@@ -193,23 +191,24 @@ class _MyAppState extends State<MyApp> {
             BlocProvider(create: (_) => di.sl<ProfileBloc>()),
           ],
           child: Directionality(
-            textDirection: currentLocale == AppLocale.ar 
-                ? TextDirection.rtl 
+            textDirection: currentLocale == AppLocale.ar
+                ? TextDirection.rtl
                 : TextDirection.ltr,
             child: MaterialApp.router(
-              key: ValueKey('material_app_${currentLocale.name}'), // Force complete rebuild on language change
+              key: ValueKey(
+                  'material_app_${currentLocale.name}'), // Force complete rebuild on language change
               debugShowCheckedModeBanner: false,
               title: '3amerli',
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
-              themeMode: _themeMode,
+              themeMode: ThemeMode.light,
               routerConfig: _router,
               locale: Locale(currentLocale.name),
               // Ensure RTL support for Arabic - double wrap for maximum compatibility
               builder: (context, child) {
                 return Directionality(
-                  textDirection: currentLocale == AppLocale.ar 
-                      ? TextDirection.rtl 
+                  textDirection: currentLocale == AppLocale.ar
+                      ? TextDirection.rtl
                       : TextDirection.ltr,
                   child: child ?? const SizedBox.shrink(),
                 );

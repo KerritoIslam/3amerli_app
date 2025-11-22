@@ -8,6 +8,8 @@ import 'package:amerli_app/features/catalog/app/bloc/favorites_event.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
 import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 typedef ProductItemBuilder = Widget Function(
     BuildContext context, Product product, int index);
@@ -223,23 +225,19 @@ class _ProductsListState extends State<ProductsList> {
               });
 
               // Show toast
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(product.isFavorit
-                      ? 'Retiré des favoris'
-                      : 'Ajouté aux favoris'),
-                  duration: const Duration(seconds: 1),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                ),
+              // Show toast
+              TopToast.show(
+                context,
+                product.isFavorit
+                    ? AppLanguage.removedFromFavorites
+                    : AppLanguage.addedToFavorites,
               );
             } catch (e) {
               debugPrint('Error toggling favorite: $e');
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Erreur lors de la mise à jour des favoris'),
-                  duration: Duration(seconds: 2),
-                  backgroundColor: Colors.red,
-                ),
+              TopToast.show(
+                context,
+                AppLanguage.error,
+                isError: true,
               );
             }
           },
@@ -250,9 +248,12 @@ class _ProductsListState extends State<ProductsList> {
           sellerName: product.sellerName,
           brand: product.brand,
           productId: product.id,
-          onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
+          onTap: () async {
+            await Navigator.of(context).push(MaterialPageRoute(
                 builder: (ctx) => ProductDetailsPage(product: product)));
+            if (context.mounted) {
+              sl<CatalogBloc>().add(CatalogLoadEvent());
+            }
           },
         );
         return card;

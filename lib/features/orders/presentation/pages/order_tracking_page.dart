@@ -21,12 +21,12 @@ class OrderTrackingPage extends StatelessWidget {
   }) {
     // Make circles bigger; diameter 44 (radius ~22)
     final circleSize = 44.0;
-  // connector thickness and lengths
-     const connectorWidth = 3.0;
-     // increase connector lengths to create more spacing between states
-     // keep inter-step SizedBox at 0 so connectors form a continuous line
-     const connectorTopHeight = 24.0;
-     const connectorBottomHeight = 24.0;
+    // connector thickness and lengths
+    const connectorWidth = 3.0;
+    // increase connector lengths to create more spacing between states
+    // keep inter-step SizedBox at 0 so connectors form a continuous line
+    const connectorTopHeight = 24.0;
+    const connectorBottomHeight = 24.0;
 
     // determine whether connectors should be shown as active (colored) based on current order.status
     int statusIndex(OrderStatus s) {
@@ -70,29 +70,52 @@ class OrderTrackingPage extends StatelessWidget {
           child: Column(
             children: [
               // top connector (touches circle)
-              if (showTopConnector) Container(width: connectorWidth, height: connectorTopHeight, color: connectorColorTop()),
+              if (showTopConnector)
+                Container(
+                    width: connectorWidth,
+                    height: connectorTopHeight,
+                    color: connectorColorTop()),
               Container(
                 width: circleSize,
                 height: circleSize,
-                decoration: BoxDecoration(color: active ? _primary : const Color(0xFFE5E7EB), shape: BoxShape.circle),
-                child: Icon(icon, size: 20, color: active ? Colors.white : Colors.grey.shade700),
+                decoration: BoxDecoration(
+                    color: active ? _primary : const Color(0xFFE5E7EB),
+                    shape: BoxShape.circle),
+                child: Icon(icon,
+                    size: 20,
+                    color: active ? Colors.white : Colors.grey.shade700),
               ),
               // bottom connector (touches circle)
-              if (showBottomConnector) Container(width: connectorWidth, height: connectorBottomHeight, color: connectorColorBottom()),
+              if (showBottomConnector)
+                Container(
+                    width: connectorWidth,
+                    height: connectorBottomHeight,
+                    color: connectorColorBottom()),
             ],
           ),
         ),
-  const SizedBox(width: 12),
+        const SizedBox(width: 12),
         // center
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: active ? _dark : Colors.grey.shade700)),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title,
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: active ? _dark : Colors.grey.shade700)),
             const SizedBox(height: 6),
-            Text(date, style: TextStyle(color: active ? _dark : Colors.grey.shade600, fontWeight: FontWeight.w400, fontSize: 13)),
+            if (active)
+              Text(date,
+                  style: TextStyle(
+                      color: _dark, fontWeight: FontWeight.w400, fontSize: 13)),
           ]),
         ),
         // time (with AM/PM)
-        Text(time, style: TextStyle(color: active ? _dark : Colors.grey.shade600, fontWeight: FontWeight.w400, fontSize: 13)),
+        if (active)
+          Text(time,
+              style: TextStyle(
+                  color: _dark, fontWeight: FontWeight.w400, fontSize: 13)),
       ],
     );
   }
@@ -100,9 +123,10 @@ class OrderTrackingPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // For mock purposes we derive times from createdAt
-  final created = order.createdAt;
-  final confirmedDate = '${created.day} ${_month(created.month)} ${created.year}';
-  final confirmedTime = _formatTime(created);
+    final created = order.createdAt;
+    final confirmedDate =
+        '${created.day} ${_month(created.month)} ${created.year}';
+    final confirmedTime = _formatTime(created);
 
     // build a simple timeline ordering
     return Scaffold(
@@ -129,7 +153,9 @@ class OrderTrackingPage extends StatelessWidget {
                         'assets/icons/back_arrow.svg',
                         width: 16,
                         height: 16,
-                        color: Theme.of(context).colorScheme.onPrimary,
+                        colorFilter: ColorFilter.mode(
+                            Theme.of(context).colorScheme.onPrimary,
+                            BlendMode.srcIn),
                         placeholderBuilder: (context) => Icon(
                           Icons.arrow_back,
                           size: 16,
@@ -139,26 +165,75 @@ class OrderTrackingPage extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Text('Suivre \nMa Commande', textAlign: TextAlign.center, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: _dark)),
+                  Text('Suivre \nMa Commande',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: _dark)),
                   const Spacer(flex: 2),
                 ],
               ),
             ),
             const SizedBox(height: 12),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20.0), child: Align(alignment: Alignment.centerLeft, child: Text('Commande #${order.id}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: _dark)))),
+            Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Commande #${order.id}',
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: _dark)))),
             const SizedBox(height: 16),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
                 child: Column(
                   children: [
-                    _buildStep(active: true, icon: Icons.check, title: OrderStatus.confirmed.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.confirmed, showTopConnector: false, showBottomConnector: true),
+                    _buildStep(
+                        active: true,
+                        icon: Icons.check,
+                        title: OrderStatus.confirmed.displayLabel,
+                        date: confirmedDate,
+                        time: confirmedTime,
+                        stepStatus: OrderStatus.confirmed,
+                        showTopConnector: false,
+                        showBottomConnector: true),
                     const SizedBox(height: 0),
-                    _buildStep(active: order.status == OrderStatus.preparing || order.status == OrderStatus.delivering || order.status == OrderStatus.delivered, icon: Icons.inventory_2_outlined, title: OrderStatus.preparing.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.preparing, showTopConnector: true, showBottomConnector: true),
+                    _buildStep(
+                        active: order.status == OrderStatus.preparing ||
+                            order.status == OrderStatus.delivering ||
+                            order.status == OrderStatus.delivered,
+                        icon: Icons.inventory_2_outlined,
+                        title: OrderStatus.preparing.displayLabel,
+                        date: confirmedDate,
+                        time: confirmedTime,
+                        stepStatus: OrderStatus.preparing,
+                        showTopConnector: true,
+                        showBottomConnector: true),
                     const SizedBox(height: 0),
-                    _buildStep(active: order.status == OrderStatus.delivering || order.status == OrderStatus.delivered, icon: Icons.local_shipping, title: OrderStatus.delivering.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.delivering, showTopConnector: true, showBottomConnector: true),
+                    _buildStep(
+                        active: order.status == OrderStatus.delivering ||
+                            order.status == OrderStatus.delivered,
+                        icon: Icons.local_shipping,
+                        title: OrderStatus.delivering.displayLabel,
+                        date: confirmedDate,
+                        time: confirmedTime,
+                        stepStatus: OrderStatus.delivering,
+                        showTopConnector: true,
+                        showBottomConnector: true),
                     const SizedBox(height: 0),
-                    _buildStep(active: order.status == OrderStatus.delivered, icon: Icons.mark_email_read, title: OrderStatus.delivered.displayLabel, date: confirmedDate, time: confirmedTime, stepStatus: OrderStatus.delivered, showTopConnector: true, showBottomConnector: false),
+                    _buildStep(
+                        active: order.status == OrderStatus.delivered,
+                        icon: Icons.mark_email_read,
+                        title: OrderStatus.delivered.displayLabel,
+                        date: confirmedDate,
+                        time: confirmedTime,
+                        stepStatus: OrderStatus.delivered,
+                        showTopConnector: true,
+                        showBottomConnector: false),
                     const SizedBox(height: 12),
                   ],
                 ),
@@ -171,7 +246,20 @@ class OrderTrackingPage extends StatelessWidget {
   }
 
   String _month(int m) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
     return months[(m - 1).clamp(0, 11)];
   }
 

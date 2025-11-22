@@ -14,41 +14,63 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
     on<CatalogLoadEvent>(_onLoad);
   }
 
-  Future<void> _onLoad(CatalogLoadEvent event, Emitter<CatalogState> emit) async {
+  Future<void> _onLoad(
+      CatalogLoadEvent event, Emitter<CatalogState> emit) async {
     try {
       // Debug logging
       // ignore: avoid_print
-      print('📦 [CatalogBloc] Loading products - categoryIds: ${event.categoryIds}, brandIds: ${event.brandIds}, query: ${event.query}, loadMore: ${event.loadMore}');
-      
-  if (event.loadMore) {
+      print(
+          '📦 [CatalogBloc] Loading products - categoryIds: ${event.categoryIds}, brandIds: ${event.brandIds}, query: ${event.query}, loadMore: ${event.loadMore}');
+
+      if (event.loadMore) {
         // If there is already loaded content, emit loading-more state with current items so UI can extend
-        if (_items.isNotEmpty) emit(CatalogLoadingMore(List<Product>.from(_items), page: _currentPage, hasMore: true));
+        if (_items.isNotEmpty) {
+          emit(CatalogLoadingMore(List<Product>.from(_items),
+              page: _currentPage, hasMore: true));
+        }
         final nextPage = _currentPage + 1;
-  final List<Product> newItems = await repository.getProducts(page: nextPage, pageSize: event.pageSize, query: event.query, categoryIds: event.categoryIds, brandIds: event.brandIds);
+        final List<Product> newItems = await repository.getProducts(
+            page: nextPage,
+            pageSize: event.pageSize,
+            query: event.query,
+            categoryIds: event.categoryIds,
+            brandIds: event.brandIds);
         if (newItems.isNotEmpty) {
           _currentPage = nextPage;
           _items.addAll(newItems);
           // hasMore when newItems length == pageSize and we haven't hit the end
           final hasMore = newItems.length >= event.pageSize;
-          emit(CatalogLoaded(List<Product>.from(_items), page: _currentPage, hasMore: hasMore));
+          emit(CatalogLoaded(List<Product>.from(_items),
+              page: _currentPage, hasMore: hasMore));
         } else {
           // no more items
-          emit(CatalogLoaded(List<Product>.from(_items), page: _currentPage, hasMore: false));
+          emit(CatalogLoaded(List<Product>.from(_items),
+              page: _currentPage, hasMore: false));
         }
       } else {
         // fresh load
-        emit(CatalogLoading());
+        if (_items.isEmpty || event.timestamp == null) {
+          emit(CatalogLoading());
+        }
         _currentPage = 1;
-  final List<Product> products = await repository.getProducts(page: _currentPage, pageSize: event.pageSize, query: event.query, categoryIds: event.categoryIds, brandIds: event.brandIds);
+        final List<Product> products = await repository.getProducts(
+            page: _currentPage,
+            pageSize: event.pageSize,
+            query: event.query,
+            categoryIds: event.categoryIds,
+            brandIds: event.brandIds,
+            forceRefresh: event.timestamp != null);
         _items.clear();
         _items.addAll(products);
         final hasMore = products.length >= event.pageSize;
-        
+
         // Debug logging
         // ignore: avoid_print
-        print('📦 [CatalogBloc] Loaded ${products.length} products, hasMore: $hasMore');
-        
-        emit(CatalogLoaded(List<Product>.from(_items), page: _currentPage, hasMore: hasMore));
+        print(
+            '📦 [CatalogBloc] Loaded ${products.length} products, hasMore: $hasMore');
+
+        emit(CatalogLoaded(List<Product>.from(_items),
+            page: _currentPage, hasMore: hasMore));
       }
     } catch (e) {
       // ignore: avoid_print

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:async';
 
 class SplashScreen extends StatefulWidget {
@@ -14,64 +13,94 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-  bool _showFullLogo = false;
+
+  // Phase 1: Hole
+  late Animation<double> _holeScaleAnimation;
+  late Animation<double> _holeFadeOutAnimation;
+
+  // Phase 2: Logo Mix Movement
+  late Animation<double> _logoMixScaleAnimation;
+  late Animation<double> _logoMixJumpUpAnimation;
+  late Animation<double> _logoMixDropAnimation;
+  late Animation<double> _logoHorizontalMoveAnimation;
+
+  // Phase 3: Transition to Full Logo
+  late Animation<double> _fullLogoRevealAnimation;
 
   @override
   void initState() {
     super.initState();
-    
-    // Create animation controller for smooth transitions
+
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 3500),
     );
 
-    // Fade animation for smooth transition
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+    // 1. Hole opens (0.0 - 0.15)
+    _holeScaleAnimation = Tween<double>(begin: 0.0, end: 1.5).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeIn),
+        curve: const Interval(0.0, 0.15, curve: Curves.easeOutBack),
       ),
     );
 
-    // Scale animation for expansion effect
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+    // Hole fades out quickly as icon goes up (0.2 - 0.3)
+    _holeFadeOutAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: Curves.easeOutBack,
+        curve: const Interval(0.2, 0.3, curve: Curves.easeIn),
       ),
     );
 
-    // Start the animation sequence
-    _startAnimation();
-  }
+    // 2. Logo Mix pops up (0.1 - 0.25)
+    _logoMixScaleAnimation = Tween<double>(begin: 0.0, end: 1.5).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.1, 0.25, curve: Curves.easeOutBack),
+      ),
+    );
 
-  Future<void> _startAnimation() async {
-    // Show logo_mix.svg first
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Start fade in animation
-    _controller.forward();
-    
-    // Wait for initial animation
-    await Future.delayed(const Duration(milliseconds: 800));
-    
-    // Transition to full logo
-    setState(() {
-      _showFullLogo = true;
+    // Jump UP (0.1 - 0.3) - Moves UP by 100 pixels
+    // Start from 110.0 (below center) so the top of the logo (220/2 = 110) starts at the hole (0)
+    _logoMixJumpUpAnimation = Tween<double>(begin: 110.0, end: -120.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.1, 0.3, curve: Curves.easeOut),
+      ),
+    );
+
+    // Drop Down to Center (0.3 - 0.5) - Returns to 0 with bounce
+    _logoMixDropAnimation = Tween<double>(begin: -120.0, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.3, 0.5, curve: Curves.bounceOut),
+      ),
+    );
+
+    // Move to Right (0.5 - 0.65)
+    // Shifts the logo to the right before the full logo reveals
+    _logoHorizontalMoveAnimation =
+        Tween<double>(begin: 0.0, end: 78.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.5, 0.65, curve: Curves.easeInOut),
+      ),
+    );
+
+    // Final Logo Animations
+    // Full Logo reveals from Right to Left (0.65 - 0.9)
+    _fullLogoRevealAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.65, 0.9, curve: Curves.easeInOut),
+      ),
+    );
+
+    _controller.forward().then((_) {
+      Future.delayed(const Duration(milliseconds: 200), () {
+        widget.onAnimationComplete();
+      });
     });
-    
-    // Reset and replay animation for full logo
-    _controller.reset();
-    _controller.forward();
-    
-    // Wait before completing
-    await Future.delayed(const Duration(milliseconds: 1200));
-    
-    // Call completion callback
-    widget.onAnimationComplete();
   }
 
   @override
@@ -88,35 +117,77 @@ class _SplashScreenState extends State<SplashScreen>
         child: AnimatedBuilder(
           animation: _controller,
           builder: (context, child) {
-            return FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 600),
-                  transitionBuilder: (Widget child, Animation<double> animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: ScaleTransition(
-                        scale: Tween<double>(begin: 0.8, end: 1.0).animate(animation),
-                        child: child,
+            // Calculate current Y position for Logo Mix
+            double currentY = 0;
+            if (_controller.value < 0.3) {
+              currentY = _logoMixJumpUpAnimation.value;
+            } else {
+              currentY = _logoMixDropAnimation.value;
+            }
+
+            // Calculate current X position for Logo Mix
+            // Only apply horizontal move after drop (0.5)
+            double currentX = 0;
+            if (_controller.value >= 0.5) {
+              currentX = _logoHorizontalMoveAnimation.value;
+            }
+
+            return Stack(
+              alignment: Alignment.center,
+              children: [
+                // Phase 1: Hole (Fades out quickly)
+                Opacity(
+                  opacity: _holeFadeOutAnimation.value,
+                  child: Transform.scale(
+                    scale: _holeScaleAnimation.value,
+                    child: Container(
+                      width: 150,
+                      height: 50,
+                      decoration: const BoxDecoration(
+                        color: Colors.black,
+                        borderRadius:
+                            BorderRadius.all(Radius.elliptical(150, 50)),
                       ),
-                    );
-                  },
-                  child: _showFullLogo
-                      ? SvgPicture.asset(
-                          'assets/logo/full_logo.svg',
-                          key: const ValueKey('full_logo'),
-                          width: MediaQuery.of(context).size.width * 0.7,
-                        )
-                      : SvgPicture.asset(
-                          'assets/logo/logo_mix.svg',
-                          key: const ValueKey('logo_mix'),
-                          width: 120,
-                          height: 120,
-                        ),
+                    ),
+                  ),
                 ),
-              ),
+
+                // Phase 2: First Logo (Icon)
+                // Jumps, Drops, then Moves Right
+                Transform.translate(
+                  offset: Offset(currentX, currentY),
+                  child: Transform.scale(
+                    scale: _logoMixScaleAnimation.value,
+                    child: Image.asset(
+                      'assets/logo/logo_mix.png',
+                      width: 220, // Increased size
+                      height: 220, // Increased size
+                    ),
+                  ),
+                ),
+
+                // Phase 3: Second Logo (Full Logo)
+                // Reveals from Right to Left, covering the First Logo
+                if (_controller.value > 0.6)
+                  SizedBox(
+                    width: 300, // Fixed width container
+                    height: 150,
+                    child: Align(
+                      alignment: Alignment.centerRight, // Anchor to the right
+                      child: ClipRect(
+                        child: Align(
+                          alignment: Alignment.centerRight, // Reveal from right
+                          widthFactor: _fullLogoRevealAnimation.value,
+                          child: Image.asset(
+                            'assets/logo/full_logo.png',
+                            width: 300, // Match container width
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         ),

@@ -7,21 +7,24 @@ class ProductTile extends StatefulWidget {
   final Product product;
   final int quantity;
   final Function(int) onQuantityChange;
-  const ProductTile({super.key, required this.product, required this.quantity, required this.onQuantityChange});
+  const ProductTile(
+      {super.key,
+      required this.product,
+      required this.quantity,
+      required this.onQuantityChange});
 
   @override
   State<ProductTile> createState() => _ProductTileState();
 }
 
 class _ProductTileState extends State<ProductTile> {
-  
   @override
   Widget build(BuildContext context) {
-  // debug: product pics
-  // ignore: avoid_print
-  print('product tile');
-  // ignore: avoid_print
-  print(widget.product.pics);
+    // debug: product pics
+    // ignore: avoid_print
+    print('product tile');
+    // ignore: avoid_print
+    print(widget.product.pics);
     final cs = Theme.of(context).colorScheme;
     return Container(
       height: 120,
@@ -29,7 +32,10 @@ class _ProductTileState extends State<ProductTile> {
         color: cs.surface,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
         ],
       ),
       padding: const EdgeInsets.all(4),
@@ -43,7 +49,10 @@ class _ProductTileState extends State<ProductTile> {
               width: 100,
               height: 112,
               color: Colors.grey.shade200,
-              child: (widget.product.pics.isNotEmpty ? widget.product.pics.first : '').isNotEmpty
+              child: (widget.product.pics.isNotEmpty
+                          ? widget.product.pics.first
+                          : '')
+                      .isNotEmpty
                   ? Image.network(
                       widget.product.pics.first,
                       fit: BoxFit.cover,
@@ -52,7 +61,8 @@ class _ProductTileState extends State<ProductTile> {
                         return Center(
                           child: CircularProgressIndicator(
                             value: loadingProgress.expectedTotalBytes != null
-                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
                                 : null,
                             strokeWidth: 2,
                           ),
@@ -88,7 +98,10 @@ class _ProductTileState extends State<ProductTile> {
                   widget.product.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 2),
                 if ((widget.product.description).isNotEmpty)
@@ -105,12 +118,16 @@ class _ProductTileState extends State<ProductTile> {
                 const SizedBox(height: 6),
                 Text(
                   '${widget.product.price.toStringAsFixed(2)} DZD',
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   'Vendu par ${widget.product.soldBy ?? 12}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: cs.onSurface.withOpacity(0.6)),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontSize: 12, color: cs.onSurface.withOpacity(0.6)),
                 ),
               ],
             ),
@@ -136,7 +153,11 @@ class _ProductTileState extends State<ProductTile> {
                       border: Border.all(color: cs.primary, width: 2),
                     ),
                     padding: const EdgeInsets.all(4),
-                    child: SvgPicture.asset('assets/icons/trash.svg', width: 8, height: 8, color: cs.primary),
+                    child: SvgPicture.asset('assets/icons/trash.svg',
+                        width: 8,
+                        height: 8,
+                        colorFilter:
+                            ColorFilter.mode(cs.primary, BlendMode.srcIn)),
                   ),
                 ),
                 const Spacer(),
@@ -152,28 +173,39 @@ class _ProductTileState extends State<ProductTile> {
                     children: [
                       Container(
                         decoration: BoxDecoration(
-                          color: Theme.of(context).extension<BrandColors>()?.brandTeal,
+                          color: Theme.of(context)
+                              .extension<BrandColors>()
+                              ?.brandTeal,
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: InkWell(
                           onTap: () {
-                            final next = widget.quantity > 0 ? widget.quantity - 1 : 0;
+                            final next =
+                                widget.quantity > 0 ? widget.quantity - 1 : 0;
                             widget.onQuantityChange(next);
                           },
                           child: Padding(
                             padding: const EdgeInsets.all(3.0),
-                            child: Icon(Icons.remove, size: 16, color: cs.surface),
+                            child:
+                                Icon(Icons.remove, size: 16, color: cs.surface),
                           ),
                         ),
                       ),
-                      Text('${widget.quantity}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: cs.onSecondary)),
+                      Text('${widget.quantity}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(color: cs.onSecondary)),
                       Container(
                         decoration: BoxDecoration(
-                          color: Theme.of(context).extension<BrandColors>()?.brandTeal,
+                          color: Theme.of(context)
+                              .extension<BrandColors>()
+                              ?.brandTeal,
                           borderRadius: BorderRadius.circular(100),
                         ),
                         child: InkWell(
-                          onTap: () => widget.onQuantityChange(widget.quantity + 1),
+                          onTap: () =>
+                              widget.onQuantityChange(widget.quantity + 1),
                           child: Padding(
                             padding: const EdgeInsets.all(3.0),
                             child: Icon(Icons.add, size: 16, color: cs.surface),

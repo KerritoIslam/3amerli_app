@@ -8,6 +8,7 @@ import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class ProductCard extends StatefulWidget {
   final String? imageUrl;
@@ -21,7 +22,7 @@ class ProductCard extends StatefulWidget {
   final int? productId;
   final String? brand;
   final VoidCallback? onTap;
-  
+
   const ProductCard({
     super.key,
     this.imageUrl,
@@ -49,10 +50,17 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   void initState() {
-    print("the image url is : 123123 : ${widget.imageUrl}");
     super.initState();
     _quantity = 1;
     _localFavorite = widget.isFavorite;
+  }
+
+  @override
+  void didUpdateWidget(covariant ProductCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isFavorite != oldWidget.isFavorite) {
+      _localFavorite = widget.isFavorite;
+    }
   }
 
   @override
@@ -106,8 +114,14 @@ class _ProductCardState extends State<ProductCard> {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(4, 4)),
-                BoxShadow(color: Colors.black.withOpacity(0.12), blurRadius: 4, offset: const Offset(-4, -4)),
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 4,
+                    offset: const Offset(4, 4)),
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.12),
+                    blurRadius: 4,
+                    offset: const Offset(-4, -4)),
               ],
             ),
             child: Column(
@@ -122,40 +136,50 @@ class _ProductCardState extends State<ProductCard> {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(22),
                           child: Image.network(
-                            widget.imageUrl ?? 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1170&q=80',
+                            widget.imageUrl ??
+                                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1170&q=80',
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(color: Colors.grey.shade200),
+                            errorBuilder: (_, __, ___) =>
+                                Container(color: Colors.grey.shade200),
                           ),
                         ),
                       ),
-                        Positioned(
+                      Positioned(
                         top: 8,
                         right: 8,
                         child: SizedBox(
                           height: 25,
                           width: 25,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(16),
-                            onTap: () {
-                              setState(() {
-                                _localFavorite = !_localFavorite;
-                              });
-                              widget.onFavoriteToggle?.call();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.surface,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 4, offset: const Offset(0, 2)),
-                                ],
-                              ),
-                              child: SvgPicture.asset(
-                                _localFavorite ? 'assets/icons/favoris.svg' : 'assets/icons/favoris_reversed.svg',
-                                width: 16,
-                                height: 16,
-                                color: Theme.of(context).colorScheme.primary,
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(16),
+                              onTap: () {
+                                setState(() {
+                                  _localFavorite = !_localFavorite;
+                                });
+                                widget.onFavoriteToggle?.call();
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.surface,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2)),
+                                  ],
+                                ),
+                                child: SvgPicture.asset(
+                                  _localFavorite
+                                      ? 'assets/icons/favoris.svg'
+                                      : 'assets/icons/favoris_reversed.svg',
+                                  width: 16,
+                                  height: 16,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
                               ),
                             ),
                           ),
@@ -175,15 +199,26 @@ class _ProductCardState extends State<ProductCard> {
                           widget.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 16),
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(fontSize: 16),
                         ),
-                        if (widget.brand != null && (widget.brand ?? '').isNotEmpty) ...[
+                        if (widget.brand != null &&
+                            (widget.brand ?? '').isNotEmpty) ...[
                           const SizedBox(height: 4),
                           Text(
                             widget.brand!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Theme.of(context).colorScheme.secondary),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    fontSize: 12,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .secondary),
                           ),
                         ],
                         const SizedBox(height: 0),
@@ -192,19 +227,40 @@ class _ProductCardState extends State<ProductCard> {
                             widget.subtitle!,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(decoration: TextDecoration.underline, fontSize: 14, color: Theme.of(context).colorScheme.secondary, decorationColor: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w500),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    decoration: TextDecoration.underline,
+                                    fontSize: 14,
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                    decorationColor:
+                                        Theme.of(context).colorScheme.secondary,
+                                    fontWeight: FontWeight.w500),
                           ),
                         const SizedBox(height: 0),
                         if (widget.price != null)
                           Text(
                             '${widget.price!.toStringAsFixed(2)} DZD',
-                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                        if ((widget.sellerName ?? widget.soldBy?.toString()) != null) ...[
+                        if ((widget.sellerName ?? widget.soldBy?.toString()) !=
+                            null) ...[
                           const SizedBox(height: 0),
                           Text(
                             'Vendu par: ${widget.sellerName ?? widget.soldBy?.toString()}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 12, color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.w400),
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    fontSize: 12,
+                                    color:
+                                        Theme.of(context).colorScheme.secondary,
+                                    fontWeight: FontWeight.w400),
                           ),
                         ],
                         const SizedBox(height: 2),
@@ -214,12 +270,15 @@ class _ProductCardState extends State<ProductCard> {
                             Expanded(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.secondary,
-                                  borderRadius: const BorderRadius.all(Radius.circular(32)),
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(32)),
                                 ),
                                 height: 24,
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
                                     InkWell(
                                       onTap: () {
@@ -230,13 +289,18 @@ class _ProductCardState extends State<ProductCard> {
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
                                           color: Colors.transparent,
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
                                         ),
-                                        child: const Icon(Icons.remove, size: 16),
+                                        child:
+                                            const Icon(Icons.remove, size: 16),
                                       ),
                                     ),
                                     const SizedBox(width: 8),
-                                    Text('$_quantity', style: Theme.of(context).textTheme.bodyMedium),
+                                    Text('$_quantity',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium),
                                     const SizedBox(width: 8),
                                     InkWell(
                                       onTap: () {
@@ -247,7 +311,8 @@ class _ProductCardState extends State<ProductCard> {
                                         padding: const EdgeInsets.all(6),
                                         decoration: BoxDecoration(
                                           color: Colors.transparent,
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
                                         ),
                                         child: const Icon(Icons.add, size: 16),
                                       ),
@@ -259,7 +324,8 @@ class _ProductCardState extends State<ProductCard> {
                             const SizedBox(width: 8),
                             InkWell(
                               onTap: () {
-                                if (widget.productId == null || widget.price == null) return;
+                                if (widget.productId == null ||
+                                    widget.price == null) return;
                                 CartBloc? cartBloc;
                                 try {
                                   cartBloc = context.read<CartBloc>();
@@ -268,11 +334,14 @@ class _ProductCardState extends State<ProductCard> {
                                   print('CartBloc provider not found: $e');
                                   return;
                                 }
-                                final productIdStr = widget.productId.toString();
+                                final productIdStr =
+                                    widget.productId.toString();
                                 final state = cartBloc.state;
                                 // Check if item is already in cart
                                 if (state is CartLoaded) {
-                                  final existingItem = state.items.firstWhereOrNull((item) => item.productId == productIdStr);
+                                  final existingItem = state.items
+                                      .firstWhereOrNull((item) =>
+                                          item.productId == productIdStr);
                                   if (existingItem == null) {
                                     cartBloc.add(CartAddItemEvent(CartItem(
                                       productId: productIdStr,
@@ -284,22 +353,21 @@ class _ProductCardState extends State<ProductCard> {
                                       soldBy: widget.soldBy,
                                     )));
                                     // Show toast notification
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('$_quantity x ${widget.title} ajouté au panier'),
-                                        duration: const Duration(seconds: 2),
-                                        backgroundColor: Theme.of(context).colorScheme.primary,
-                                      ),
+                                    // Show toast notification
+                                    TopToast.show(
+                                      context,
+                                      '$_quantity x ${widget.title} ajouté au panier',
                                     );
                                   } else {
-                                    cartBloc.add(CartUpdateQuantityEvent(productId: productIdStr, quantity: existingItem.quantity + _quantity));
+                                    cartBloc.add(CartUpdateQuantityEvent(
+                                        productId: productIdStr,
+                                        quantity:
+                                            existingItem.quantity + _quantity));
                                     // Show toast notification
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Quantité mise à jour: ${existingItem.quantity + _quantity} x ${widget.title}'),
-                                        duration: const Duration(seconds: 2),
-                                        backgroundColor: Theme.of(context).colorScheme.primary,
-                                      ),
+                                    // Show toast notification
+                                    TopToast.show(
+                                      context,
+                                      'Quantité mise à jour: ${existingItem.quantity + _quantity} x ${widget.title}',
                                     );
                                   }
                                 } else {
@@ -313,16 +381,19 @@ class _ProductCardState extends State<ProductCard> {
                                     soldBy: widget.soldBy,
                                   )));
                                   // Show toast notification
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('$_quantity x ${widget.title} ajouté au panier'),
-                                      duration: const Duration(seconds: 2),
-                                      backgroundColor: Theme.of(context).colorScheme.primary,
-                                    ),
+                                  // Show toast notification
+                                  TopToast.show(
+                                    context,
+                                    '$_quantity x ${widget.title} ajouté au panier',
                                   );
                                 }
                               },
-                              child: IconCircle(isSelected: true, asset: 'assets/icons/panier.svg', size: 26, selectedColor: Theme.of(context).colorScheme.primary),
+                              child: IconCircle(
+                                  isSelected: true,
+                                  asset: 'assets/icons/panier.svg',
+                                  size: 26,
+                                  selectedColor:
+                                      Theme.of(context).colorScheme.primary),
                             ),
                           ],
                         ),

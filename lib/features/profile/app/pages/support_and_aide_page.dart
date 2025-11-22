@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+
 class SupportAndAidePage extends StatefulWidget {
   const SupportAndAidePage({super.key});
 
@@ -22,8 +24,7 @@ class _SupportAndAidePageState extends State<SupportAndAidePage> {
       return;
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(AppLanguage.cannotOpenDialer)));
+    TopToast.show(context, AppLanguage.cannotOpenDialer);
   }
 
   Future<void> _launchEmail(String email) async {
@@ -34,8 +35,7 @@ class _SupportAndAidePageState extends State<SupportAndAidePage> {
       return;
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLanguage.cannotOpenMailClient)));
+    TopToast.show(context, AppLanguage.cannotOpenMailClient);
   }
 
   @override
@@ -63,7 +63,8 @@ class _SupportAndAidePageState extends State<SupportAndAidePage> {
                           child: SvgPicture.asset('assets/icons/back_arrow.svg',
                               width: 18,
                               height: 18,
-                              colorFilter: ColorFilter.mode(_darkGreen, BlendMode.srcIn),
+                              colorFilter:
+                                  ColorFilter.mode(_darkGreen, BlendMode.srcIn),
                               placeholderBuilder: (_) => const Icon(
                                   Icons.arrow_back,
                                   color: _darkGreen)),

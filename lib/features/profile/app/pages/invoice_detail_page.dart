@@ -2,6 +2,8 @@ import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class InvoiceDetailPage extends StatefulWidget {
   final String invoiceId;
@@ -13,14 +15,51 @@ class InvoiceDetailPage extends StatefulWidget {
 }
 
 class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
-  static const Color _darkGreen = Color(0xFF083B2E);
-  static const Color _primary = Color(0xFFA7C957);
+  late final WebViewController _controller;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    final pdfUrl = widget.pdfUrl;
+    final viewerUrl = pdfUrl != null
+        ? 'https://docs.google.com/gview?embedded=true&url=${Uri.encodeComponent(pdfUrl)}'
+        : null;
+
+    _controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onPageStarted: (_) {
+            if (mounted) setState(() => _isLoading = true);
+          },
+          onPageFinished: (_) {
+            if (mounted) setState(() => _isLoading = false);
+          },
+          onWebResourceError: (error) {
+            debugPrint('WebView error: ${error.description}');
+            if (mounted) setState(() => _isLoading = false);
+          },
+        ),
+      );
+
+    if (viewerUrl != null) {
+      // Add a small delay to ensure the WebView platform is ready
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          _controller.loadRequest(Uri.parse(viewerUrl));
+        }
+      });
+    } else {
+      _isLoading = false;
+    }
+  }
 
   Future<void> _openPdf() async {
     final pdf = widget.pdfUrl;
     if (pdf == null) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Aucun PDF disponible')));
+      TopToast.show(context, 'Aucun PDF disponible', isError: true);
       return;
     }
     final uri = Uri.parse(pdf);
@@ -30,7 +69,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
       return;
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Impossible d\'ouvrir le PDF')));
+    TopToast.show(context, 'Impossible d\'ouvrir le PDF', isError: true);
   }
 
   @override
@@ -41,7 +80,7 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
+              padding: const EdgeInsets.fromLTRB(24, 12, 24, 8),
               child: Directionality(
                 textDirection: TextDirection.ltr,
                 child: Row(
@@ -52,74 +91,120 @@ class _InvoiceDetailPageState extends State<InvoiceDetailPage> {
                       child: Container(
                         width: 40,
                         height: 40,
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).colorScheme.tertiaryContainer,
+                          shape: BoxShape.circle,
+                        ),
                         alignment: Alignment.center,
-                        child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 18, height: 18, color: _darkGreen, placeholderBuilder: (_) => const Icon(Icons.arrow_back, color: _darkGreen)),
+                        child: SvgPicture.asset(
+                          'assets/icons/back_arrow.svg',
+                          width: 16,
+                          height: 16,
+                          colorFilter: ColorFilter.mode(
+                              Theme.of(context).colorScheme.onPrimary,
+                              BlendMode.srcIn),
+                          placeholderBuilder: (context) => Icon(
+                            Icons.arrow_back,
+                            size: 16,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                        ),
                       ),
                     ),
-                    const Spacer(),
-                    Center(child: Text(widget.invoiceId, style: const TextStyle(fontFamily: 'Geist', fontWeight: FontWeight.w700, fontSize: 20, color: _darkGreen))),
-                    const Spacer(flex: 2),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          widget.invoiceId,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineLarge
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 40, height: 40),
                   ],
                 ),
               ),
             ),
-
-            const SizedBox(height: 32),
-
+            const SizedBox(height: 16),
             Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    Padding(
+              child: widget.pdfUrl != null
+                  ? Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: Container(
-                        width: double.infinity,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          border: Border.all(color: Colors.grey.shade300),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _primary),
-                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 6, offset: const Offset(0, 2))],
                         ),
-                        padding: const EdgeInsets.all(16),
-                        child: AspectRatio(
-                          aspectRatio: 4 / 3,
-                          child: Center(child: Text('Invoice preview for ${widget.invoiceId}', style: const TextStyle(color: Colors.black54))),
+                        clipBehavior: Clip.hardEdge,
+                        child: Stack(
+                          children: [
+                            WebViewWidget(controller: _controller),
+                            if (_isLoading)
+                              const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                          ],
                         ),
                       ),
+                    )
+                  : const Center(
+                      child: Text('Aucun PDF disponible',
+                          style: TextStyle(color: Colors.grey))),
+            ),
+            const SizedBox(height: 24),
+            Padding(
+              padding: EdgeInsets.only(
+                  left: 28.0,
+                  right: 28.0,
+                  bottom: MediaQuery.of(context).padding.bottom + 24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: _openPdf,
+                    style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                            color: Theme.of(context)
+                                    .extension<BrandColors>()
+                                    ?.brandTeal ??
+                                AppColors.brandTeal),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 4)),
+                    child: Text('Partager',
+                        style: TextStyle(
+                            color: Theme.of(context)
+                                    .extension<BrandColors>()
+                                    ?.brandTeal ??
+                                AppColors.brandTeal)),
+                  ),
+                  const SizedBox(width: 20),
+                  ElevatedButton(
+                    onPressed: _openPdf,
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context)
+                                .extension<BrandColors>()
+                                ?.brandTeal ??
+                            AppColors.brandTeal,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 8)),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset('assets/icons/print.svg',
+                            width: 20, height: 20),
+                        const SizedBox(width: 8),
+                        const Text('Ouvrir',
+                            style: TextStyle(color: Colors.white)),
+                      ],
                     ),
-
-                    const SizedBox(height: 24),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          OutlinedButton(
-                            onPressed: _openPdf,
-                            style: OutlinedButton.styleFrom(
-                                side:  BorderSide(color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4)),
-                            child:  Text('Partager', style: TextStyle(color: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal)),
-                          ),
-                          const SizedBox(width: 20),
-                          ElevatedButton(
-                            onPressed: _openPdf,
-                            style: ElevatedButton.styleFrom(backgroundColor: Theme.of(context).extension<BrandColors>()?.brandTeal ?? AppColors.brandTeal, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8)),
-                            child: Row(
-                              children: [
-                                SvgPicture.asset('assets/icons/print.svg', width: 20, height: 20),
-                                const SizedBox(width: 8),
-                                const Text('Imprimer', style: TextStyle(color: Colors.white)),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],

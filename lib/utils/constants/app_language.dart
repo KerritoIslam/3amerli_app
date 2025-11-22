@@ -198,6 +198,147 @@ class AppLanguage {
       AppLocale.fr: 'Appliquer',
       AppLocale.ar: 'تطبيق',
     },
+    'applyFilters': {
+      AppLocale.en: 'Apply filters',
+      AppLocale.fr: 'Appliquer les filtres',
+      AppLocale.ar: 'تطبيق المرشحات',
+    },
+    // Admin Orders & Users
+    'orderDetails': {
+      AppLocale.en: 'Order Details',
+      AppLocale.fr: 'Détails de la commande',
+      AppLocale.ar: 'تفاصيل الطلب',
+    },
+    'orderedItems': {
+      AppLocale.en: 'Ordered Items',
+      AppLocale.fr: 'Articles commandés',
+      AppLocale.ar: 'العناصر المطلوبة',
+    },
+    'clientInfo': {
+      AppLocale.en: 'Client Information',
+      AppLocale.fr: 'Informations du client',
+      AppLocale.ar: 'معلومات العميل',
+    },
+    'storeName': {
+      AppLocale.en: 'Store Name',
+      AppLocale.fr: 'Nom de la supérette',
+      AppLocale.ar: 'اسم المتجر',
+    },
+    'representativeName': {
+      AppLocale.en: 'Representative Name',
+      AppLocale.fr: 'Nom et prénom du réprésentant',
+      AppLocale.ar: 'اسم الممثل',
+    },
+    'fullAddress': {
+      AppLocale.en: 'Full Address',
+      AppLocale.fr: 'Adresse complète',
+      AppLocale.ar: 'العنوان الكامل',
+    },
+    'paymentInfo': {
+      AppLocale.en: 'Payment Information',
+      AppLocale.fr: 'Informations du paiement',
+      AppLocale.ar: 'معلومات الدفع',
+    },
+    'dateTime': {
+      AppLocale.en: 'Date and Time',
+      AppLocale.fr: 'Date et heure',
+      AppLocale.ar: 'التاريخ والوقت',
+    },
+    'currentStatus': {
+      AppLocale.en: 'Current Status',
+      AppLocale.fr: 'Statut actuel',
+      AppLocale.ar: 'الحالة الحالية',
+    },
+    'nextStep': {
+      AppLocale.en: 'Next Step',
+      AppLocale.fr: 'Étape suivante',
+      AppLocale.ar: 'الخطوة التالية',
+    },
+    'orderNotFound': {
+      AppLocale.en: 'Order not found',
+      AppLocale.fr: 'Commande non trouvée',
+      AppLocale.ar: 'الطلب غير موجود',
+    },
+    'statusUpdated': {
+      AppLocale.en: 'Status updated successfully',
+      AppLocale.fr: 'Statut mis à jour avec succès',
+      AppLocale.ar: 'تم تحديث الحالة بنجاح',
+    },
+    'quantityAbbr': {
+      AppLocale.en: 'Qty',
+      AppLocale.fr: 'Qté',
+      AppLocale.ar: 'الكمية',
+    },
+    'orderNumber': {
+      AppLocale.en: 'Order No.',
+      AppLocale.fr: 'N° Commande',
+      AppLocale.ar: 'رقم الطلب',
+    },
+    'client': {
+      AppLocale.en: 'Client',
+      AppLocale.fr: 'Client',
+      AppLocale.ar: 'العميل',
+    },
+    'noOrdersFound': {
+      AppLocale.en: 'No orders found',
+      AppLocale.fr: 'Aucune commande trouvée',
+      AppLocale.ar: 'لم يتم العثور على طلبات',
+    },
+    'deleteOrders': {
+      AppLocale.en: 'Delete Orders',
+      AppLocale.fr: 'Supprimer les commandes',
+      AppLocale.ar: 'حذف الطلبات',
+    },
+    'deleteOrdersConfirm': {
+      AppLocale.en: 'Are you sure you want to delete',
+      AppLocale.fr: 'Êtes-vous sûr de vouloir supprimer',
+      AppLocale.ar: 'هل أنت متأكد أنك تريد حذف',
+    },
+    'exportCSV': {
+      AppLocale.en: 'Export CSV',
+      AppLocale.fr: 'Exporter CSV',
+      AppLocale.ar: 'تصدير CSV',
+    },
+    'suspended': {
+      AppLocale.en: 'Suspended',
+      AppLocale.fr: 'Suspendu',
+      AppLocale.ar: 'معلق',
+    },
+    'role': {
+      AppLocale.en: 'Role',
+      AppLocale.fr: 'Rôle',
+      AppLocale.ar: 'الدور',
+    },
+    'confirmDelete': {
+      AppLocale.en: 'Confirm Delete',
+      AppLocale.fr: 'Confirmer la suppression',
+      AppLocale.ar: 'تأكيد الحذف',
+    },
+    'confirmDeleteUser': {
+      AppLocale.en: 'Are you sure you want to delete this user?',
+      AppLocale.fr: 'Voulez-vous vraiment supprimer cet utilisateur ?',
+      AppLocale.ar: 'هل أنت متأكد أنك تريد حذف هذا المستخدم؟',
+    },
+    'confirmDeleteUsers': {
+      AppLocale.en: 'Are you sure you want to delete these users?',
+      AppLocale.fr: 'Voulez-vous vraiment supprimer ces utilisateurs ?',
+      AppLocale.ar: 'هل أنت متأكد أنك تريد حذف هؤلاء المستخدمين؟',
+    },
+    'deleteSelected': {
+      AppLocale.en: 'Delete Selected',
+      AppLocale.fr: 'Supprimer la sélection',
+      AppLocale.ar: 'حذف المحدد',
+    },
+    'selectedCount': {
+      AppLocale.en: 'selected',
+      AppLocale.fr: 'sélectionné(s)',
+      AppLocale.ar: 'محدد',
+    },
+    'openOrderLinkedToNotification': {
+      AppLocale.en: 'Open order linked to notification',
+      AppLocale.fr: 'Ouvrir la commande liée à la notification',
+      AppLocale.ar: 'فتح الطلب المرتبط بالإشعار',
+    },
     'reset': {
       AppLocale.en: 'Reset',
       AppLocale.fr: 'Réinitialiser',
@@ -345,11 +486,8 @@ class AppLanguage {
       AppLocale.fr: 'Statut',
       AppLocale.ar: 'الحالة',
     },
-    'role': {
-      AppLocale.en: 'Role',
-      AppLocale.fr: 'Rôle',
-      AppLocale.ar: 'الدور',
-    },
+    // 'role' removed (duplicate)
+
     'address': {
       AppLocale.en: 'Address',
       AppLocale.fr: 'Adresse',
@@ -424,11 +562,8 @@ class AppLanguage {
       AppLocale.fr: 'Aucun produit trouvé',
       AppLocale.ar: 'لم يتم العثور على منتجات',
     },
-    'noOrdersFound': {
-      AppLocale.en: 'No orders found',
-      AppLocale.fr: 'Aucune commande trouvée',
-      AppLocale.ar: 'لم يتم العثور على طلبات',
-    },
+    // 'noOrdersFound' removed (duplicate)
+
     'noUsersFound': {
       AppLocale.en: 'No users found',
       AppLocale.fr: 'Aucun utilisateur trouvé',
@@ -498,11 +633,8 @@ class AppLanguage {
       AppLocale.fr: 'Précisez votre adresse pour recevoir vos livraisons.',
       AppLocale.ar: 'حدد عنوانك لاستلام طلباتك.',
     },
-    'confirmDelete': {
-      AppLocale.en: 'Are you sure you want to delete?',
-      AppLocale.fr: 'Êtes-vous sûr de vouloir supprimer ?',
-      AppLocale.ar: 'هل أنت متأكد أنك تريد الحذف؟',
-    },
+    // 'confirmDelete' removed (duplicate)
+
     'deleteSuccess': {
       AppLocale.en: 'Deleted successfully',
       AppLocale.fr: 'Supprimé avec succès',
@@ -1334,6 +1466,37 @@ class AppLanguage {
   static String get search => _t('search');
   static String get filter => _t('filter');
   static String get sort => _t('sort');
+  static String get applyFilters => _t('applyFilters');
+
+  // Admin Orders & Users
+  static String get orderDetails => _t('orderDetails');
+  static String get orderedItems => _t('orderedItems');
+  static String get clientInfo => _t('clientInfo');
+  static String get storeName => _t('storeName');
+  static String get representativeName => _t('representativeName');
+  static String get fullAddress => _t('fullAddress');
+  static String get paymentInfo => _t('paymentInfo');
+  static String get dateTime => _t('dateTime');
+  static String get currentStatus => _t('currentStatus');
+  static String get nextStep => _t('nextStep');
+  static String get orderNotFound => _t('orderNotFound');
+  static String get statusUpdated => _t('statusUpdated');
+  static String get quantityAbbr => _t('quantityAbbr');
+  static String get orderNumber => _t('orderNumber');
+  static String get client => _t('client');
+  static String get noOrdersFound => _t('noOrdersFound');
+  static String get deleteOrders => _t('deleteOrders');
+  static String get deleteOrdersConfirm => _t('deleteOrdersConfirm');
+  static String get exportCSV => _t('exportCSV');
+  static String get suspended => _t('suspended');
+  static String get role => _t('role');
+  static String get confirmDelete => _t('confirmDelete');
+  static String get confirmDeleteUser => _t('confirmDeleteUser');
+  static String get confirmDeleteUsers => _t('confirmDeleteUsers');
+  static String get deleteSelected => _t('deleteSelected');
+  static String get selectedCount => _t('selectedCount');
+  static String get openOrderLinkedToNotification =>
+      _t('openOrderLinkedToNotification');
 
   // Common Labels
   static String get all => _t('all');
@@ -1356,7 +1519,6 @@ class AppLanguage {
   static String get name => _t('name');
   static String get date => _t('date');
   static String get status => _t('status');
-  static String get role => _t('role');
   static String get address => _t('address');
   static String get phone => _t('phone');
   static String get email => _t('email');
@@ -1375,7 +1537,6 @@ class AppLanguage {
 
   // Empty States
   static String get noProductsFound => _t('noProductsFound');
-  static String get noOrdersFound => _t('noOrdersFound');
   static String get noUsersFound => _t('noUsersFound');
   static String get noCategoriesFound => _t('noCategoriesFound');
   static String get noBrandsFound => _t('noBrandsFound');
@@ -1393,7 +1554,6 @@ class AppLanguage {
   static String get pleaseSelectBrand => _t('pleaseSelectBrand');
   static String get defineYourLocation => _t('defineYourLocation');
   static String get enterAddressHint => _t('enterAddressHint');
-  static String get confirmDelete => _t('confirmDelete');
   static String get deleteSuccess => _t('deleteSuccess');
   static String get saveSuccess => _t('saveSuccess');
   static String get updateSuccess => _t('updateSuccess');
@@ -1411,6 +1571,29 @@ class AppLanguage {
   static String get gettingLocation => _t('gettingLocation');
   static String get locationPluginUnavailable =>
       _t('locationPluginUnavailable');
+  static String get ordersToday => _t('ordersToday');
+  static String get turnover => _t('turnover');
+  static String get activeSupermarkets => _t('activeSupermarkets');
+  static String get deliveriesInProgress => _t('deliveriesInProgress');
+  static String get performance => _t('performance');
+  static String get salesEvolution => _t('salesEvolution');
+  static String get salesEvolutionDesc => _t('salesEvolutionDesc');
+  static String get topProducts => _t('topProducts');
+  static String get admin => _t('admin');
+
+  // Month abbreviations
+  static String get jan => _t('jan');
+  static String get feb => _t('feb');
+  static String get mar => _t('mar');
+  static String get apr => _t('apr');
+  static String get may => _t('may');
+  static String get jun => _t('jun');
+  static String get jul => _t('jul');
+  static String get aug => _t('aug');
+  static String get sep => _t('sep');
+  static String get oct => _t('oct');
+  static String get nov => _t('nov');
+  static String get dec => _t('dec');
   static String get locationPermissionPermanentlyDenied =>
       _t('locationPermissionPermanentlyDenied');
   static String get useCurrentLocation => _t('useCurrentLocation');

@@ -8,6 +8,7 @@ import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/entities/brand.dart';
 import '../../domain/repositories/admin_brands_repository.dart';
 import 'add_brand_page.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class AdminBrandsPage extends StatefulWidget {
   const AdminBrandsPage({super.key});
@@ -22,6 +23,12 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
   late final AdminBrandsRepository _repository;
   List<Brand> _brands = [];
   bool _isLoading = false;
+
+  // Pagination
+  final ScrollController _scrollController = ScrollController();
+  int _currentPage = 1;
+  bool _hasMore = true;
+  bool _isLoadMoreRunning = false;
 
   bool get _allSelected =>
       _filteredBrands.isNotEmpty &&
@@ -40,22 +47,66 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
     super.initState();
     _repository = di.sl<AdminBrandsRepository>();
     _loadBrands();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoading &&
+        !_isLoadMoreRunning &&
+        _hasMore &&
+        _search.isEmpty) {
+      _loadMoreBrands();
+    }
   }
 
   Future<void> _loadBrands() async {
-    setState(() => _isLoading = true);
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+      _currentPage = 1;
+      _hasMore = true;
+    });
     try {
-      final brands = await _repository.getAllBrands();
+      final brands = await _repository.getAllBrands(page: 1, limit: 20);
       setState(() {
         _brands = brands;
         _isLoading = false;
+        if (brands.length < 20) _hasMore = false;
       });
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLanguage.loadingError)),
-        );
+        TopToast.show(context, AppLanguage.loadingError, isError: true);
+      }
+    }
+  }
+
+  Future<void> _loadMoreBrands() async {
+    if (_isLoadMoreRunning) return;
+    setState(() => _isLoadMoreRunning = true);
+    try {
+      final nextPage = _currentPage + 1;
+      final newBrands =
+          await _repository.getAllBrands(page: nextPage, limit: 20);
+      setState(() {
+        _brands.addAll(newBrands);
+        _currentPage = nextPage;
+        _isLoadMoreRunning = false;
+        if (newBrands.length < 20) _hasMore = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadMoreRunning = false);
+      if (mounted) {
+        TopToast.show(context, AppLanguage.loadingError, isError: true);
       }
     }
   }
@@ -67,12 +118,6 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
     return _brands
         .where((b) => b.name.toLowerCase().contains(_search))
         .toList();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _openAddPage({Brand? edit}) async {
@@ -90,25 +135,19 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
             if (idx != -1) _brands[idx] = savedBrand;
           });
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLanguage.brandUpdated)),
-            );
+            TopToast.show(context, AppLanguage.brandUpdated, isError: false);
           }
         } else {
           // add new
           savedBrand = await _repository.createBrand(result.name);
           setState(() => _brands.insert(0, savedBrand));
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(AppLanguage.brandAdded)),
-            );
+            TopToast.show(context, AppLanguage.brandAdded, isError: false);
           }
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLanguage.error)),
-          );
+          TopToast.show(context, AppLanguage.error, isError: true);
         }
       }
     }
@@ -137,15 +176,11 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
         await _repository.deleteBrand(brand.id);
         setState(() => _brands.removeWhere((b) => b.id == brand.id));
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLanguage.brandDeleted)),
-          );
+          TopToast.show(context, AppLanguage.brandDeleted, isError: false);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLanguage.deleteError)),
-          );
+          TopToast.show(context, AppLanguage.deleteError, isError: true);
         }
       }
     }
@@ -208,7 +243,10 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                   ElevatedButton.icon(
                     onPressed: () => _openAddPage(),
                     icon: SvgPicture.asset('assets/icons/plus.svg',
-                        width: 14, height: 14, color: Colors.white),
+                        width: 14,
+                        height: 14,
+                        colorFilter: const ColorFilter.mode(
+                            Colors.white, BlendMode.srcIn)),
                     label: Text(AppLanguage.addWithPlus),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
@@ -225,148 +263,161 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
 
             // Table
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0, vertical: 12.0),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(12),
-                      topRight: Radius.circular(12),
-                    ),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 1,
-                    ),
-                  ),
-                  child: Column(
-                    children: [
-                      // Table Header (match products table header look)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: const BorderRadius.only(
-                            topLeft: Radius.circular(12),
-                            topRight: Radius.circular(12),
-                          ),
+              child: RefreshIndicator(
+                onRefresh: _loadBrands,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 12.0),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(12),
+                          topRight: Radius.circular(12),
                         ),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: Checkbox(
-                                value: _allSelected,
-                                onChanged: _toggleSelectAll,
-                                shape: const CircleBorder(),
-                                activeColor: AppColors.brandDeep,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                                child: Text(AppLanguage.brand,
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 11))),
-                            SizedBox(width: 6),
-                            SizedBox(
-                                width: 50,
-                                child: Center(
-                                    child: Text(AppLanguage.actions,
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.w700)))),
-                          ],
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 1,
                         ),
                       ),
+                      child: Column(
+                        children: [
+                          // Table Header (match products table header look)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: Checkbox(
+                                    value: _allSelected,
+                                    onChanged: _toggleSelectAll,
+                                    shape: const CircleBorder(),
+                                    activeColor: AppColors.brandDeep,
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                    child: Text(AppLanguage.brand,
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 11))),
+                                SizedBox(width: 6),
+                                SizedBox(
+                                    width: 50,
+                                    child: Center(
+                                        child: Text(AppLanguage.actions,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.w700)))),
+                              ],
+                            ),
+                          ),
 
-                      // Brand List (use dividers between rows like products table)
-                      Flexible(
-                        child: _isLoading
-                            ? const Center(child: CircularProgressIndicator())
-                            : _filteredBrands.isEmpty
-                                ? Center(
-                                    child: Padding(
-                                        padding: const EdgeInsets.all(32),
-                                        child: Text(AppLanguage.noBrandsFound)))
-                                : ListView.separated(
-                                    shrinkWrap: true,
-                                    physics:
-                                        const NeverScrollableScrollPhysics(),
-                                    padding: const EdgeInsets.all(12),
-                                    itemCount: _filteredBrands.length,
-                                    separatorBuilder: (context, index) =>
-                                        Divider(
-                                      height: 1,
-                                      thickness: 1,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0.12),
-                                    ),
-                                    itemBuilder: (context, index) {
-                                      final brand = _filteredBrands[index];
-                                      final isSelected =
-                                          _selected[brand.id] ?? false;
-                                      return Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            vertical: 6),
+                          // Brand List (use dividers between rows like products table)
+                          if (_isLoading)
+                            const SizedBox(
+                                height: 200,
+                                child:
+                                    Center(child: CircularProgressIndicator()))
+                          else if (_filteredBrands.isEmpty)
+                            Center(
+                                child: Padding(
+                                    padding: const EdgeInsets.all(32),
+                                    child: Text(AppLanguage.noBrandsFound)))
+                          else
+                            ListView.separated(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(12),
+                              itemCount: _filteredBrands.length,
+                              separatorBuilder: (context, index) => Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.12),
+                              ),
+                              itemBuilder: (context, index) {
+                                final brand = _filteredBrands[index];
+                                final isSelected = _selected[brand.id] ?? false;
+                                return Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 6),
+                                  child: Row(
+                                    children: [
+                                      SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: Checkbox(
+                                          value: isSelected,
+                                          onChanged: (v) => setState(() =>
+                                              _selected[brand.id] = v ?? false),
+                                          shape: const CircleBorder(),
+                                          activeColor: AppColors.brandDeep,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Expanded(child: Text(brand.name)),
+                                      SizedBox(
+                                        width: 50,
                                         child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
                                           children: [
-                                            SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: Checkbox(
-                                                value: isSelected,
-                                                onChanged: (v) => setState(() =>
-                                                    _selected[brand.id] =
-                                                        v ?? false),
-                                                shape: const CircleBorder(),
-                                                activeColor:
-                                                    AppColors.brandDeep,
-                                              ),
+                                            InkWell(
+                                              onTap: () =>
+                                                  _openAddPage(edit: brand),
+                                              child: SvgPicture.asset(
+                                                  'assets/icons/small_edit.svg',
+                                                  width: 16,
+                                                  height: 16,
+                                                  colorFilter: ColorFilter.mode(
+                                                      AppColors.brandDeep,
+                                                      BlendMode.srcIn)),
                                             ),
-                                            const SizedBox(width: 6),
-                                            Expanded(child: Text(brand.name)),
-                                            SizedBox(
-                                              width: 50,
-                                              child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                children: [
-                                                  InkWell(
-                                                    onTap: () => _openAddPage(
-                                                        edit: brand),
-                                                    child: SvgPicture.asset(
-                                                        'assets/icons/small_edit.svg',
-                                                        width: 16,
-                                                        height: 16,
-                                                        color: AppColors
-                                                            .brandDeep),
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  InkWell(
-                                                    onTap: () =>
-                                                        _confirmDelete(brand),
-                                                    child: SvgPicture.asset(
-                                                        'assets/icons/delete.svg',
-                                                        width: 16,
-                                                        height: 16,
-                                                        color: Colors.red),
-                                                  ),
-                                                ],
-                                              ),
+                                            const SizedBox(width: 8),
+                                            InkWell(
+                                              onTap: () =>
+                                                  _confirmDelete(brand),
+                                              child: SvgPicture.asset(
+                                                  'assets/icons/delete.svg',
+                                                  width: 16,
+                                                  height: 16,
+                                                  colorFilter:
+                                                      const ColorFilter.mode(
+                                                          Colors.red,
+                                                          BlendMode.srcIn)),
                                             ),
                                           ],
                                         ),
-                                      );
-                                    },
+                                      ),
+                                    ],
                                   ),
+                                );
+                              },
+                            ),
+                          if (_isLoadMoreRunning)
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

@@ -11,6 +11,8 @@ import '../bloc/admin_categories_event.dart';
 import '../bloc/admin_categories_state.dart';
 import '../../domain/entities/category.dart';
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+
 class AdminCategoriesPage extends StatefulWidget {
   const AdminCategoriesPage({super.key});
 
@@ -22,23 +24,41 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
   final TextEditingController _searchController = TextEditingController();
   final Set<String> _selectedIds = {};
   final Set<String> _selectedSubIds = {};
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
-    context.read<AdminCategoriesBloc>().add(const AdminCategoriesLoadEvent());
+    context
+        .read<AdminCategoriesBloc>()
+        .add(const AdminCategoriesLoadEvent(page: 1, limit: 20));
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final state = context.read<AdminCategoriesBloc>().state;
+      if (state is AdminCategoriesLoaded &&
+          state.hasMore &&
+          !state.isLoadingMore) {
+        context.read<AdminCategoriesBloc>().add(
+            AdminCategoriesLoadEvent(page: state.currentPage + 1, limit: 20));
+      }
+    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
   void _onSearch(String query) {
     context
         .read<AdminCategoriesBloc>()
-        .add(AdminCategoriesLoadEvent(query: query));
+        .add(AdminCategoriesLoadEvent(query: query, page: 1, limit: 20));
   }
 
   @override
@@ -48,11 +68,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
         if (state is AdminCategoriesError) {
           ErrorHandler.showError(context, state.message);
         } else if (state is AdminCategoriesOperationSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-                content: Text(state.message),
-                backgroundColor: AppColors.brandDeep),
-          );
+          TopToast.show(context, state.message, isError: false);
         }
       },
       child: Scaffold(
@@ -140,31 +156,54 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
 
               // Content
               Expanded(
-                child: BlocBuilder<AdminCategoriesBloc, AdminCategoriesState>(
-                    builder: (context, state) {
-                  if (state is AdminCategoriesLoading)
-                    return const Center(child: CircularProgressIndicator());
-                  if (state is AdminCategoriesLoaded) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _buildCategoriesTable(state),
-                            const SizedBox(height: 24),
-                            Text(AppLanguage.subcategories,
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black)),
-                            const SizedBox(height: 12),
-                            _buildSubCategoriesTable(state),
-                            const SizedBox(height: 100),
-                          ]),
-                    );
-                  }
-                  return Center(child: Text(AppLanguage.noDataAvailable));
-                }),
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<AdminCategoriesBloc>().add(
+                        const AdminCategoriesLoadEvent(page: 1, limit: 20));
+                  },
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child:
+                        BlocBuilder<AdminCategoriesBloc, AdminCategoriesState>(
+                            builder: (context, state) {
+                      if (state is AdminCategoriesLoading) {
+                        return const SizedBox(
+                            height: 400,
+                            child: Center(child: CircularProgressIndicator()));
+                      }
+                      if (state is AdminCategoriesLoaded) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                          child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildCategoriesTable(state),
+                                if (state.isLoadingMore)
+                                  const Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Center(
+                                        child: CircularProgressIndicator()),
+                                  ),
+                                const SizedBox(height: 24),
+                                Text(AppLanguage.subcategories,
+                                    style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black)),
+                                const SizedBox(height: 12),
+                                _buildSubCategoriesTable(state),
+                                const SizedBox(height: 100),
+                              ]),
+                        );
+                      }
+                      return SizedBox(
+                          height: 400,
+                          child:
+                              Center(child: Text(AppLanguage.noDataAvailable)));
+                    }),
+                  ),
+                ),
               ),
             ],
           ),
@@ -319,7 +358,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                             'assets/icons/small_edit.svg',
                             width: 16,
                             height: 16,
-                            color: AppColors.brandDeep,
+                            colorFilter: ColorFilter.mode(
+                                AppColors.brandDeep, BlendMode.srcIn),
                             placeholderBuilder: (c) => Icon(Icons.edit,
                                 size: 16, color: AppColors.brandDeep),
                           ),
@@ -331,7 +371,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                             'assets/icons/delete.svg',
                             width: 16,
                             height: 16,
-                            color: Colors.red,
+                            colorFilter: const ColorFilter.mode(
+                                Colors.red, BlendMode.srcIn),
                             placeholderBuilder: (c) =>
                                 Icon(Icons.delete, size: 16, color: Colors.red),
                           ),
@@ -498,7 +539,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                           'assets/icons/small_edit.svg',
                           width: 16,
                           height: 16,
-                          color: AppColors.brandDeep,
+                          colorFilter: ColorFilter.mode(
+                              AppColors.brandDeep, BlendMode.srcIn),
                           placeholderBuilder: (c) => Icon(Icons.edit,
                               size: 16, color: AppColors.brandDeep),
                         ),
@@ -510,7 +552,8 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                           'assets/icons/delete.svg',
                           width: 16,
                           height: 16,
-                          color: Colors.red,
+                          colorFilter: const ColorFilter.mode(
+                              Colors.red, BlendMode.srcIn),
                           placeholderBuilder: (c) =>
                               Icon(Icons.delete, size: 16, color: Colors.red),
                         ),

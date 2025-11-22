@@ -11,10 +11,14 @@ class AdminUsersLoadEvent extends AdminUsersEvent {
   final String? query;
   final String? statusFilter;
 
-  const AdminUsersLoadEvent({this.query, this.statusFilter});
+  final int page;
+  final int limit;
+
+  const AdminUsersLoadEvent(
+      {this.query, this.statusFilter, this.page = 1, this.limit = 20});
 
   @override
-  List<Object?> get props => [query, statusFilter];
+  List<Object?> get props => [query, statusFilter, page, limit];
 }
 
 class AdminUsersLoadDetailEvent extends AdminUsersEvent {
@@ -78,7 +82,7 @@ class AdminUsersLoadBlacklistEvent extends AdminUsersEvent {
   final int page;
   final int limit;
 
-  const AdminUsersLoadBlacklistEvent({this.page = 1, this.limit = 10});
+  const AdminUsersLoadBlacklistEvent({this.page = 1, this.limit = 20});
 
   @override
   List<Object?> get props => [page, limit];

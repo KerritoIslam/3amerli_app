@@ -18,10 +18,12 @@ class SignUpCubit extends Cubit<SignUpState> {
 
   void setPhoneNumber(String phone) {
     if (phone.trim().isEmpty) {
-      _safeEmit(state.copyWith(status: VerificationStatus.noNumberEntered, phoneNumber: ''));
+      _safeEmit(state.copyWith(
+          status: VerificationStatus.noNumberEntered, phoneNumber: ''));
       return;
     }
-    _safeEmit(state.copyWith(phoneNumber: phone, status: VerificationStatus.pending));
+    _safeEmit(
+        state.copyWith(phoneNumber: phone, status: VerificationStatus.pending));
   }
 
   void setCountryCode(String code) {
@@ -29,21 +31,31 @@ class SignUpCubit extends Cubit<SignUpState> {
   }
 
   Future<void> sendCode() async {
-    
     if (state.phoneNumber.trim().isEmpty) {
       _safeEmit(state.copyWith(status: VerificationStatus.noNumberEntered));
       return;
     }
-    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    _safeEmit(
+        state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
-      
       await repository.sendOtp(state.phoneNumber);
-      
-  _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp));
-      print("111");
-      print(state.status);
+
+      _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp));
     } catch (e) {
-    _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Failed to send code'));
+      String message = e.toString();
+      bool isForbidden = false;
+      if (e is ApiException) {
+        message = e.message;
+        if (e.statusCode == 403) {
+          isForbidden = true;
+        }
+      } else if (message.contains('Exception:')) {
+        message = message.replaceAll('Exception:', '').trim();
+      }
+      _safeEmit(state.copyWith(
+          status: VerificationStatus.pending,
+          errorMessage: message,
+          isForbidden: isForbidden));
     }
   }
 
@@ -52,17 +64,15 @@ class SignUpCubit extends Cubit<SignUpState> {
       _safeEmit(state.copyWith(errorMessage: 'Code invalide'));
       return;
     }
-    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    _safeEmit(
+        state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
       final isRegistered = await repository.validateOtp(state.phoneNumber, otp);
-      print("Is Registered : $isRegistered");
-      
+
       // If registered, read cached user and dispatch login event
       if (isRegistered) {
         final userModel = await repository.readCachedUser();
-        print("User Model $userModel");
         if (userModel != null) {
-          
           final userEntity = userModel.toEntity();
           final authBloc = sl<AuthBloc>();
           if (userEntity.role == 'SUPERMARKET') {
@@ -71,19 +81,34 @@ class SignUpCubit extends Cubit<SignUpState> {
             authBloc.add(LogInEvent(userEntity));
           }
         }
-  _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
+        _safeEmit(state.copyWith(
+            status: VerificationStatus.verified,
+            result: AuthResult.existingUser));
       } else {
-        print("New User Detected");
-  _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.newUser));
+        _safeEmit(state.copyWith(
+            status: VerificationStatus.verified, result: AuthResult.newUser));
       }
-      print("Verification result: ${state.result}");
     } catch (e) {
-    _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp, errorMessage: 'Vérification échouée'));
+      String message = e.toString();
+      bool isForbidden = false;
+      if (e is ApiException) {
+        message = e.message;
+        if (e.statusCode == 403) {
+          isForbidden = true;
+        }
+      } else if (message.contains('Exception:')) {
+        message = message.replaceAll('Exception:', '').trim();
+      }
+      _safeEmit(state.copyWith(
+          status: VerificationStatus.enteringOtp,
+          errorMessage: message,
+          isForbidden: isForbidden));
     }
   }
 
   Future<void> registerProfile(Map<String, dynamic> profile) async {
-    _safeEmit(state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    _safeEmit(
+        state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
       await repository.register(profile);
       // After registration complete, read cached user and dispatch login only if we actually have a user
@@ -96,17 +121,22 @@ class SignUpCubit extends Cubit<SignUpState> {
         } else {
           authBloc.add(LogInEvent(userEntity));
         }
-        _safeEmit(state.copyWith(status: VerificationStatus.verified, result: AuthResult.existingUser));
+        _safeEmit(state.copyWith(
+            status: VerificationStatus.verified,
+            result: AuthResult.existingUser));
       } else {
         // No user saved -> treat as failure
-        _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: 'Échec de l\'enregistrement'));
+        _safeEmit(state.copyWith(
+            status: VerificationStatus.pending,
+            errorMessage: 'Échec de l\'enregistrement'));
         throw Exception('Registration did not produce a user');
       }
     } catch (e) {
       // Prefer ApiException message when available
       String err = 'Échec de l\'enregistrement';
       if (e is ApiException) err = e.message;
-      _safeEmit(state.copyWith(status: VerificationStatus.pending, errorMessage: err));
+      _safeEmit(state.copyWith(
+          status: VerificationStatus.pending, errorMessage: err));
       rethrow; // rethrow so UI callers (that used .then/.catchError) receive the error
     }
   }

@@ -32,6 +32,19 @@ class AuthRemoteDataSource {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
+
+      String? friendlyMsg;
+      if (serverResp is Map && serverResp['message'] != null) {
+        friendlyMsg = serverResp['message'].toString();
+      } else if (serverResp is String) {
+        friendlyMsg = serverResp;
+      }
+
+      if (friendlyMsg != null) {
+        throw ApiException(friendlyMsg,
+            statusCode: status, isNetworkError: true);
+      }
+
       final baseMsg = e.message ?? 'Network error while sending OTP';
       final detailed =
           'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
@@ -69,6 +82,19 @@ class AuthRemoteDataSource {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
+
+      String? friendlyMsg;
+      if (serverResp is Map && serverResp['message'] != null) {
+        friendlyMsg = serverResp['message'].toString();
+      } else if (serverResp is String) {
+        friendlyMsg = serverResp;
+      }
+
+      if (friendlyMsg != null) {
+        throw ApiException(friendlyMsg,
+            statusCode: status, isNetworkError: true);
+      }
+
       final baseMsg = e.message ?? 'Network error while validating OTP';
       final detailed =
           'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
@@ -107,6 +133,19 @@ class AuthRemoteDataSource {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
+
+      String? friendlyMsg;
+      if (serverResp is Map && serverResp['message'] != null) {
+        friendlyMsg = serverResp['message'].toString();
+      } else if (serverResp is String) {
+        friendlyMsg = serverResp;
+      }
+
+      if (friendlyMsg != null) {
+        throw ApiException(friendlyMsg,
+            statusCode: status, isNetworkError: true);
+      }
+
       final baseMsg = e.message ?? 'Network error while registering';
       final detailed =
           'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';

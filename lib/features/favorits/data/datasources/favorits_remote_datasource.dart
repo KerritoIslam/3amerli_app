@@ -16,8 +16,14 @@ class FavoritsRemoteDataSource {
       final resp = await apiService.get('/products/favorite/all', queryParameters: {'page': page, 'limit': pageSize});
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         final data = resp.data as Map<String, dynamic>;
-        final items = (data['data'] as List<dynamic>?) ?? [];
-        return items.map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList();
+        final items = (data['data'] as List<dynamic>?)?.map(
+          (e) {
+            e["isLoved"] = true;
+            return ProductModel.fromJson(e);
+          }
+        ).toList() ?? [];
+        
+        return items;
       }
       final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to fetch favorite products';
       throw ApiException(msg, statusCode: resp.statusCode);

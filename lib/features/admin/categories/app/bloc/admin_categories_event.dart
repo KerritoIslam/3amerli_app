@@ -10,11 +10,13 @@ abstract class AdminCategoriesEvent extends Equatable {
 
 class AdminCategoriesLoadEvent extends AdminCategoriesEvent {
   final String? query;
+  final int page;
+  final int limit;
 
-  const AdminCategoriesLoadEvent({this.query});
+  const AdminCategoriesLoadEvent({this.query, this.page = 1, this.limit = 20});
 
   @override
-  List<Object?> get props => [query];
+  List<Object?> get props => [query, page, limit];
 }
 
 class AdminCategoriesAddEvent extends AdminCategoriesEvent {

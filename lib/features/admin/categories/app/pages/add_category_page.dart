@@ -10,6 +10,8 @@ import '../bloc/admin_categories_event.dart';
 import '../../domain/repositories/admin_categories_repository.dart';
 import 'package:amerli_app/core/config/injection.dart' as di;
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+
 class AddCategoryPage extends StatefulWidget {
   final String? categoryId;
 
@@ -41,18 +43,20 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
   Future<void> _loadCategoryData() async {
     if (widget.categoryId == null) return;
-    
+
     setState(() => _isLoadingCategory = true);
     try {
-      final category = await _categoriesRepository.getCategory(widget.categoryId!);
-      final subCategories = await _categoriesRepository.getSubCategories(categoryId: widget.categoryId!);
-      
+      final category =
+          await _categoriesRepository.getCategory(widget.categoryId!);
+      final subCategories = await _categoriesRepository.getSubCategories(
+          categoryId: widget.categoryId!);
+
       setState(() {
         _existingCategory = category;
         // Pre-fill form fields
         _nameController.text = category.name;
         _imagePath = category.imageUrl;
-        
+
         // Load subcategories
         _subCategoryControllers.clear();
         if (subCategories.isEmpty) {
@@ -63,15 +67,14 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
             _subCategoryControllers.add(controller);
           }
         }
-        
+
         _isLoadingCategory = false;
       });
     } catch (e) {
       setState(() => _isLoadingCategory = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de chargement de la catégorie: $e')),
-        );
+        TopToast.show(context, 'Erreur de chargement de la catégorie: $e',
+            isError: true);
       }
     }
   }
@@ -125,9 +128,13 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
       );
 
       if (widget.categoryId == null) {
-        context.read<AdminCategoriesBloc>().add(AdminCategoriesAddEvent(category));
+        context
+            .read<AdminCategoriesBloc>()
+            .add(AdminCategoriesAddEvent(category));
       } else {
-        context.read<AdminCategoriesBloc>().add(AdminCategoriesUpdateEvent(category));
+        context
+            .read<AdminCategoriesBloc>()
+            .add(AdminCategoriesUpdateEvent(category));
       }
 
       // Add subcategories
@@ -346,7 +353,8 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                       ElevatedButton(
                         onPressed: _addSubCategoryField,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),

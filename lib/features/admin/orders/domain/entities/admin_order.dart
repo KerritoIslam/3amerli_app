@@ -46,4 +46,35 @@ class AdminOrder {
     required this.paymentMethod,
     required this.products,
   });
+  AdminOrder copyWith({
+    String? id,
+    String? orderNumber,
+    String? customerName,
+    String? storeName,
+    String? representativeName,
+    String? customerPhone,
+    DateTime? orderDate,
+    String? status,
+    double? totalAmount,
+    int? itemsCount,
+    String? deliveryAddress,
+    String? paymentMethod,
+    List<OrderProduct>? products,
+  }) {
+    return AdminOrder(
+      id: id ?? this.id,
+      orderNumber: orderNumber ?? this.orderNumber,
+      customerName: customerName ?? this.customerName,
+      storeName: storeName ?? this.storeName,
+      representativeName: representativeName ?? this.representativeName,
+      customerPhone: customerPhone ?? this.customerPhone,
+      orderDate: orderDate ?? this.orderDate,
+      status: status ?? this.status,
+      totalAmount: totalAmount ?? this.totalAmount,
+      itemsCount: itemsCount ?? this.itemsCount,
+      deliveryAddress: deliveryAddress ?? this.deliveryAddress,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      products: products ?? this.products,
+    );
+  }
 }

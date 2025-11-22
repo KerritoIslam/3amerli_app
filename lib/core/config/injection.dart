@@ -1,4 +1,3 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
@@ -48,10 +47,14 @@ import '../../features/catalog/repository/categories_repository_impl.dart';
 import '../../features/catalog/domain/repositories/categories_repository.dart';
 import '../../features/catalog/app/bloc/favorites_bloc.dart';
 // Favorits feature (mocked favorites products list)
-import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart' as fav_feature;
-import 'package:amerli_app/features/favorits/data/datasources/favorits_remote_datasource.dart' as fav_feature;
-import 'package:amerli_app/features/favorits/data/repositories/favorits_repository_impl.dart' as fav_feature;
-import 'package:amerli_app/features/favorits/domain/repositories/favorits_repository.dart' as fav_feature;
+import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart'
+    as fav_feature;
+import 'package:amerli_app/features/favorits/data/datasources/favorits_remote_datasource.dart'
+    as fav_feature;
+import 'package:amerli_app/features/favorits/data/repositories/favorits_repository_impl.dart'
+    as fav_feature;
+import 'package:amerli_app/features/favorits/domain/repositories/favorits_repository.dart'
+    as fav_feature;
 import '../../features/catalog/app/bloc/categories_bloc.dart';
 import '../../features/cart/app/bloc/cart_bloc.dart';
 import '../../features/orders/data/datasources/orders_remote_datasource.dart';
@@ -84,13 +87,15 @@ Future<void> init() async {
   // External
   // Create Dio and ApiService
   sl.registerLazySingleton(() => Dio(BaseOptions(
-    validateStatus: (status) => status != null && status < 500, // Don't throw on 4xx errors
-  )));
+        validateStatus: (status) =>
+            status != null && status < 500, // Don't throw on 4xx errors
+      )));
   // Use a single source of truth for the API base url
   const baseUrl = AppConstants.apiBaseUrl;
   // Register AuthService (uses flutter_secure_storage internally)
   sl.registerLazySingleton(() => AuthService());
-  sl.registerLazySingleton(() => ApiService(dio: sl<Dio>(), baseUrl: baseUrl, authService: sl<AuthService>()));
+  sl.registerLazySingleton(() => ApiService(
+      dio: sl<Dio>(), baseUrl: baseUrl, authService: sl<AuthService>()));
 
   // Storage - SharedPreferences and SecureStorage
   // Initialize SharedPreferences once and register it
@@ -102,7 +107,8 @@ Future<void> init() async {
   sl.registerLazySingleton<LocalStorage>(() => localStorage);
 
   // Register secure storage wrapper
-  sl.registerLazySingleton(() => SecureStorage(storage: const FlutterSecureStorage()));
+  sl.registerLazySingleton(
+      () => SecureStorage(storage: const FlutterSecureStorage()));
 
   // Register Settings (depends on SharedPreferences)
   final settings = Settings(prefs);
@@ -111,66 +117,109 @@ Future<void> init() async {
   // (demo AuthController removed; using AuthBloc instead)
 
   // Data sources
-  sl.registerLazySingleton(() => CatalogRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => FavoritesRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => OffersRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => CatalogRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => FavoritesRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => OffersRemoteDataSource(apiService: sl<ApiService>()));
   // Favorits
-  sl.registerLazySingleton<fav_feature.FavoritsRemoteDataSource>(() => fav_feature.FavoritsRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => CategoriesRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => BrandsRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => OrdersRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => NotificationsRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton<fav_feature.FavoritsRemoteDataSource>(
+      () => fav_feature.FavoritsRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => CategoriesRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => BrandsRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => OrdersRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => NotificationsRemoteDataSource(apiService: sl<ApiService>()));
 
-  sl.registerLazySingleton(() => PaymentsRemoteDataSource(apiService: sl<ApiService>()));
-  sl.registerLazySingleton(() => ProfileRemoteDataSourceImpl(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => PaymentsRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => ProfileRemoteDataSourceImpl(apiService: sl<ApiService>()));
   // Auth feature datasources & repository
-  sl.registerLazySingleton(() => AuthRemoteDataSource(apiService: sl<ApiService>()));
+  sl.registerLazySingleton(
+      () => AuthRemoteDataSource(apiService: sl<ApiService>()));
   sl.registerLazySingleton(() => ProfileLocalDataSource());
-  sl.registerLazySingleton(() => AuthRepositoryImpl(remote: sl<AuthRemoteDataSource>(), authService: sl<AuthService>(), local: sl<ProfileLocalDataSource>()));
+  sl.registerLazySingleton(() => AuthRepositoryImpl(
+      remote: sl<AuthRemoteDataSource>(),
+      authService: sl<AuthService>(),
+      local: sl<ProfileLocalDataSource>()));
 
   // Repositories
-  sl.registerLazySingleton<CatalogRepository>(() => CatalogRepositoryImpl(remoteDataSource: sl<CatalogRemoteDataSource>()));
-  sl.registerLazySingleton<FavoritesRepository>(() => FavoritesRepositoryImpl(remoteDataSource: sl<FavoritesRemoteDataSource>()));
-  sl.registerLazySingleton<CategoriesRepository>(() => CategoriesRepositoryImpl(remoteDataSource: sl<CategoriesRemoteDataSource>()));
-  sl.registerLazySingleton<BrandsRepository>(() => BrandsRepositoryImpl(remoteDataSource: sl<BrandsRemoteDataSource>()));
-  sl.registerLazySingleton<OrdersRepository>(() => OrdersRepositoryImpl(remoteDataSource: sl<OrdersRemoteDataSource>()));
-  sl.registerLazySingleton<NotificationsRepository>(() => NotificationsRepositoryImpl(remoteDataSource: sl<NotificationsRemoteDataSource>()));
-  sl.registerLazySingleton<OffersRepository>(() => OffersRepositoryImpl(remoteDataSource: sl<OffersRemoteDataSource>()));
-  sl.registerLazySingleton<PaymentsRepository>(() => PaymentsRepositoryImpl(remoteDataSource: sl<PaymentsRemoteDataSource>()));
+  sl.registerLazySingleton<CatalogRepository>(() =>
+      CatalogRepositoryImpl(remoteDataSource: sl<CatalogRemoteDataSource>()));
+  sl.registerLazySingleton<FavoritesRepository>(() => FavoritesRepositoryImpl(
+      remoteDataSource: sl<FavoritesRemoteDataSource>()));
+  sl.registerLazySingleton<CategoriesRepository>(() => CategoriesRepositoryImpl(
+      remoteDataSource: sl<CategoriesRemoteDataSource>()));
+  sl.registerLazySingleton<BrandsRepository>(() =>
+      BrandsRepositoryImpl(remoteDataSource: sl<BrandsRemoteDataSource>()));
+  sl.registerLazySingleton<OrdersRepository>(() =>
+      OrdersRepositoryImpl(remoteDataSource: sl<OrdersRemoteDataSource>()));
+  sl.registerLazySingleton<NotificationsRepository>(() =>
+      NotificationsRepositoryImpl(
+          remoteDataSource: sl<NotificationsRemoteDataSource>()));
+  sl.registerLazySingleton<OffersRepository>(() =>
+      OffersRepositoryImpl(remoteDataSource: sl<OffersRemoteDataSource>()));
+  sl.registerLazySingleton<PaymentsRepository>(() =>
+      PaymentsRepositoryImpl(remoteDataSource: sl<PaymentsRemoteDataSource>()));
   // Favorits
-  sl.registerLazySingleton<fav_feature.FavoritsRepository>(() => fav_feature.FavoritsRepositoryImpl(remote: sl<fav_feature.FavoritsRemoteDataSource>()));
-  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(remoteDataSource: sl<ProfileRemoteDataSourceImpl>()));
+  sl.registerLazySingleton<fav_feature.FavoritsRepository>(() =>
+      fav_feature.FavoritsRepositoryImpl(
+          remote: sl<fav_feature.FavoritsRemoteDataSource>()));
+  sl.registerLazySingleton<ProfileRepository>(() => ProfileRepositoryImpl(
+      remoteDataSource: sl<ProfileRemoteDataSourceImpl>()));
 
   // Blocs
   // Make CatalogBloc app-scoped (singleton) so its state is preserved across routes
-  sl.registerLazySingleton<CatalogBloc>(() => CatalogBloc(repository: sl<CatalogRepository>()));
-  sl.registerFactory(() => FavoritesBloc(repository: sl<FavoritesRepository>()));
-  sl.registerFactory(() => CategoriesBloc(repository: sl<CategoriesRepository>()));
+  sl.registerLazySingleton<CatalogBloc>(
+      () => CatalogBloc(repository: sl<CatalogRepository>()));
+  sl.registerFactory(
+      () => FavoritesBloc(repository: sl<FavoritesRepository>()));
+  sl.registerFactory(
+      () => CategoriesBloc(repository: sl<CategoriesRepository>()));
   // Feature Blocs (make some app-scoped singletons)
-  sl.registerLazySingleton<AuthBloc>(() => AuthBloc());
+  sl.registerLazySingleton<AuthBloc>(
+      () => AuthBloc(authService: sl<AuthService>()));
   // Cart should be app-scoped to preserve user selections across routes
   sl.registerLazySingleton<CartBloc>(() => CartBloc());
   // Favorits Bloc
-  sl.registerFactory<fav_feature.FavoritsBloc>(() => fav_feature.FavoritsBloc(repository: sl<fav_feature.FavoritsRepository>()));
+  sl.registerFactory<fav_feature.FavoritsBloc>(() => fav_feature.FavoritsBloc(
+      repository: sl<fav_feature.FavoritsRepository>()));
   sl.registerFactory(() => ProfileBloc(repository: sl<ProfileRepository>()));
-  sl.registerLazySingleton<OrdersBloc>(() => OrdersBloc(repository: sl<OrdersRepository>()));
+  sl.registerLazySingleton<OrdersBloc>(
+      () => OrdersBloc(repository: sl<OrdersRepository>()));
   sl.registerFactory(() => PaymentsBloc(repository: sl<PaymentsRepository>()));
   sl.registerFactory(() => DeliveryBloc());
-  sl.registerLazySingleton<NotificationsBloc>(() => NotificationsBloc(repository: sl<NotificationsRepository>()));
-  sl.registerLazySingleton<OffersBloc>(() => OffersBloc(repository: sl<OffersRepository>()));
+  sl.registerLazySingleton<NotificationsBloc>(
+      () => NotificationsBloc(repository: sl<NotificationsRepository>()));
+  sl.registerLazySingleton<OffersBloc>(
+      () => OffersBloc(repository: sl<OffersRepository>()));
   sl.registerFactory(() => AdminBloc());
   // Admin features
-  sl.registerLazySingleton<DashboardRepository>(() => DashboardRepositoryImpl(apiService: sl<ApiService>()));
+  sl.registerLazySingleton<DashboardRepository>(
+      () => DashboardRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerFactory(() => DashboardBloc(sl<DashboardRepository>()));
-  sl.registerLazySingleton<AdminOrdersRepository>(() => AdminOrdersRepositoryImpl(apiService: sl<ApiService>()));
+  sl.registerLazySingleton<AdminOrdersRepository>(
+      () => AdminOrdersRepositoryImpl(apiService: sl<ApiService>()));
   sl.registerFactory(() => AdminOrdersBloc(sl<AdminOrdersRepository>()));
-  sl.registerLazySingleton<AdminUsersRepository>(() => AdminUsersRepositoryImpl(apiService: sl<ApiService>()));
-  sl.registerFactory(() => AdminUsersBloc(repository: sl<AdminUsersRepository>()));
-  sl.registerLazySingleton<AdminProductsRepository>(() => AdminProductsRepositoryImpl(apiService: sl<ApiService>()));
-  sl.registerLazySingleton<AdminProductsBloc>(() => AdminProductsBloc(sl<AdminProductsRepository>()));
-  sl.registerLazySingleton<AdminCategoriesRepository>(() => AdminCategoriesRepositoryImpl(apiService: sl<ApiService>()));
-  sl.registerFactory(() => AdminCategoriesBloc(sl<AdminCategoriesRepository>()));
-  sl.registerLazySingleton<AdminBrandsRepository>(() => AdminBrandsRepositoryImpl(apiService: sl<ApiService>()));
+  sl.registerLazySingleton<AdminUsersRepository>(
+      () => AdminUsersRepositoryImpl(apiService: sl<ApiService>()));
+  sl.registerFactory(
+      () => AdminUsersBloc(repository: sl<AdminUsersRepository>()));
+  sl.registerLazySingleton<AdminProductsRepository>(
+      () => AdminProductsRepositoryImpl(apiService: sl<ApiService>()));
+  sl.registerLazySingleton<AdminProductsBloc>(
+      () => AdminProductsBloc(sl<AdminProductsRepository>()));
+  sl.registerLazySingleton<AdminCategoriesRepository>(
+      () => AdminCategoriesRepositoryImpl(apiService: sl<ApiService>()));
+  sl.registerFactory(
+      () => AdminCategoriesBloc(sl<AdminCategoriesRepository>()));
+  sl.registerLazySingleton<AdminBrandsRepository>(
+      () => AdminBrandsRepositoryImpl(apiService: sl<ApiService>()));
   // Brands feature
   sl.registerFactory(() => BrandsBloc(repository: sl<BrandsRepository>()));
 }

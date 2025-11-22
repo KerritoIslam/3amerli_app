@@ -19,6 +19,8 @@ import 'package:amerli_app/features/cart/app/pages/address_selection_page.dart';
 import 'package:amerli_app/features/cart/app/pages/payment_webview_page.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+
 class PaiementScreen extends StatefulWidget {
   const PaiementScreen({super.key});
 
@@ -89,6 +91,14 @@ class _PaiementScreenState extends State<PaiementScreen> {
       print(
           '💵 Cash payment detected, going to success page with order ID: $_createdOrderId');
 
+      // Calculate total amount
+      double totalAmount = 0;
+      if (_createdOrder != null) {
+        for (var product in _createdOrder!.products) {
+          totalAmount += product.price * product.quantity;
+        }
+      }
+
       // Reset paying state
       setState(() {
         _paying = false;
@@ -103,6 +113,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
                   orderId: _createdOrderId,
                   paymentMethod: 'CASH',
                   order: _createdOrder,
+                  date: _createdOrder?.createdAt.toString(),
+                  amount: totalAmount.toStringAsFixed(2),
                 )),
       );
       return;
@@ -145,12 +157,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
   void _onPay(List<CartItem> cartItems) async {
     // Validate that an address is selected
     if (_selectedAddress == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLanguage.selectDeliveryAddress),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      TopToast.show(context, AppLanguage.selectDeliveryAddress, isError: true);
       return;
     }
 

@@ -19,10 +19,17 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
   }
 
   @override
-  Future<List<AdminUser>> getAllUsers({String? query, String? statusFilter}) async {
+  Future<List<AdminUser>> getAllUsers(
+      {String? query,
+      String? statusFilter,
+      int page = 1,
+      int limit = 20}) async {
     final qp = <String, dynamic>{};
     if (query != null && query.isNotEmpty) qp['search'] = query;
-    if (statusFilter != null && statusFilter.isNotEmpty) qp['status'] = statusFilter;
+    if (statusFilter != null && statusFilter.isNotEmpty)
+      qp['status'] = statusFilter;
+    qp['page'] = page;
+    qp['limit'] = limit;
     final resp = await apiService.get('/user/admin/all', queryParameters: qp);
     final list = _extractList(resp.data);
 
@@ -44,7 +51,10 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
         } else if (e is String) {
           try {
             final decoded = jsonDecode(e);
-            if (decoded is Map) results.add(AdminUserModel.fromJson(Map<String, dynamic>.from(decoded)).toEntity());
+            if (decoded is Map)
+              results.add(
+                  AdminUserModel.fromJson(Map<String, dynamic>.from(decoded))
+                      .toEntity());
           } catch (_) {
             // ignore malformed
             // ignore: avoid_print
@@ -52,7 +62,8 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
           }
         } else {
           // ignore: avoid_print
-          print('[ADMIN USERS] skipped unsupported entry type: ${e.runtimeType}');
+          print(
+              '[ADMIN USERS] skipped unsupported entry type: ${e.runtimeType}');
         }
       } catch (ex, st) {
         // ignore: avoid_print
@@ -76,15 +87,21 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
 
   @override
   Future<AdminUser> updateUserRole(String userId, String newRole) async {
-    final resp = await apiService.post('/user/$userId/role', data: {'role': newRole});
-    if (resp.data is Map) return AdminUserModel.fromJson(Map<String, dynamic>.from(resp.data)).toEntity();
+    final resp =
+        await apiService.post('/user/$userId/role', data: {'role': newRole});
+    if (resp.data is Map)
+      return AdminUserModel.fromJson(Map<String, dynamic>.from(resp.data))
+          .toEntity();
     throw Exception('Unexpected update user role response');
   }
 
   @override
   Future<AdminUser> updateUserStatus(String userId, String newStatus) async {
-    final resp = await apiService.post('/user/$userId/status', data: {'status': newStatus});
-    if (resp.data is Map) return AdminUserModel.fromJson(Map<String, dynamic>.from(resp.data)).toEntity();
+    final resp = await apiService
+        .post('/user/$userId/status', data: {'status': newStatus});
+    if (resp.data is Map)
+      return AdminUserModel.fromJson(Map<String, dynamic>.from(resp.data))
+          .toEntity();
     throw Exception('Unexpected update user status response');
   }
 
@@ -103,14 +120,20 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
   Future<List<UserRole>> getRoles() async {
     final resp = await apiService.get('/user/roles');
     final list = _extractList(resp.data);
-    return list.map<UserRole>((e) => UserRoleModel.fromJson(Map<String, dynamic>.from(e as Map)).toEntity()).toList();
+    return list
+        .map<UserRole>((e) =>
+            UserRoleModel.fromJson(Map<String, dynamic>.from(e as Map))
+                .toEntity())
+        .toList();
   }
 
   @override
-  Future<List<AdminUser>> getBlacklistedUsers({int page = 1, int limit = 10}) async {
-    final resp = await apiService.get('/user/black-list', queryParameters: {'page': page, 'limit': limit});
+  Future<List<AdminUser>> getBlacklistedUsers(
+      {int page = 1, int limit = 20}) async {
+    final resp = await apiService.get('/user/black-list',
+        queryParameters: {'page': page, 'limit': limit});
     final list = _extractList(resp.data);
-    
+
     final results = <AdminUser>[];
     for (final e in list) {
       try {

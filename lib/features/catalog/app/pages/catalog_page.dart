@@ -1,5 +1,6 @@
 import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
 import 'dart:async';
+import 'package:amerli_app/features/catalog/domain/entities/product.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
@@ -342,85 +343,77 @@ class _CatalogPageState extends State<CatalogPage> {
                   }
                   return const SizedBox.shrink();
                 }),
-
-                const SizedBox(height: 12),
-                // Product list
                 Expanded(
-                  child: BlocBuilder<CatalogBloc, CatalogState>(
-                      bloc: _catalogBloc,
-                      builder: (context, state) {
-                        // Debug logging
-                        // ignore: avoid_print
-                        print(
-                            '🖼️ [CatalogPage] BlocBuilder rebuild - state: ${state.runtimeType}');
-
-                        final isLoading = state is CatalogLoading;
-                        final isLoadingMore = state is CatalogLoadingMore;
-
-                        if (state is CatalogError) {
-                          // Error handled by BlocListener
-                          return Center(
-                            child: Text(
-                              AppLanguage.noProductsFound,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: AppColors.hint),
-                            ),
-                          );
-                        }
-                        if (state is CatalogLoadingMore) {
-                          // Keep showing the existing items while loading more; the ProductsList will show skeleton tiles for the end
-                          final products = state.products;
-                          final hasMore = state.hasMore;
-                          if (products.isEmpty)
-                            return Center(
-                                child: Text(AppLanguage.noProductsFound,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: AppColors.hint)));
-                          return ProductsList(
-                            products: products,
-                            isLoading: true,
-                            hasMore: hasMore,
-                            onLoadMore: () => _loadMoreAsync(),
-                          );
-                        }
-
-                        if (state is CatalogLoaded) {
-                          final products = state.products;
-                          final hasMore = state.hasMore;
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      // Trigger refresh for both categories and catalog
+                      _categoriesBloc.add(CategoriesLoadEvent());
+                      _catalogBloc.add(CatalogLoadEvent(
+                        categoryIds: _selectedCategoryIds.isEmpty
+                            ? null
+                            : _selectedCategoryIds,
+                        timestamp: DateTime.now(),
+                      ));
+                      // Wait a bit to ensure the loading state is processed or at least the spinner shows for a moment
+                      await Future.delayed(const Duration(seconds: 1));
+                    },
+                    child: BlocBuilder<CatalogBloc, CatalogState>(
+                        bloc: _catalogBloc,
+                        builder: (context, state) {
+                          // Debug logging
                           // ignore: avoid_print
                           print(
-                              '🖼️ [CatalogPage] Displaying ${products.length} products');
-                          if (products.isEmpty)
+                              '🖼️ [CatalogPage] BlocBuilder rebuild - state: ${state.runtimeType}');
+
+                          final isLoading = state is CatalogLoading;
+                          final isLoadingMore = state is CatalogLoadingMore;
+
+                          if (state is CatalogError) {
+                            // Error handled by BlocListener, but show empty state or error message in list
+                            return Center(
+                              child: Text(
+                                AppLanguage.noProductsFound,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: AppColors.hint),
+                              ),
+                            );
+                          }
+
+                          List<Product> products = [];
+                          bool hasMore = false;
+
+                          if (state is CatalogLoadingMore) {
+                            products = state.products;
+                            hasMore = state.hasMore;
+                          } else if (state is CatalogLoaded) {
+                            products = state.products;
+                            hasMore = state.hasMore;
+                          } else if (isLoading) {
+                            // Initial loading
+                            return ProductsList(products: [], isLoading: true);
+                          }
+
+                          if (products.isEmpty && !isLoading) {
+                            // If loaded but empty, show message
                             return Center(
                                 child: Text(AppLanguage.noProductsFound,
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodyMedium
                                         ?.copyWith(color: AppColors.hint)));
+                          }
+
                           return ProductsList(
-                            products: state.products,
+                            key: const PageStorageKey('products_list'),
+                            products: products,
                             isLoading: isLoadingMore,
                             hasMore: hasMore,
                             onLoadMore: () => _loadMoreAsync(),
                           );
-                        }
-
-                        if (isLoading) {
-                          // show skeleton grid while initial loading
-                          return ProductsList(products: [], isLoading: true);
-                        }
-
-                        if (isLoading) {
-                          // show skeleton grid while initial loading
-                          return ProductsList(products: [], isLoading: true);
-                        }
-
-                        return const SizedBox.shrink();
-                      }),
+                        }),
+                  ),
                 ),
               ],
             ),

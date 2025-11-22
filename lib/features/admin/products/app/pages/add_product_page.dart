@@ -15,6 +15,7 @@ import 'package:amerli_app/features/admin/brands/domain/repositories/admin_brand
 import 'package:amerli_app/features/admin/brands/domain/entities/brand.dart';
 import '../../domain/repositories/admin_products_repository.dart';
 // import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class AddProductPage extends StatefulWidget {
   final String? productId; // null for add, non-null for edit
@@ -30,10 +31,14 @@ class _AddProductPageState extends State<AddProductPage> {
   final _formKey1 = GlobalKey<FormState>();
   final _formKey2 = GlobalKey<FormState>();
   // keys for individual form fields so we can read/show their errorText
-  final GlobalKey<FormFieldState<String>> _nameFieldKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _quantityFieldKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _priceFieldKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _availableQuantityFieldKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _nameFieldKey =
+      GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _quantityFieldKey =
+      GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _priceFieldKey =
+      GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _availableQuantityFieldKey =
+      GlobalKey<FormFieldState<String>>();
   // key to measure the form content height so the stepper can match it
   final GlobalKey _formContentKey = GlobalKey();
   double _formContentHeight = 0.0;
@@ -98,19 +103,20 @@ class _AddProductPageState extends State<AddProductPage> {
     } catch (e) {
       setState(() => _isLoadingData = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de chargement: $e')),
-        );
+        if (mounted) {
+          TopToast.show(context, 'Erreur de chargement: $e', isError: true);
+        }
       }
     }
   }
 
   Future<void> _loadProductData() async {
     if (widget.productId == null) return;
-    
+
     setState(() => _isLoadingProduct = true);
     try {
-      final product = await _productsRepository.getProductById(widget.productId!);
+      final product =
+          await _productsRepository.getProductById(widget.productId!);
       setState(() {
         _existingProduct = product;
         // Pre-fill form fields
@@ -121,35 +127,44 @@ class _AddProductPageState extends State<AddProductPage> {
           orElse: () => Brand(id: '', name: ''),
         );
         if (brand.id.isNotEmpty) _selectedBrandId = brand.id;
-        
+
         _quantityController.text = product.quantityPerLot.toString();
-        
+
         // Find category ID by name
         final category = _categories.firstWhere(
           (c) => c.name == product.category,
-          orElse: () => Category(id: '', name: '', description: '', imageUrl: null, productCount: 0, createdAt: DateTime.now(), updatedAt: DateTime.now()),
+          orElse: () => Category(
+              id: '',
+              name: '',
+              description: '',
+              imageUrl: null,
+              productCount: 0,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now()),
         );
         if (category.id.isNotEmpty) _selectedCategoryId = category.id;
-        
+
         _specifications.clear();
         _specifications.addAll(product.specifications);
         _expirationDate = product.expirationDate;
         _priceController.text = product.pricePerLot.toString();
-        _availableQuantityController.text = product.availableQuantity.toString();
-        
+        _availableQuantityController.text =
+            product.availableQuantity.toString();
+
         // Add existing product images (URLs) to the images list
         _images.clear();
         _images.addAll(product.images);
         _mainImageIndex = product.mainImageIndex;
-        
+
         _isLoadingProduct = false;
       });
     } catch (e) {
       setState(() => _isLoadingProduct = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de chargement du produit: $e')),
-        );
+        if (mounted) {
+          TopToast.show(context, 'Erreur de chargement du produit: $e',
+              isError: true);
+        }
       }
     }
   }
@@ -222,19 +237,17 @@ class _AddProductPageState extends State<AddProductPage> {
   void _saveProduct() {
     if (_formKey2.currentState!.validate()) {
       final bool isEditing = widget.productId != null;
-      
+
       // For new products, validate that category and brand are selected
       if (!isEditing) {
         if (_selectedCategoryId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Veuillez sélectionner une catégorie')),
-          );
+          TopToast.show(context, 'Veuillez sélectionner une catégorie',
+              isError: true);
           return;
         }
         if (_selectedBrandId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Veuillez sélectionner une marque')),
-          );
+          TopToast.show(context, 'Veuillez sélectionner une marque',
+              isError: true);
           return;
         }
       }
@@ -255,14 +268,25 @@ class _AddProductPageState extends State<AddProductPage> {
           'PRD${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
       // Get brand and category NAMES from selected IDs
-      final String brandName = _brands.firstWhere(
-        (b) => b.id == _selectedBrandId,
-        orElse: () => Brand(id: '', name: ''),
-      ).name;
-      final String categoryName = _categories.firstWhere(
-        (c) => c.id == _selectedCategoryId,
-        orElse: () => Category(id: '', name: '', description: '', imageUrl: null, productCount: 0, createdAt: DateTime.now(), updatedAt: DateTime.now()),
-      ).name;
+      final String brandName = _brands
+          .firstWhere(
+            (b) => b.id == _selectedBrandId,
+            orElse: () => Brand(id: '', name: ''),
+          )
+          .name;
+      final String categoryName = _categories
+          .firstWhere(
+            (c) => c.id == _selectedCategoryId,
+            orElse: () => Category(
+                id: '',
+                name: '',
+                description: '',
+                imageUrl: null,
+                productCount: 0,
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now()),
+          )
+          .name;
 
       final product = Product(
         id: productId,
@@ -273,7 +297,9 @@ class _AddProductPageState extends State<AddProductPage> {
         specifications: _specifications,
         expirationDate: _expirationDate,
         pricePerLot: double.tryParse(_priceController.text) ?? 0.0,
-        stockStatus: (int.tryParse(_availableQuantityController.text) ?? 0) > 0 ? 'En stock' : 'Rupture',
+        stockStatus: (int.tryParse(_availableQuantityController.text) ?? 0) > 0
+            ? 'En stock'
+            : 'Rupture',
         availableQuantity: int.tryParse(_availableQuantityController.text) ?? 0,
         images: reorderedImages, // Use reordered images with main image first
         mainImageIndex: 0, // Main image is now always at index 0
@@ -359,7 +385,8 @@ class _AddProductPageState extends State<AddProductPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   // bottom padding so focused fields are visible above the keyboard
-                  final bottomInset = MediaQuery.of(context).viewInsets.bottom + 24.0;
+                  final bottomInset =
+                      MediaQuery.of(context).viewInsets.bottom + 24.0;
                   // Schedule a post-frame measurement of the form content height
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _measureFormHeight();
@@ -382,7 +409,8 @@ class _AddProductPageState extends State<AddProductPage> {
                         // Vertical Step Indicator on the left — fixed width
                         Container(
                           width: 40,
-                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 24, horizontal: 8),
                           // build a column where the connector height matches the
                           // measured form content height (so it visually aligns)
                           child: _MeasuredStepper(
@@ -397,10 +425,15 @@ class _AddProductPageState extends State<AddProductPage> {
 
                         // Form Content container — give it the remaining width
                         SizedBox(
-                          width: constraints.maxWidth - 40 - 6 - 28, // account for paddings
+                          width: constraints.maxWidth -
+                              40 -
+                              6 -
+                              28, // account for paddings
                           child: Container(
                             key: _formContentKey,
-                            child: _currentStep == 0 ? _buildStep1() : _buildStep2(),
+                            child: _currentStep == 0
+                                ? _buildStep1()
+                                : _buildStep2(),
                           ),
                         ),
                       ],
@@ -490,12 +523,14 @@ class _AddProductPageState extends State<AddProductPage> {
     // Prefer label-measured center distance when available: connector is
     // centerDistance minus one circle diameter (distance between circle edges).
     if (_labelCenterDistance > 0.5) {
-      final h = (_labelCenterDistance - circleDiameter).clamp(0.0, double.infinity);
+      final h =
+          (_labelCenterDistance - circleDiameter).clamp(0.0, double.infinity);
       return h;
     }
 
     // fallback: use form height based heuristic
-    final subtract = circleDiameter + 6.0 + 6.0 + circleDiameter; // circles + spacings
+    final subtract =
+        circleDiameter + 6.0 + 6.0 + circleDiameter; // circles + spacings
     final h = (_formContentHeight - subtract).clamp(0.0, double.infinity);
     return h;
   }
@@ -520,9 +555,9 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            widget.productId != null 
-              ? 'Informations générales (optionnel)'
-              : 'Informations générales',
+            widget.productId != null
+                ? 'Informations générales (optionnel)'
+                : 'Informations générales',
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -573,7 +608,9 @@ class _AddProductPageState extends State<AddProductPage> {
                   horizontal: 16,
                   vertical: 12,
                 ),
-                hintText: _isLoadingData ? 'Chargement...' : 'Sélectionner une catégorie',
+                hintText: _isLoadingData
+                    ? 'Chargement...'
+                    : 'Sélectionner une catégorie',
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
               validator: (value) {
@@ -590,11 +627,13 @@ class _AddProductPageState extends State<AddProductPage> {
                         child: Text(cat.name),
                       ))
                   .toList(),
-              onChanged: _isLoadingData ? null : (value) {
-                setState(() {
-                  _selectedCategoryId = value;
-                });
-              },
+              onChanged: _isLoadingData
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _selectedCategoryId = value;
+                      });
+                    },
             ),
           ),
           const SizedBox(height: 16),
@@ -619,7 +658,9 @@ class _AddProductPageState extends State<AddProductPage> {
                   horizontal: 16,
                   vertical: 12,
                 ),
-                hintText: _isLoadingData ? 'Chargement...' : 'Sélectionner une marque',
+                hintText: _isLoadingData
+                    ? 'Chargement...'
+                    : 'Sélectionner une marque',
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
               validator: (value) {
@@ -636,11 +677,13 @@ class _AddProductPageState extends State<AddProductPage> {
                         child: Text(b.name),
                       ))
                   .toList(),
-              onChanged: _isLoadingData ? null : (value) {
-                setState(() {
-                  _selectedBrandId = value;
-                });
-              },
+              onChanged: _isLoadingData
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _selectedBrandId = value;
+                      });
+                    },
             ),
           ),
           const SizedBox(height: 16),
@@ -659,11 +702,11 @@ class _AddProductPageState extends State<AddProductPage> {
           // Specifications
           _buildLabel('Spécifications'),
           const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 40,
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -676,8 +719,8 @@ class _AddProductPageState extends State<AddProductPage> {
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                       isDense: true,
                     ),
@@ -715,10 +758,8 @@ class _AddProductPageState extends State<AddProductPage> {
                   label: Text(entry.value),
                   deleteIcon: const Icon(Icons.close, size: 18),
                   onDeleted: () => _removeSpecification(entry.key),
-                  backgroundColor: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withOpacity(0.1),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 );
               }).toList(),
             ),
@@ -797,8 +838,8 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 8),
           Text(
             widget.productId != null
-              ? 'Détails du prix (optionnel)'
-              : 'Détails du prix',
+                ? 'Détails du prix (optionnel)'
+                : 'Détails du prix',
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -1017,15 +1058,15 @@ class _AddProductPageState extends State<AddProductPage> {
                       _setMainImage(index);
                       Navigator.pop(context);
                     },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Text('Définir comme image principale'),
+                    ),
+                    child: const Text('Définir comme image principale'),
                   ),
                 ),
               ),
@@ -1052,7 +1093,10 @@ class _AddProductPageState extends State<AddProductPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // show hint or error in the label area
-        _buildLabel(label, required: required, hint: fieldError ?? hint, hintIsError: fieldError != null),
+        _buildLabel(label,
+            required: required,
+            hint: fieldError ?? hint,
+            hintIsError: fieldError != null),
         const SizedBox(height: 6),
         SizedBox(
           height: 40,
@@ -1068,7 +1112,8 @@ class _AddProductPageState extends State<AddProductPage> {
             },
             decoration: InputDecoration(
               // hide the default error text (we render it in the hint area)
-              errorStyle: const TextStyle(height: 0, fontSize: 0, color: Colors.transparent),
+              errorStyle: const TextStyle(
+                  height: 0, fontSize: 0, color: Colors.transparent),
               suffixText: suffix,
               isDense: true,
               border: OutlineInputBorder(
@@ -1105,7 +1150,8 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
-  Widget _buildLabel(String label, {bool required = false, String? hint, bool hintIsError = false}) {
+  Widget _buildLabel(String label,
+      {bool required = false, String? hint, bool hintIsError = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1148,7 +1194,10 @@ class _MeasuredStepper extends StatelessWidget {
   final int totalSteps;
   final double connectorHeight;
 
-  const _MeasuredStepper({required this.currentStep, required this.totalSteps, required this.connectorHeight});
+  const _MeasuredStepper(
+      {required this.currentStep,
+      required this.totalSteps,
+      required this.connectorHeight});
 
   @override
   Widget build(BuildContext context) {
@@ -1180,23 +1229,24 @@ class _MeasuredStepper extends StatelessWidget {
       );
     }
 
-  // If the user is on the second step (currentStep == 1) we set the desired
-  // center-to-center distance between the two circles to 50 pixels so the
-  // second circle rises. Convert that to the connector height (center
-  // distance minus circle diameter). Otherwise use the measured connector
-  // height passed in.
-  const double desiredCenterDistanceOnStep2 = 50.0;
-  final double circleDiameter = 12.0; // must match circle() size
-  final double totalConnector = (currentStep == 1)
-    ? (desiredCenterDistanceOnStep2 - circleDiameter).clamp(0.0, double.infinity)
-    : connectorHeight.clamp(0.0, double.infinity);
+    // If the user is on the second step (currentStep == 1) we set the desired
+    // center-to-center distance between the two circles to 50 pixels so the
+    // second circle rises. Convert that to the connector height (center
+    // distance minus circle diameter). Otherwise use the measured connector
+    // height passed in.
+    const double desiredCenterDistanceOnStep2 = 50.0;
+    final double circleDiameter = 12.0; // must match circle() size
+    final double totalConnector = (currentStep == 1)
+        ? (desiredCenterDistanceOnStep2 - circleDiameter)
+            .clamp(0.0, double.infinity)
+        : connectorHeight.clamp(0.0, double.infinity);
 
-  // We'll render the full connector (no artificial spare gaps) so the circles
-  // move to satisfy the totalConnector height. AnimatedContainer will smooth
-  // the transition when the step changes.
-  final double displayedConnector = totalConnector;
-  final double spareAbove = 0.0;
-  final double spareBelow = 0.0;
+    // We'll render the full connector (no artificial spare gaps) so the circles
+    // move to satisfy the totalConnector height. AnimatedContainer will smooth
+    // the transition when the step changes.
+    final double displayedConnector = totalConnector;
+    final double spareAbove = 0.0;
+    final double spareBelow = 0.0;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -1227,4 +1277,3 @@ class _MeasuredStepper extends StatelessWidget {
     );
   }
 }
-

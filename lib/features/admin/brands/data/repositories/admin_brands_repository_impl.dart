@@ -8,9 +8,10 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
   AdminBrandsRepositoryImpl({required this.apiService});
 
   @override
-  Future<List<Brand>> getAllBrands() async {
+  Future<List<Brand>> getAllBrands({int page = 1, int limit = 20}) async {
     try {
-      final resp = await apiService.get('/brands');
+      final resp = await apiService
+          .get('/brands', queryParameters: {'page': page, 'limit': limit});
       if (resp.data is List) {
         return (resp.data as List)
             .map((e) => Brand(
@@ -53,7 +54,8 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
       if (resp.data is Map) {
         final data = resp.data as Map;
         return Brand(
-          id: data['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          id: data['id']?.toString() ??
+              DateTime.now().millisecondsSinceEpoch.toString(),
           name: data['label']?.toString() ?? data['name']?.toString() ?? name,
         );
       }
@@ -93,7 +95,9 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
   Future<void> deleteBrand(String id) async {
     try {
       final resp = await apiService.delete('/brands/$id');
-      if (resp.statusCode == null || resp.statusCode! < 200 || resp.statusCode! >= 300) {
+      if (resp.statusCode == null ||
+          resp.statusCode! < 200 ||
+          resp.statusCode! >= 300) {
         throw Exception('Failed to delete brand: ${resp.statusCode}');
       }
     } catch (e) {

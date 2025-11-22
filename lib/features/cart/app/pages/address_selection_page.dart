@@ -7,6 +7,7 @@ import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:amerli_app/features/auth/domain/repositories/profile_repository.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class AddressSelectionPage extends StatefulWidget {
   final Map<String, dynamic>? currentAddress;
@@ -74,11 +75,10 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
       } on NoSuchMethodError {
         setState(() => _isFetchingLocation = false);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(AppLanguage.locationPluginUnavailable),
-            ),
-          );
+          if (mounted) {
+            TopToast.show(context, AppLanguage.locationPluginUnavailable,
+                isError: true);
+          }
         }
         return;
       }
@@ -90,9 +90,10 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
       if (permission == LocationPermission.denied) {
         setState(() => _isFetchingLocation = false);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(AppLanguage.locationPermissionDenied)),
-          );
+          if (mounted) {
+            TopToast.show(context, AppLanguage.locationPermissionDenied,
+                isError: true);
+          }
         }
         return;
       }
@@ -153,9 +154,10 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
     } catch (e) {
       debugPrint('Location fetch error: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLanguage.unableToGetLocation)),
-        );
+        if (mounted) {
+          TopToast.show(context, AppLanguage.unableToGetLocation,
+              isError: true);
+        }
       }
     } finally {
       setState(() => _isFetchingLocation = false);
@@ -204,9 +206,10 @@ class _AddressSelectionPageState extends State<AddressSelectionPage> {
 
       debugPrint('Failed to create address: $e');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLanguage.addressCreationFailed)),
-        );
+        if (mounted) {
+          TopToast.show(context, AppLanguage.addressCreationFailed,
+              isError: true);
+        }
       }
     }
   }

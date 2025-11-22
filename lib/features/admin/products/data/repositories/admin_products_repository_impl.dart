@@ -56,6 +56,8 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
     String? category,
     List<int>? categoryIds,
     List<int>? brandIds,
+    int page = 1,
+    int limit = 20,
   }) async {
     final qp = <String, dynamic>{};
     if (query != null && query.isNotEmpty) qp['search'] = query;
@@ -66,6 +68,8 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
     if (brandIds != null && brandIds.isNotEmpty) {
       qp['brandIds'] = brandIds.join(',');
     }
+    qp['page'] = page;
+    qp['limit'] = limit;
 
     final resp =
         await apiService.get('/products/admin/all', queryParameters: qp);

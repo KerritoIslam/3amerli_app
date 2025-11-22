@@ -50,7 +50,15 @@ class AuthRepositoryImpl {
   Future<Map<String, dynamic>> register(Map<String, dynamic> profile) async {
     final resp = await remote.register(profile);
     print("Register Response: $resp");
+
     // resp contains {accessToken, refreshToken, user, isRegistered}
+    final access = resp['accessToken'] as String?;
+    final refresh = resp['refreshToken'] as String?;
+
+    if (access != null && refresh != null) {
+      await authService.saveTokens(accessToken: access, refreshToken: refresh);
+    }
+
     // Extract only the user object to save
     final userJson = resp['user'] as Map<String, dynamic>?;
     if (userJson != null && userJson.isNotEmpty) {

@@ -11,9 +11,11 @@ class AuthService {
 
   final FlutterSecureStorage _storage;
 
-  AuthService({FlutterSecureStorage? storage}) : _storage = storage ?? const FlutterSecureStorage();
+  AuthService({FlutterSecureStorage? storage})
+      : _storage = storage ?? const FlutterSecureStorage();
 
-  Future<void> saveTokens({required String accessToken, required String refreshToken}) async {
+  Future<void> saveTokens(
+      {required String accessToken, required String refreshToken}) async {
     await Future.wait([
       _storage.write(key: _accessKey, value: accessToken),
       _storage.write(key: _refreshKey, value: refreshToken),
@@ -22,7 +24,8 @@ class AuthService {
 
   /// Save a short-lived week token returned after OTP validation.
   /// This token is intended to be used only for the registration endpoint.
-  Future<void> saveWeekToken(String weekToken) => _storage.write(key: _weekKey, value: weekToken);
+  Future<void> saveWeekToken(String weekToken) =>
+      _storage.write(key: _weekKey, value: weekToken);
 
   /// Read the week token stored after OTP validation.
   Future<String?> readWeekToken() => _storage.read(key: _weekKey);
@@ -33,11 +36,19 @@ class AuthService {
   Future<String?> readAccessToken() => _storage.read(key: _accessKey);
   Future<String?> readRefreshToken() => _storage.read(key: _refreshKey);
 
+  final _logoutController = StreamController<void>.broadcast();
+  Stream<void> get onLoggedOut => _logoutController.stream;
+
   Future<void> clear() async {
     await Future.wait([
       _storage.delete(key: _accessKey),
       _storage.delete(key: _refreshKey),
       _storage.delete(key: _weekKey),
     ]);
+    _logoutController.add(null);
+  }
+
+  void dispose() {
+    _logoutController.close();
   }
 }

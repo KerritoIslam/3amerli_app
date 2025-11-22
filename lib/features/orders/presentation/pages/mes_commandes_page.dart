@@ -7,7 +7,9 @@ import '../../../orders/app/bloc/orders_event.dart';
 import '../../../orders/app/bloc/orders_state.dart';
 import '../../../../core/config/injection.dart';
 import 'order_tracking_page.dart';
-import '../../../../core/error/error_handler.dart';
+import 'user_order_details_page.dart';
+
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class MesCommandesPage extends StatefulWidget {
   const MesCommandesPage({super.key});
@@ -24,18 +26,14 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
         AppLanguage.ordersTabCanceled,
       ];
   int selected = 0;
-  late final PageController _pageController;
-
   @override
   void initState() {
     super.initState();
     sl<OrdersBloc>().add(OrdersLoadEvent());
-    _pageController = PageController(initialPage: selected);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -64,7 +62,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
       child: BlocListener<OrdersBloc, OrdersState>(
         listener: (context, state) {
           if (state is OrdersError) {
-            ErrorHandler.showError(context, state.message);
+            TopToast.show(context, state.message, isError: true);
           }
         },
         child: Scaffold(
@@ -98,12 +96,6 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                   return Expanded(
                                     child: GestureDetector(
                                       onTap: () {
-                                        _pageController.animateToPage(
-                                          i,
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        );
                                         setState(() => selected = i);
                                       },
                                       child: Container(
@@ -113,7 +105,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                         child: Text(
                                           tabs[i],
                                           style: TextStyle(
-                                            fontSize: 16,
+                                            fontSize: 13,
                                             fontWeight: FontWeight.w600,
                                             color: active
                                                 ? _primary
@@ -126,22 +118,13 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                 }),
                               ),
                               // Sliding indicator
-                              AnimatedBuilder(
-                                animation: _pageController,
-                                builder: (context, child) {
-                                  final page = (_pageController.hasClients &&
-                                          _pageController.page != null)
-                                      ? _pageController.page!
-                                      : selected.toDouble();
-                                  final left = page * tabWidth;
-                                  return Positioned(
-                                    left: left,
-                                    bottom: 0,
-                                    width: tabWidth,
-                                    child:
-                                        Container(height: 2, color: _primary),
-                                  );
-                                },
+                              AnimatedPositioned(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                left: selected * tabWidth,
+                                bottom: 0,
+                                width: tabWidth,
+                                child: Container(height: 2, color: _primary),
                               ),
                             ],
                           ),
@@ -156,49 +139,56 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                   Expanded(
                     child: BlocBuilder<OrdersBloc, OrdersState>(
                         builder: (context, state) {
-                      if (state is OrdersLoading)
+                      if (state is OrdersLoading) {
                         return const Center(child: CircularProgressIndicator());
-                      if (state is OrdersError) {
-                        // Error handled by BlocListener
-                        return Center(child: Text(AppLanguage.noOrdersFound));
                       }
-
-                      // Use PageView so users can swipe between tabs
-                      return PageView.builder(
-                        controller: _pageController,
-                        itemCount: tabs.length,
-                        onPageChanged: (idx) => setState(() => selected = idx),
-                        itemBuilder: (context, pageIndex) {
-                          final items = state is OrdersLoaded
-                              ? _filterForIndex(state.items, pageIndex)
-                              : const <Order>[];
-                          return RefreshIndicator(
-                            onRefresh: () async {
-                              sl<OrdersBloc>().add(OrdersLoadEvent());
-                              await sl<OrdersBloc>()
-                                  .stream
-                                  .firstWhere((s) => s is! OrdersLoading);
+                      if (state is OrdersError) {
+                        return Center(child: Text(state.message));
+                      }
+                      if (state is OrdersLoaded) {
+                        final filtered = _filterForIndex(state.items, selected);
+                        if (filtered.isEmpty) {
+                          return Center(child: Text(AppLanguage.noOrdersFound));
+                        }
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            context.read<OrdersBloc>().add(OrdersLoadEvent());
+                          },
+                          child: ListView.separated(
+                            padding: const EdgeInsets.only(bottom: 100),
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final order = filtered[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          UserOrderDetailsPage(order: order),
+                                    ),
+                                  );
+                                },
+                                child: _OrderCard(
+                                  order: order,
+                                  onFollow: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            OrderTrackingPage(order: order),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
                             },
-                            child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.only(top: 8, bottom: 20),
-                              itemCount: items.length,
-                              itemBuilder: (context, index) {
-                                final o = items[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 16.0),
-                                  child: _OrderCard(
-                                      order: o,
-                                      onFollow: () => Navigator.of(context)
-                                          .push(MaterialPageRoute(
-                                              builder: (_) => OrderTrackingPage(
-                                                  order: o)))),
-                                );
-                              },
-                            ),
-                          );
-                        },
-                      );
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
                     }),
                   )
                 ],
@@ -239,8 +229,6 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total =
-        order.products.fold<double>(0, (p, e) => p + e.price * e.quantity);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -248,7 +236,7 @@ class _OrderCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE6E6E6)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 6,
               offset: const Offset(0, 2))
         ],
@@ -299,11 +287,12 @@ class _OrderCard extends StatelessWidget {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${order.products.length} ${AppLanguage.items}',
+                      Text('${order.productCount} ${AppLanguage.items}',
                           style: const TextStyle(
                               fontSize: 15, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 6),
-                      Text('Total : ${total.toStringAsFixed(0)} DZD',
+                      Text(
+                          'Total : ${order.totalAmount.toStringAsFixed(0)} DZD',
                           style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,

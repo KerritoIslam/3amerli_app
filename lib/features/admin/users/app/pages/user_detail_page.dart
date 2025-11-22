@@ -8,6 +8,8 @@ import '../bloc/admin_users_bloc.dart';
 import '../bloc/admin_users_event.dart';
 import '../bloc/admin_users_state.dart';
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+
 class UserDetailPage extends StatefulWidget {
   final String userId;
 
@@ -46,23 +48,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
       body: BlocListener<AdminUsersBloc, AdminUsersState>(
         listener: (context, state) {
           if (state is AdminUsersOperationSuccess) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.green,
-              ),
-            );
+            TopToast.show(context, state.message, isError: false);
             // Reload user details after successful operation
             context.read<AdminUsersBloc>().add(
-              AdminUsersLoadDetailEvent(userId: widget.userId),
-            );
+                  AdminUsersLoadDetailEvent(userId: widget.userId),
+                );
           } else if (state is AdminUsersError) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: Colors.red,
-              ),
-            );
+            TopToast.show(context, state.message, isError: true);
           }
         },
         child: BlocBuilder<AdminUsersBloc, AdminUsersState>(
@@ -142,7 +134,8 @@ class _UserDetailPageState extends State<UserDetailPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: _getActiveStatusColor(user.isActive).withOpacity(0.1),
+                          color: _getActiveStatusColor(user.isActive)
+                              .withOpacity(0.1),
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(
                             color: _getActiveStatusColor(user.isActive),
@@ -201,13 +194,13 @@ class _UserDetailPageState extends State<UserDetailPage> {
                   _buildSectionTitle('Adresses'),
                   const SizedBox(height: 16),
                   ...user.addresses!.map((address) => Padding(
-                    padding: const EdgeInsets.only(bottom: 12.0),
-                    child: _buildInfoCard([
-                      _InfoRow(label: 'Rue', value: address.street),
-                      _InfoRow(label: 'Ville', value: address.city),
-                      _InfoRow(label: 'Quartier', value: address.district),
-                    ]),
-                  )),
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: _buildInfoCard([
+                          _InfoRow(label: 'Rue', value: address.street),
+                          _InfoRow(label: 'Ville', value: address.city),
+                          _InfoRow(label: 'Quartier', value: address.district),
+                        ]),
+                      )),
                   const SizedBox(height: 12),
                 ],
 
@@ -357,13 +350,14 @@ class _UserDetailPageState extends State<UserDetailPage> {
                         if (isActive) {
                           // Suspend user by adding to blacklist
                           this.context.read<AdminUsersBloc>().add(
-                            AdminUsersAddToBlacklistEvent(userId: user.id),
-                          );
+                                AdminUsersAddToBlacklistEvent(userId: user.id),
+                              );
                         } else {
                           // Activate user by restoring from blacklist
                           this.context.read<AdminUsersBloc>().add(
-                            AdminUsersRestoreFromBlacklistEvent(userId: user.id),
-                          );
+                                AdminUsersRestoreFromBlacklistEvent(
+                                    userId: user.id),
+                              );
                         }
                       },
                       child: Text(buttonText),

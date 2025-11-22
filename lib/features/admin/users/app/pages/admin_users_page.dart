@@ -10,6 +10,9 @@ import '../bloc/admin_users_event.dart';
 import '../bloc/admin_users_state.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:amerli_app/core/utils/csv_export_helper.dart';
+
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
 
@@ -22,10 +25,41 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   String _searchQuery = '';
   final Set<String> _selectedUserIds = {};
 
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _loadUsers();
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      final state = context.read<AdminUsersBloc>().state;
+      if (state is AdminUsersLoaded && state.hasMore && !state.isLoadingMore) {
+        context.read<AdminUsersBloc>().add(AdminUsersLoadEvent(
+              query: state.currentQuery,
+              statusFilter: state.currentStatusFilter,
+              page: state.currentPage + 1,
+              limit: 20,
+            ));
+      } else if (state is AdminUsersBlacklistLoaded &&
+          state.hasMore &&
+          !state.isLoadingMore) {
+        context.read<AdminUsersBloc>().add(AdminUsersLoadBlacklistEvent(
+              page: state.currentPage + 1,
+              limit: 20,
+            ));
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _loadUsers() {
@@ -37,6 +71,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       context.read<AdminUsersBloc>().add(AdminUsersLoadEvent(
             query: _searchQuery.isEmpty ? null : _searchQuery,
             statusFilter: null,
+            page: 1,
+            limit: 20,
           ));
     }
   }
@@ -54,6 +90,56 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       _selectedUserIds.clear();
     });
     _loadUsers();
+  }
+
+  Future<void> _onExportCSV() async {
+    final state = context.read<AdminUsersBloc>().state;
+    List<AdminUser> usersToExport = [];
+
+    if (state is AdminUsersLoaded) {
+      usersToExport = state.users;
+    } else if (state is AdminUsersBlacklistLoaded) {
+      usersToExport = state.blacklistedUsers;
+    }
+
+    if (usersToExport.isEmpty) {
+      TopToast.show(context, 'Aucun utilisateur à exporter', isError: true);
+      return;
+    }
+
+    try {
+      final headers = [
+        'ID',
+        'Name',
+        'Phone',
+        'Role',
+        'Status',
+        'Store',
+        'Address'
+      ];
+
+      final data = usersToExport.map((u) {
+        return [
+          u.id,
+          u.name,
+          u.phone,
+          u.role,
+          u.status,
+          u.storeName ?? '',
+          u.address ?? '',
+        ];
+      }).toList();
+
+      await CsvExportHelper.exportToCsv(
+        fileName: 'users_export_${DateTime.now().millisecondsSinceEpoch}',
+        headers: headers,
+        data: data,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      TopToast.show(context, 'Erreur lors de l\'exportation CSV',
+          isError: true);
+    }
   }
 
   void _onDeleteSelected() {
@@ -104,7 +190,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         children: [
           // Header (centered title)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            padding:
+                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
             child: Row(
               children: const [
                 SizedBox(width: 40),
@@ -131,7 +218,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               height: 40,
               child: Row(
                 children: [
-                  Expanded(child: SizedBox(height: 40, child: AppSearchbar(onChanged: _onSearchChanged))),
+                  Expanded(
+                      child: SizedBox(
+                          height: 40,
+                          child: AppSearchbar(onChanged: _onSearchChanged))),
                   const SizedBox(width: 8),
                   if (_selectedUserIds.isNotEmpty) ...[
                     ElevatedButton(
@@ -139,26 +229,30 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
                         minimumSize: const Size(0, 40),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20)),
                       ),
-                      child: Text('Supprimer (${_selectedUserIds.length})', style: const TextStyle(fontSize: 13)),
+                      child: Text('Supprimer (${_selectedUserIds.length})',
+                          style: const TextStyle(fontSize: 13)),
                     ),
                     const SizedBox(width: 8),
                   ],
                   ElevatedButton(
-                    onPressed: () {
-                      // TODO: Implement export to CSV
-                    },
+                    onPressed: _onExportCSV,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).colorScheme.primary,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
                       minimumSize: const Size(0, 40),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
                     ),
-                    child: const Text('Exporter CSV', style: TextStyle(fontSize: 13)),
+                    child: const Text('Exporter CSV',
+                        style: TextStyle(fontSize: 13)),
                   ),
                 ],
               ),
@@ -191,28 +285,51 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
           // Users Table
           Expanded(
-            child: SingleChildScrollView(
-              child: BlocConsumer<AdminUsersBloc, AdminUsersState>(
-                listener: (context, state) {
-                  if (state is AdminUsersOperationSuccess) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(state.message)),
-                    );
-                    _loadUsers();
-                  }
-                },
-                builder: (context, state) {
-                  if (state is AdminUsersLoading) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (state is AdminUsersLoaded) {
-                    return _buildUsersTable(state.users);
-                  } else if (state is AdminUsersBlacklistLoaded) {
-                    return _buildUsersTable(state.blacklistedUsers);
-                  } else if (state is AdminUsersError) {
-                    return Center(child: Text(state.message));
-                  }
-                  return const SizedBox.shrink();
-                },
+            child: RefreshIndicator(
+              onRefresh: () async {
+                _loadUsers();
+              },
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: BlocConsumer<AdminUsersBloc, AdminUsersState>(
+                  listener: (context, state) {
+                    if (state is AdminUsersOperationSuccess) {
+                      TopToast.show(context, state.message);
+                      _loadUsers();
+                    }
+                  },
+                  builder: (context, state) {
+                    if (state is AdminUsersLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    } else if (state is AdminUsersLoaded) {
+                      return Column(
+                        children: [
+                          _buildUsersTable(state.users),
+                          if (state.isLoadingMore)
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                        ],
+                      );
+                    } else if (state is AdminUsersBlacklistLoaded) {
+                      return Column(
+                        children: [
+                          _buildUsersTable(state.blacklistedUsers),
+                          if (state.isLoadingMore)
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                        ],
+                      );
+                    } else if (state is AdminUsersError) {
+                      return Center(child: Text(state.message));
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ),
             ),
           ),
@@ -257,11 +374,13 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   SizedBox(
                     width: 24,
                     child: Checkbox(
-                      value: _selectedUserIds.length == filteredUsers.length && filteredUsers.isNotEmpty,
+                      value: _selectedUserIds.length == filteredUsers.length &&
+                          filteredUsers.isNotEmpty,
                       onChanged: (value) {
                         setState(() {
                           if (value == true) {
-                            _selectedUserIds.addAll(filteredUsers.map((u) => u.id));
+                            _selectedUserIds
+                                .addAll(filteredUsers.map((u) => u.id));
                           } else {
                             _selectedUserIds.clear();
                           }
@@ -332,7 +451,10 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                 separatorBuilder: (context, index) => Divider(
                   height: 1,
                   thickness: 1,
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                  color: Theme.of(context)
+                      .colorScheme
+                      .primary
+                      .withValues(alpha: 0.12),
                 ),
                 itemBuilder: (context, index) {
                   final u = filteredUsers[index];
@@ -362,7 +484,8 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                             ),
                             actions: [
                               TextButton(
-                                onPressed: () => Navigator.of(dialogContext).pop(),
+                                onPressed: () =>
+                                    Navigator.of(dialogContext).pop(),
                                 child: const Text('Annuler'),
                               ),
                               TextButton(
@@ -513,11 +636,14 @@ class _UserRow extends StatelessWidget {
             child: Builder(builder: (context) {
               final roleKey = user.role.toLowerCase();
               Color textColor = AppColors.lightPrimary;
-              Color bgColor = AppColors.lightPrimary.withOpacity(0.1);
-              if (roleKey.contains('supermarket') || roleKey.contains('supérette')) {
+              Color bgColor = AppColors.lightPrimary.withValues(alpha: 0.1);
+              if (roleKey.contains('supermarket') ||
+                  roleKey.contains('supérette')) {
                 textColor = const Color(0xFF4AA785);
                 bgColor = const Color(0xFFDEF8EE);
-              } else if (roleKey.contains('gros') || roleKey.contains('gross') || roleKey.contains('grosist')) {
+              } else if (roleKey.contains('gros') ||
+                  roleKey.contains('gross') ||
+                  roleKey.contains('grosist')) {
                 // grosist: text -> #FFFBD4 / background -> #FFC555
                 bgColor = const Color(0xFFFFFBD4);
                 textColor = const Color(0xFFFFC555);
@@ -529,10 +655,14 @@ class _UserRow extends StatelessWidget {
 
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-                decoration: BoxDecoration(color: bgColor, borderRadius: BorderRadius.circular(8)),
+                decoration: BoxDecoration(
+                    color: bgColor, borderRadius: BorderRadius.circular(8)),
                 child: Text(
                   user.role,
-                  style: TextStyle(color: textColor, fontSize: 9, fontWeight: FontWeight.w500),
+                  style: TextStyle(
+                      color: textColor,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w500),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   textAlign: TextAlign.center,
@@ -560,7 +690,12 @@ class _UserRow extends StatelessWidget {
                 const SizedBox(width: 4),
                 GestureDetector(
                   onTap: onSuspendToggle,
-                  child: SvgPicture.asset('assets/icons/suspend.svg', width: 14, height: 14, color: AppColors.brandDeep, semanticsLabel: 'suspend'),
+                  child: SvgPicture.asset('assets/icons/suspend.svg',
+                      width: 14,
+                      height: 14,
+                      colorFilter: ColorFilter.mode(
+                          AppColors.brandDeep, BlendMode.srcIn),
+                      semanticsLabel: 'suspend'),
                 ),
                 const SizedBox(width: 4),
                 GestureDetector(
@@ -569,7 +704,8 @@ class _UserRow extends StatelessWidget {
                     'assets/icons/delete.svg',
                     width: 14,
                     height: 14,
-                    color: AppColors.brandDeep,
+                    colorFilter:
+                        ColorFilter.mode(AppColors.brandDeep, BlendMode.srcIn),
                   ),
                 ),
               ],

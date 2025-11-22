@@ -18,16 +18,19 @@ extension OrderStatusX on OrderStatus {
 
   static OrderStatus fromString(String s) {
     switch (s.toUpperCase()) {
+      case 'CONFIRMATION':
       case 'CONFIRMED':
         return OrderStatus.confirmed;
+      case 'PREPARATION':
       case 'PREPARING':
         return OrderStatus.preparing;
+      case 'ON_DELIVERING':
       case 'DELIVERING':
         return OrderStatus.delivering;
       case 'DELIVERED':
         return OrderStatus.delivered;
-      case 'CANCELED':
       case 'CANCELLED':
+      case 'CANCELED':
         return OrderStatus.canceled;
       default:
         return OrderStatus.confirmed;

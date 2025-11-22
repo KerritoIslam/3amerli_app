@@ -7,12 +7,16 @@ class AdminProductsLoadEvent extends AdminProductsEvent {
   final String? category;
   final List<int>? categoryIds;
   final List<int>? brandIds;
+  final int page;
+  final int limit;
 
   AdminProductsLoadEvent({
     this.query,
     this.category,
     this.categoryIds,
     this.brandIds,
+    this.page = 1,
+    this.limit = 20,
   });
 }
 
