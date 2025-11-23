@@ -49,7 +49,12 @@ class ProductModel {
           : double.tryParse(json['price']?.toString() ?? '') ?? 0.0,
       stock: (json['stock'] is num)
           ? (json['stock'] as num).toInt()
-          : int.tryParse(json['stock']?.toString() ?? '') ?? 0,
+          : (json['quantity'] is num)
+              ? (json['quantity'] as num).toInt()
+              : int.tryParse(json['stock']?.toString() ??
+                      json['quantity']?.toString() ??
+                      '') ??
+                  0,
       sellerId: (json['sellerId'] is num)
           ? (json['sellerId'] as num).toInt()
           : (json['soldBy'] is num)

@@ -9,6 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/core/utils/top_toast.dart';
@@ -28,13 +29,16 @@ class ProductDetailsPage extends StatefulWidget {
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   int _quantity = 1;
   late bool _localFavorite;
+  int _loveCount = 0;
   Product? _loadedProduct;
   bool _isLoading = true;
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
     super.initState();
     _localFavorite = widget.product.isFavorit;
+    _loveCount = widget.product.loveCount ?? 0;
     _loadProductDetails();
   }
 
@@ -49,6 +53,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
       setState(() {
         _loadedProduct = productModel.toEntity();
+        _loveCount = _loadedProduct?.loveCount ?? 0;
         _isLoading = false;
       });
     } catch (e) {
@@ -74,10 +79,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           bottom: false,
           child: Padding(
             padding: EdgeInsets.fromLTRB(
-                28.0,
-                MediaQuery.of(context).padding.top + 8.0,
-                28.0,
-                MediaQuery.of(context).padding.bottom + 16.0),
+                28.0.w,
+                MediaQuery.of(context).padding.top + 8.0.h,
+                28.0.w,
+                MediaQuery.of(context).padding.bottom + 80.0.h),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -98,8 +103,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   onTap: () => Navigator.of(context).pop(),
                                   borderRadius: BorderRadius.circular(24),
                                   child: Container(
-                                    width: 40,
-                                    height: 40,
+                                    width: 40.w,
+                                    height: 40.w,
                                     decoration: BoxDecoration(
                                       color: Theme.of(context)
                                           .colorScheme
@@ -109,14 +114,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     alignment: Alignment.center,
                                     child: SvgPicture.asset(
                                       'assets/icons/back_arrow.svg',
-                                      width: 16,
-                                      height: 16,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onPrimary,
+                                      width: 16.w,
+                                      height: 16.h,
+                                      colorFilter: ColorFilter.mode(
+                                          Theme.of(context)
+                                              .colorScheme
+                                              .onPrimary,
+                                          BlendMode.srcIn),
                                       placeholderBuilder: (context) => Icon(
                                         Icons.arrow_back,
-                                        size: 16,
+                                        size: 16.w,
                                         color: Theme.of(context)
                                             .colorScheme
                                             .onPrimary,
@@ -138,8 +145,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   ),
                                 ),
                                 Container(
-                                  width: 40,
-                                  height: 40,
+                                  width: 40.w,
+                                  height: 40.w,
                                   alignment: Alignment.center,
                                   child: InkWell(
                                     onTap: () {
@@ -164,6 +171,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                       // Update local state immediately for instant UI feedback
                                       setState(() {
                                         _localFavorite = !_localFavorite;
+                                        if (_localFavorite) {
+                                          _loveCount++;
+                                        } else {
+                                          if (_loveCount > 0) _loveCount--;
+                                        }
                                       });
 
                                       // Refresh catalog after a short delay to update the product list
@@ -180,8 +192,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     },
                                     borderRadius: BorderRadius.circular(24),
                                     child: Container(
-                                      width: 40,
-                                      height: 40,
+                                      width: 40.w,
+                                      height: 40.w,
                                       decoration: BoxDecoration(
                                         color: Colors.transparent,
                                         shape: BoxShape.circle,
@@ -197,16 +209,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                         _localFavorite
                                             ? 'assets/icons/favoris.svg'
                                             : 'assets/icons/favoris_reversed.svg',
-                                        width: 24,
-                                        height: 24,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
+                                        width: 24.w,
+                                        height: 24.h,
+                                        colorFilter: ColorFilter.mode(
+                                            Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                            BlendMode.srcIn),
                                         placeholderBuilder: (context) => Icon(
                                           _localFavorite
                                               ? Icons.favorite
                                               : Icons.favorite_border,
-                                          size: 20,
+                                          size: 20.w,
                                           color: Theme.of(context)
                                               .colorScheme
                                               .primary,
@@ -232,36 +246,43 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
                           // Product image
                           if (!_isLoading)
-                            Center(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
-                                child: SizedBox(
-                                  width: 220,
-                                  height: 260,
-                                  child: product.pics.isEmpty
-                                      ? Center(
-                                          child: Icon(
-                                            Icons.image_not_supported,
-                                            size: 64,
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .onPrimary
-                                                .withOpacity(0.6),
-                                          ),
-                                        )
-                                      : Stack(
-                                          children: [
-                                            PageView.builder(
-                                              scrollDirection: Axis.vertical,
+                            Column(
+                              children: [
+                                Center(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(16),
+                                    child: SizedBox(
+                                      width: double.infinity,
+                                      height: 260.h,
+                                      child: product.pics.isEmpty
+                                          ? Center(
+                                              child: Icon(
+                                                Icons.image_not_supported,
+                                                size: 64.w,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onPrimary
+                                                    .withOpacity(0.6),
+                                              ),
+                                            )
+                                          : PageView.builder(
+                                              scrollDirection: Axis.horizontal,
                                               itemCount: product.pics.length,
+                                              onPageChanged: (index) {
+                                                setState(() {
+                                                  _currentImageIndex = index;
+                                                });
+                                              },
                                               itemBuilder: (context, index) {
                                                 return Image.network(
                                                   product.pics[index],
                                                   fit: BoxFit.contain,
                                                   loadingBuilder: (context,
                                                       child, loadingProgress) {
-                                                    if (loadingProgress == null)
+                                                    if (loadingProgress ==
+                                                        null) {
                                                       return child;
+                                                    }
                                                     return const Center(
                                                         child:
                                                             CircularProgressIndicator());
@@ -271,7 +292,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                                     return Center(
                                                       child: Icon(
                                                         Icons.broken_image,
-                                                        size: 64,
+                                                        size: 64.w,
                                                         color: Theme.of(context)
                                                             .colorScheme
                                                             .onPrimary
@@ -282,54 +303,33 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                                 );
                                               },
                                             ),
-                                            if (product.pics.length > 1)
-                                              Positioned(
-                                                right: 8,
-                                                top: 0,
-                                                bottom: 0,
-                                                child: Center(
-                                                  child: Container(
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.black
-                                                          .withOpacity(0.3),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              10),
-                                                    ),
-                                                    padding: const EdgeInsets
-                                                        .symmetric(
-                                                        vertical: 4,
-                                                        horizontal: 2),
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: List.generate(
-                                                          product.pics.length,
-                                                          (index) => Container(
-                                                                margin: const EdgeInsets
-                                                                    .symmetric(
-                                                                    vertical:
-                                                                        2),
-                                                                width: 4,
-                                                                height: 4,
-                                                                decoration:
-                                                                    BoxDecoration(
-                                                                  shape: BoxShape
-                                                                      .circle,
-                                                                  color: Colors
-                                                                      .white
-                                                                      .withOpacity(
-                                                                          0.8),
-                                                                ),
-                                                              )),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                          ],
-                                        ),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                                if (product.pics.length > 1) ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(
+                                      product.pics.length,
+                                      (index) => Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            horizontal: 4),
+                                        width: 8.w,
+                                        height: 8.h,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: _currentImageIndex == index
+                                              ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                              : Colors.grey.withOpacity(0.5),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
                             ),
 
                           if (!_isLoading) ...[
@@ -405,7 +405,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                       .textTheme
                                       .headlineSmall
                                       ?.copyWith(
-                                        fontSize: 18,
+                                        fontSize: 18.sp,
                                         fontWeight: FontWeight.bold,
                                       ),
                                 ),
@@ -429,19 +429,19 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   children: [
                                     SvgPicture.asset(
                                       'assets/icons/favoris.svg',
-                                      width: 16,
-                                      height: 16,
-                                      color: Colors.red,
-                                      placeholderBuilder: (context) =>
-                                          const Icon(
+                                      width: 16.w,
+                                      height: 16.h,
+                                      colorFilter: const ColorFilter.mode(
+                                          Colors.red, BlendMode.srcIn),
+                                      placeholderBuilder: (context) => Icon(
                                         Icons.favorite,
-                                        size: 16,
+                                        size: 16.w,
                                         color: Colors.red,
                                       ),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      '${product.loveCount ?? 0}',
+                                      '$_loveCount',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodyMedium
@@ -479,7 +479,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     .textTheme
                                     .headlineSmall
                                     ?.copyWith(
-                                      fontSize: 18,
+                                      fontSize: 18.sp,
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
@@ -502,7 +502,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     .textTheme
                                     .headlineSmall
                                     ?.copyWith(
-                                      fontSize: 18,
+                                      fontSize: 18.sp,
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
@@ -534,26 +534,26 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   if (_quantity > 1) _quantity--;
                                 });
                               },
-                              icon: const Icon(Icons.remove, size: 16),
+                              icon: Icon(Icons.remove, size: 16.w),
                             ),
                             Text(
                               _quantity.toString(),
                               style: Theme.of(context)
                                   .textTheme
                                   .headlineSmall
-                                  ?.copyWith(fontSize: 16),
+                                  ?.copyWith(fontSize: 16.sp),
                             ),
                             IconButton(
                               splashColor: Colors.transparent,
                               onPressed: () {
                                 setState(() => _quantity++);
                               },
-                              icon: const Icon(Icons.add, size: 16),
+                              icon: Icon(Icons.add, size: 16.w),
                             ),
                           ],
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      SizedBox(width: 16.w),
                       InkWell(
                         onTap: () async {
                           // Add to cart logic
@@ -606,20 +606,22 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         },
                         borderRadius: BorderRadius.circular(24),
                         child: Container(
-                          width: 48,
-                          height: 48,
+                          width: 48.w,
+                          height: 48.w,
                           decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primary,
                               shape: BoxShape.circle),
                           alignment: Alignment.center,
                           child: SvgPicture.asset(
                             'assets/icons/panier.svg',
-                            width: 22,
-                            height: 22,
-                            color: Theme.of(context).colorScheme.onPrimary,
+                            width: 22.w,
+                            height: 22.h,
+                            colorFilter: ColorFilter.mode(
+                                Theme.of(context).colorScheme.onPrimary,
+                                BlendMode.srcIn),
                             placeholderBuilder: (context) => Icon(
                               Icons.shopping_cart,
-                              size: 20,
+                              size: 20.w,
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
@@ -660,16 +662,18 @@ class IconTextButton extends StatelessWidget {
           children: [
             SvgPicture.asset(
               iconAsset,
-              width: 16,
-              height: 16,
-              color: color,
+              width: 16.w,
+              height: 16.h,
+              colorFilter: color != null
+                  ? ColorFilter.mode(color!, BlendMode.srcIn)
+                  : null,
               placeholderBuilder: (context) => Icon(
                 Icons.image,
-                size: 16,
+                size: 16.w,
                 color: color ?? Theme.of(context).iconTheme.color,
               ),
             ),
-            const SizedBox(width: 4),
+            SizedBox(width: 4.w),
             Text(
               text,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(

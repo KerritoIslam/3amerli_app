@@ -12,7 +12,7 @@ class AuthRepositoryImpl {
   AuthRepositoryImpl(
       {required this.remote, required this.authService, required this.local});
 
-  Future<void> sendOtp(String phone) => remote.sendOtp(phone);
+  Future<Map<String, dynamic>> sendOtp(String phone) => remote.sendOtp(phone);
 
   Future<bool> validateOtp(String phone, String otp) async {
     final Map<String, dynamic> data = await remote.validateOtp(phone, otp);

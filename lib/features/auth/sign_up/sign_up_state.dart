@@ -5,6 +5,7 @@ enum VerificationStatus {
   pending,
   loading,
   enteringOtp,
+  verifyingOtp,
   verified
 }
 
@@ -17,6 +18,7 @@ class SignUpState extends Equatable {
   final AuthResult result;
   final String? errorMessage;
   final bool isForbidden;
+  final String? otp;
 
   const SignUpState({
     this.status = VerificationStatus.noNumberEntered,
@@ -25,6 +27,7 @@ class SignUpState extends Equatable {
     this.result = AuthResult.none,
     this.errorMessage,
     this.isForbidden = false,
+    this.otp,
   });
 
   SignUpState copyWith({
@@ -34,6 +37,7 @@ class SignUpState extends Equatable {
     AuthResult? result,
     String? errorMessage,
     bool? isForbidden,
+    String? otp,
   }) {
     return SignUpState(
       status: status ?? this.status,
@@ -42,10 +46,18 @@ class SignUpState extends Equatable {
       result: result ?? this.result,
       errorMessage: errorMessage,
       isForbidden: isForbidden ?? this.isForbidden,
+      otp: otp ?? this.otp,
     );
   }
 
   @override
-  List<Object?> get props =>
-      [status, phoneNumber, countryCode, result, errorMessage, isForbidden];
+  List<Object?> get props => [
+        status,
+        phoneNumber,
+        countryCode,
+        result,
+        errorMessage,
+        isForbidden,
+        otp
+      ];
 }

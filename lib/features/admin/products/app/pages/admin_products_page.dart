@@ -357,163 +357,176 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                               );
                             }
 
-                            return Container(
-                              margin:
-                                  const EdgeInsets.symmetric(horizontal: 10),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(12),
-                                  topRight: Radius.circular(12),
-                                ),
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 1,
-                                ),
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Table Header
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 6,
+                            return Column(
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.symmetric(
+                                      horizontal: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(12),
+                                      topRight: Radius.circular(12),
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.grey.shade50,
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(12),
-                                        topRight: Radius.circular(12),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        // Select All Checkbox
-                                        SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: Checkbox(
-                                            value: _selectedProductIds.length ==
-                                                state.products.length,
-                                            onChanged: (value) {
-                                              setState(() {
-                                                if (value == true) {
-                                                  _selectedProductIds.addAll(
-                                                    state.products
-                                                        .map((p) => p.id),
-                                                  );
-                                                } else {
-                                                  _selectedProductIds.clear();
-                                                }
-                                              });
-                                            },
-                                            shape: const CircleBorder(),
-                                            activeColor: AppColors.brandDeep,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          flex: 4,
-                                          child: Text(
-                                            AppLanguage.product,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 10,
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 2,
-                                          child: Text(
-                                            AppLanguage.price,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 2,
-                                          child: Text(
-                                            AppLanguage.stock,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                        SizedBox(
-                                          width: 50,
-                                          child: Text(
-                                            AppLanguage.actions,
-                                            style: TextStyle(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 11,
-                                            ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ),
-                                      ],
+                                    border: Border.all(
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
+                                      width: 1,
                                     ),
                                   ),
-
-                                  // Product List
-                                  Flexible(
-                                    child: ListView.separated(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: state.products.length,
-                                      separatorBuilder: (context, index) =>
-                                          Divider(
-                                        height: 1,
-                                        thickness: 1,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withOpacity(0.12),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      // Table Header
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.grey.shade50,
+                                          borderRadius: const BorderRadius.only(
+                                            topLeft: Radius.circular(12),
+                                            topRight: Radius.circular(12),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            // Select All Checkbox
+                                            SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: Checkbox(
+                                                value: _selectedProductIds
+                                                        .length ==
+                                                    state.products.length,
+                                                onChanged: (value) {
+                                                  setState(() {
+                                                    if (value == true) {
+                                                      _selectedProductIds
+                                                          .addAll(
+                                                        state.products
+                                                            .map((p) => p.id),
+                                                      );
+                                                    } else {
+                                                      _selectedProductIds
+                                                          .clear();
+                                                    }
+                                                  });
+                                                },
+                                                shape: const CircleBorder(),
+                                                activeColor:
+                                                    AppColors.brandDeep,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Expanded(
+                                              flex: 4,
+                                              child: Text(
+                                                AppLanguage.product,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 10,
+                                                ),
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                AppLanguage.price,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 11,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                            Expanded(
+                                              flex: 2,
+                                              child: Text(
+                                                AppLanguage.stock,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 11,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              width: 50,
+                                              child: Text(
+                                                AppLanguage.actions,
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 11,
+                                                ),
+                                                textAlign: TextAlign.center,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
-                                      itemBuilder: (context, index) {
-                                        final product = state.products[index];
-                                        final isSelected = _selectedProductIds
-                                            .contains(product.id);
 
-                                        return _ProductRow(
-                                          product: product,
-                                          isSelected: isSelected,
-                                          onSelectChanged: (value) {
-                                            setState(() {
-                                              if (value == true) {
+                                      // Product List
+                                      Flexible(
+                                        child: ListView.separated(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: state.products.length,
+                                          separatorBuilder: (context, index) =>
+                                              Divider(
+                                            height: 1,
+                                            thickness: 1,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withOpacity(0.12),
+                                          ),
+                                          itemBuilder: (context, index) {
+                                            final product =
+                                                state.products[index];
+                                            final isSelected =
                                                 _selectedProductIds
-                                                    .add(product.id);
-                                              } else {
-                                                _selectedProductIds
-                                                    .remove(product.id);
-                                              }
-                                            });
-                                          },
-                                          onEdit: () {
-                                            context.push(
-                                              '/admin/products/edit/${product.id}',
+                                                    .contains(product.id);
+
+                                            return _ProductRow(
+                                              product: product,
+                                              isSelected: isSelected,
+                                              onSelectChanged: (value) {
+                                                setState(() {
+                                                  if (value == true) {
+                                                    _selectedProductIds
+                                                        .add(product.id);
+                                                  } else {
+                                                    _selectedProductIds
+                                                        .remove(product.id);
+                                                  }
+                                                });
+                                              },
+                                              onEdit: () {
+                                                context.push(
+                                                  '/admin/products/edit/${product.id}',
+                                                );
+                                              },
+                                              onDelete: () =>
+                                                  _onDeleteProduct(product.id),
                                             );
                                           },
-                                          onDelete: () =>
-                                              _onDeleteProduct(product.id),
-                                        );
-                                      },
-                                    ),
+                                        ),
+                                      ),
+                                      if (state.isLoadingMore)
+                                        const Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: Center(
+                                              child:
+                                                  CircularProgressIndicator()),
+                                        ),
+                                    ],
                                   ),
-                                  if (state.isLoadingMore)
-                                    const Padding(
-                                      padding: EdgeInsets.all(8.0),
-                                      child: Center(
-                                          child: CircularProgressIndicator()),
-                                    ),
-                                ],
-                              ),
+                                ),
+                                const SizedBox(height: 80),
+                              ],
                             );
                           }
 

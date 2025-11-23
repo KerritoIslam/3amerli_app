@@ -310,145 +310,154 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
                                 );
                               }
 
-                              return Container(
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: const BorderRadius.only(
-                                    topLeft: Radius.circular(12),
-                                    topRight: Radius.circular(12),
-                                  ),
-                                  border: Border.all(
-                                    color:
-                                        Theme.of(context).colorScheme.primary,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    // Table Header
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 6,
-                                        vertical: 6,
+                              return Column(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(12),
+                                        topRight: Radius.circular(12),
                                       ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.grey.shade50,
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(12),
-                                          topRight: Radius.circular(12),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          SizedBox(
-                                            width: 80,
-                                            child: Text(
-                                              AppLanguage.orderNumber,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 10,
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              AppLanguage.client,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 10,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              AppLanguage.status,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 10,
-                                              ),
-                                              textAlign: TextAlign.start,
-                                            ),
-                                          ),
-                                          SizedBox(
-                                            width: 40,
-                                            child: Text(
-                                              AppLanguage.actions,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: 10,
-                                              ),
-                                              textAlign: TextAlign.start,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-
-                                    // Orders List
-                                    ListView.separated(
-                                      shrinkWrap: true,
-                                      physics:
-                                          const NeverScrollableScrollPhysics(),
-                                      itemCount: state.orders.length,
-                                      separatorBuilder: (context, index) =>
-                                          Divider(
-                                        height: 1,
-                                        thickness: 1,
+                                      border: Border.all(
                                         color: Theme.of(context)
                                             .colorScheme
-                                            .primary
-                                            .withValues(alpha: 0.12),
+                                            .primary,
+                                        width: 1,
                                       ),
-                                      itemBuilder: (context, index) {
-                                        final order = state.orders[index];
-                                        final isSelected = _selectedOrderIds
-                                            .contains(order.id);
-
-                                        return _OrderRow(
-                                          order: order,
-                                          isSelected: isSelected,
-                                          statusColor:
-                                              _getStatusColor(order.status),
-                                          onSelectChanged: (value) {
-                                            setState(() {
-                                              if (value == true) {
-                                                _selectedOrderIds.add(order.id);
-                                              } else {
-                                                _selectedOrderIds
-                                                    .remove(order.id);
-                                              }
-                                            });
-                                          },
-                                          onView: () {
-                                            context.push(
-                                                '/admin/orders/${order.id}');
-                                          },
-                                          onIncrementStatus: () {
-                                            context.read<AdminOrdersBloc>().add(
-                                                  AdminOrdersIncrementStatusEvent(
-                                                      order.id),
-                                                );
-                                          },
-                                        );
-                                      },
                                     ),
-                                    if (state.isLoadingMore)
-                                      const Padding(
-                                        padding: EdgeInsets.all(8.0),
-                                        child: Center(
-                                            child: CircularProgressIndicator()),
-                                      ),
-                                    const SizedBox(
-                                        height:
-                                            80), // Padding for bottom nav bar
-                                  ],
-                                ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        // Table Header
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 6,
+                                            vertical: 6,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade50,
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                              topLeft: Radius.circular(12),
+                                              topRight: Radius.circular(12),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 80,
+                                                child: Text(
+                                                  AppLanguage.orderNumber,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  AppLanguage.client,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  AppLanguage.status,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 10,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 40,
+                                                child: Text(
+                                                  AppLanguage.actions,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 10,
+                                                  ),
+                                                  textAlign: TextAlign.start,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+
+                                        // Orders List
+                                        ListView.separated(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          itemCount: state.orders.length,
+                                          separatorBuilder: (context, index) =>
+                                              Divider(
+                                            height: 1,
+                                            thickness: 1,
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary
+                                                .withValues(alpha: 0.12),
+                                          ),
+                                          itemBuilder: (context, index) {
+                                            final order = state.orders[index];
+                                            final isSelected = _selectedOrderIds
+                                                .contains(order.id);
+
+                                            return _OrderRow(
+                                              order: order,
+                                              isSelected: isSelected,
+                                              statusColor:
+                                                  _getStatusColor(order.status),
+                                              onSelectChanged: (value) {
+                                                setState(() {
+                                                  if (value == true) {
+                                                    _selectedOrderIds
+                                                        .add(order.id);
+                                                  } else {
+                                                    _selectedOrderIds
+                                                        .remove(order.id);
+                                                  }
+                                                });
+                                              },
+                                              onView: () {
+                                                context.push(
+                                                    '/admin/orders/${order.id}');
+                                              },
+                                              onIncrementStatus: () {
+                                                context
+                                                    .read<AdminOrdersBloc>()
+                                                    .add(
+                                                      AdminOrdersIncrementStatusEvent(
+                                                          order.id),
+                                                    );
+                                              },
+                                            );
+                                          },
+                                        ),
+                                        if (state.isLoadingMore)
+                                          const Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                      height: 80), // Padding for bottom nav bar
+                                ],
                               );
                             }
 

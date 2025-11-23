@@ -8,7 +8,9 @@ import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class ProductCard extends StatefulWidget {
   final String? imageUrl;
@@ -21,6 +23,8 @@ class ProductCard extends StatefulWidget {
   final String? sellerName;
   final int? productId;
   final String? brand;
+  final int? stock;
+  final int? quantityPerBatch;
   final VoidCallback? onTap;
 
   const ProductCard({
@@ -36,6 +40,8 @@ class ProductCard extends StatefulWidget {
     this.sellerName,
     this.productId,
     this.brand,
+    this.stock,
+    this.quantityPerBatch,
   });
 
   @override
@@ -53,14 +59,6 @@ class _ProductCardState extends State<ProductCard> {
     super.initState();
     _quantity = 1;
     _localFavorite = widget.isFavorite;
-  }
-
-  @override
-  void didUpdateWidget(covariant ProductCard oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.isFavorite != oldWidget.isFavorite) {
-      _localFavorite = widget.isFavorite;
-    }
   }
 
   @override
@@ -97,44 +95,51 @@ class _ProductCardState extends State<ProductCard> {
 
   @override
   Widget build(BuildContext context) {
+    // Debug print for quantityPerBatch
+    if (widget.quantityPerBatch != null) {
+      debugPrint(
+          'ProductCard: quantityPerBatch for ${widget.title} is ${widget.quantityPerBatch}');
+    }
+
     return SizedBox(
-      height: 300,
-      width: 120,
+      height: 360.h,
+      width: 120.w,
       child: Material(
         elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(24),
+        shadowColor: Colors.black.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(24.r),
         color: Theme.of(context).colorScheme.surface,
         child: InkWell(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(24.r),
           onTap: widget.onTap,
           child: Container(
-            padding: const EdgeInsets.all(2),
+            padding: EdgeInsets.all(4.r),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(24.r),
               boxShadow: [
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 4,
-                    offset: const Offset(4, 4)),
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 4.r,
+                    offset: Offset(4.w, 4.h)),
                 BoxShadow(
-                    color: Colors.black.withOpacity(0.12),
-                    blurRadius: 4,
-                    offset: const Offset(-4, -4)),
+                    color: Colors.black.withValues(alpha: 0.12),
+                    blurRadius: 4.r,
+                    offset: Offset(-4.w, -4.h)),
               ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Image Section
                 SizedBox(
-                  height: 124,
-                  width: 158,
+                  height: 85.h,
+                  width: 158.w,
                   child: Stack(
                     children: [
                       Positioned.fill(
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(20.r),
                           child: Image.network(
                             widget.imageUrl ??
                                 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1170&q=80',
@@ -145,41 +150,39 @@ class _ProductCardState extends State<ProductCard> {
                         ),
                       ),
                       Positioned(
-                        top: 8,
-                        right: 8,
+                        top: 6.h,
+                        right: 6.w,
                         child: SizedBox(
-                          height: 25,
-                          width: 25,
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(16),
-                              onTap: () {
-                                setState(() {
-                                  _localFavorite = !_localFavorite;
-                                });
-                                widget.onFavoriteToggle?.call();
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.surface,
-                                  shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2)),
-                                  ],
-                                ),
-                                child: SvgPicture.asset(
-                                  _localFavorite
-                                      ? 'assets/icons/favoris.svg'
-                                      : 'assets/icons/favoris_reversed.svg',
-                                  width: 16,
-                                  height: 16,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                          height: 24.h,
+                          width: 24.w,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12.r),
+                            onTap: () {
+                              setState(() {
+                                _localFavorite = !_localFavorite;
+                              });
+                              widget.onFavoriteToggle?.call();
+                            },
+                            child: Container(
+                              padding: EdgeInsets.all(2.r),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.surface,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 4.r,
+                                      offset: Offset(0, 2.h)),
+                                ],
+                              ),
+                              child: SvgPicture.asset(
+                                _localFavorite
+                                    ? 'assets/icons/favoris.svg'
+                                    : 'assets/icons/favoris_reversed.svg',
+                                width: 14.w,
+                                height: 14.h,
+                                color: Theme.of(context).colorScheme.primary,
                               ),
                             ),
                           ),
@@ -188,10 +191,12 @@ class _ProductCardState extends State<ProductCard> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 4.h),
+
+                // Content Section (Expanded)
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    padding: EdgeInsets.symmetric(horizontal: 4.0.w),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -202,11 +207,11 @@ class _ProductCardState extends State<ProductCard> {
                           style: Theme.of(context)
                               .textTheme
                               .bodyMedium
-                              ?.copyWith(fontSize: 16),
+                              ?.copyWith(fontSize: 13.sp),
                         ),
                         if (widget.brand != null &&
                             (widget.brand ?? '').isNotEmpty) ...[
-                          const SizedBox(height: 4),
+                          SizedBox(height: 1.h),
                           Text(
                             widget.brand!,
                             maxLines: 1,
@@ -215,14 +220,14 @@ class _ProductCardState extends State<ProductCard> {
                                 .textTheme
                                 .bodySmall
                                 ?.copyWith(
-                                    fontSize: 12,
+                                    fontSize: 10.sp,
                                     color: Theme.of(context)
                                         .colorScheme
                                         .secondary),
                           ),
                         ],
-                        const SizedBox(height: 0),
-                        if ((widget.subtitle ?? '').isNotEmpty)
+                        if ((widget.subtitle ?? '').isNotEmpty) ...[
+                          SizedBox(height: 1.h),
                           Text(
                             widget.subtitle!,
                             maxLines: 1,
@@ -232,173 +237,220 @@ class _ProductCardState extends State<ProductCard> {
                                 .bodySmall
                                 ?.copyWith(
                                     decoration: TextDecoration.underline,
-                                    fontSize: 14,
+                                    fontSize: 10.sp,
                                     color:
                                         Theme.of(context).colorScheme.secondary,
                                     decorationColor:
                                         Theme.of(context).colorScheme.secondary,
                                     fontWeight: FontWeight.w500),
                           ),
-                        const SizedBox(height: 0),
+                        ],
+                        SizedBox(height: 1.h),
                         if (widget.price != null)
                           Text(
                             '${widget.price!.toStringAsFixed(2)} DZD',
                             style: Theme.of(context)
                                 .textTheme
                                 .bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.bold),
+                                ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13.sp),
                           ),
-                        if ((widget.sellerName ?? widget.soldBy?.toString()) !=
-                            null) ...[
-                          const SizedBox(height: 0),
+
+                        // Quantity Per Batch
+                        if (widget.quantityPerBatch != null) ...[
+                          SizedBox(height: 1.h),
                           Text(
-                            'Vendu par: ${widget.sellerName ?? widget.soldBy?.toString()}',
+                            '${AppLanguage.perBatchOf}: ${widget.quantityPerBatch}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
                                 ?.copyWith(
-                                    fontSize: 12,
+                                    fontSize: 11.sp,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.w600),
+                          ),
+                        ] else if ((widget.sellerName ??
+                                widget.soldBy?.toString()) !=
+                            null) ...[
+                          SizedBox(height: 1.h),
+                          Text(
+                            '${AppLanguage.soldByLabel}: ${widget.sellerName ?? widget.soldBy?.toString()}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    fontSize: 10.sp,
                                     color:
                                         Theme.of(context).colorScheme.secondary,
                                     fontWeight: FontWeight.w400),
                           ),
                         ],
-                        const SizedBox(height: 2),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color:
-                                      Theme.of(context).colorScheme.secondary,
-                                  borderRadius: const BorderRadius.all(
-                                      Radius.circular(32)),
-                                ),
-                                height: 24,
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    InkWell(
-                                      onTap: () {
-                                        if (_quantity > 0) _quantity -= 1;
-                                        setState(() {});
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.transparent,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
-                                        child:
-                                            const Icon(Icons.remove, size: 16),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text('$_quantity',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodyMedium),
-                                    const SizedBox(width: 8),
-                                    InkWell(
-                                      onTap: () {
-                                        _quantity += 1;
-                                        setState(() {});
-                                      },
-                                      child: Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: Colors.transparent,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
-                                        child: const Icon(Icons.add, size: 16),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () {
-                                if (widget.productId == null ||
-                                    widget.price == null) return;
-                                CartBloc? cartBloc;
-                                try {
-                                  cartBloc = context.read<CartBloc>();
-                                } catch (e) {
-                                  // ignore: avoid_print
-                                  print('CartBloc provider not found: $e');
-                                  return;
-                                }
-                                final productIdStr =
-                                    widget.productId.toString();
-                                final state = cartBloc.state;
-                                // Check if item is already in cart
-                                if (state is CartLoaded) {
-                                  final existingItem = state.items
-                                      .firstWhereOrNull((item) =>
-                                          item.productId == productIdStr);
-                                  if (existingItem == null) {
-                                    cartBloc.add(CartAddItemEvent(CartItem(
-                                      productId: productIdStr,
-                                      name: widget.title,
-                                      price: widget.price ?? 0.0,
-                                      quantity: _quantity,
-                                      imageUrl: widget.imageUrl,
-                                      brand: widget.brand,
-                                      soldBy: widget.soldBy,
-                                    )));
-                                    // Show toast notification
-                                    // Show toast notification
-                                    TopToast.show(
-                                      context,
-                                      '$_quantity x ${widget.title} ajouté au panier',
-                                    );
-                                  } else {
-                                    cartBloc.add(CartUpdateQuantityEvent(
-                                        productId: productIdStr,
-                                        quantity:
-                                            existingItem.quantity + _quantity));
-                                    // Show toast notification
-                                    // Show toast notification
-                                    TopToast.show(
-                                      context,
-                                      'Quantité mise à jour: ${existingItem.quantity + _quantity} x ${widget.title}',
-                                    );
-                                  }
-                                } else {
-                                  cartBloc.add(CartAddItemEvent(CartItem(
-                                    productId: productIdStr,
-                                    name: widget.title,
-                                    price: widget.price ?? 0.0,
-                                    quantity: _quantity,
-                                    imageUrl: widget.imageUrl,
-                                    brand: widget.brand,
-                                    soldBy: widget.soldBy,
-                                  )));
-                                  // Show toast notification
-                                  // Show toast notification
-                                  TopToast.show(
-                                    context,
-                                    '$_quantity x ${widget.title} ajouté au panier',
-                                  );
-                                }
-                              },
-                              child: IconCircle(
-                                  isSelected: true,
-                                  asset: 'assets/icons/panier.svg',
-                                  size: 26,
-                                  selectedColor:
-                                      Theme.of(context).colorScheme.primary),
-                            ),
-                          ],
-                        ),
+
+                        // Stock
+                        if (widget.stock != null) ...[
+                          SizedBox(height: 1.h),
+                          Text(
+                            '${AppLanguage.stock}: ${widget.stock}',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(
+                                    fontSize: 10.sp,
+                                    color: widget.stock! > 0
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.w400),
+                          ),
+                        ],
                       ],
                     ),
+                  ),
+                ),
+
+                // Bottom Buttons Section (Fixed at bottom)
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 4.0.w, vertical: 4.h),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.secondary,
+                            borderRadius:
+                                BorderRadius.all(Radius.circular(32.r)),
+                          ),
+                          height: 22.h,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              InkWell(
+                                onTap: () {
+                                  if (_quantity > 0) _quantity -= 1;
+                                  setState(() {});
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(4.r),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(6.r),
+                                  ),
+                                  child: Icon(Icons.remove, size: 14.sp),
+                                ),
+                              ),
+                              Text('$_quantity',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(fontSize: 12.sp)),
+                              InkWell(
+                                onTap: () {
+                                  _quantity += 1;
+                                  setState(() {});
+                                },
+                                child: Container(
+                                  padding: EdgeInsets.all(4.r),
+                                  decoration: BoxDecoration(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(6.r),
+                                  ),
+                                  child: Icon(Icons.add, size: 14.sp),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      SizedBox(width: 6.w),
+                      InkWell(
+                        onTap: () {
+                          if (widget.productId == null ||
+                              widget.price == null) {
+                            return;
+                          }
+                          CartBloc? cartBloc;
+                          try {
+                            cartBloc = context.read<CartBloc>();
+                          } catch (e) {
+                            // ignore: avoid_print
+                            print('CartBloc provider not found: $e');
+                            return;
+                          }
+                          final productIdStr = widget.productId.toString();
+                          final state = cartBloc.state;
+                          final maxStock = widget.stock ?? 9999;
+
+                          // Check if item is already in cart
+                          if (state is CartLoaded) {
+                            final existingItem = state.items.firstWhereOrNull(
+                                (item) => item.productId == productIdStr);
+
+                            final currentCartQty = existingItem?.quantity ?? 0;
+
+                            if (currentCartQty + _quantity > maxStock) {
+                              TopToast.show(context,
+                                  'Quantité insuffisante. Stock disponible: $maxStock',
+                                  isError: true);
+                              return;
+                            }
+
+                            if (existingItem == null) {
+                              cartBloc.add(CartAddItemEvent(CartItem(
+                                productId: productIdStr,
+                                name: widget.title,
+                                price: widget.price ?? 0.0,
+                                quantity: _quantity,
+                                imageUrl: widget.imageUrl,
+                                brand: widget.brand,
+                                soldBy: widget.soldBy,
+                              )));
+                              // Show toast notification
+                              TopToast.show(context,
+                                  '$_quantity x ${widget.title} ajouté au panier');
+                            } else {
+                              cartBloc.add(CartUpdateQuantityEvent(
+                                  productId: productIdStr,
+                                  quantity: existingItem.quantity + _quantity));
+                              // Show toast notification
+                              TopToast.show(context,
+                                  'Quantité mise à jour: ${existingItem.quantity + _quantity} x ${widget.title}');
+                            }
+                          } else {
+                            if (_quantity > maxStock) {
+                              TopToast.show(context,
+                                  'Quantité insuffisante. Stock disponible: $maxStock',
+                                  isError: true);
+                              return;
+                            }
+
+                            cartBloc.add(CartAddItemEvent(CartItem(
+                              productId: productIdStr,
+                              name: widget.title,
+                              price: widget.price ?? 0.0,
+                              quantity: _quantity,
+                              imageUrl: widget.imageUrl,
+                              brand: widget.brand,
+                              soldBy: widget.soldBy,
+                            )));
+                            // Show toast notification
+                            TopToast.show(context,
+                                '$_quantity x ${widget.title} ajouté au panier');
+                          }
+                        },
+                        child: IconCircle(
+                            isSelected: true,
+                            asset: 'assets/icons/panier.svg',
+                            size: 24.sp,
+                            selectedColor:
+                                Theme.of(context).colorScheme.primary),
+                      ),
+                    ],
                   ),
                 ),
               ],

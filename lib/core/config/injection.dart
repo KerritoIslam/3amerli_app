@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
+import '../../core/error/global_error_handler.dart';
 
 import '../../features/catalog/app/bloc/catalog_bloc.dart';
 import '../../features/auth/app/bloc/auth_bloc.dart';
@@ -95,7 +96,13 @@ Future<void> init() async {
   // Register AuthService (uses flutter_secure_storage internally)
   sl.registerLazySingleton(() => AuthService());
   sl.registerLazySingleton(() => ApiService(
-      dio: sl<Dio>(), baseUrl: baseUrl, authService: sl<AuthService>()));
+      dio: sl<Dio>(),
+      baseUrl: baseUrl,
+      authService: sl<AuthService>(),
+      globalErrorHandler: sl<GlobalErrorHandler>()));
+
+  // Global Error Handler
+  sl.registerLazySingleton(() => GlobalErrorHandler());
 
   // Storage - SharedPreferences and SecureStorage
   // Initialize SharedPreferences once and register it

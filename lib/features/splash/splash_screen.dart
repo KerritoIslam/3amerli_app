@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onAnimationComplete;
@@ -36,51 +37,50 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 3500),
     );
 
-    // 1. Hole opens (0.0 - 0.15)
+    // 1. Hole opens (0.0 - 0.1) - Faster
     _holeScaleAnimation = Tween<double>(begin: 0.0, end: 1.5).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.0, 0.15, curve: Curves.easeOutBack),
+        curve: const Interval(0.0, 0.1, curve: Curves.easeOutBack),
       ),
     );
 
-    // Hole fades out quickly as icon goes up (0.2 - 0.3)
+    // Hole fades out quickly as icon goes up (0.15 - 0.25)
     _holeFadeOutAnimation = Tween<double>(begin: 1.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.2, 0.3, curve: Curves.easeIn),
+        curve: const Interval(0.15, 0.25, curve: Curves.easeIn),
       ),
     );
 
-    // 2. Logo Mix pops up (0.1 - 0.25)
+    // 2. Logo Mix pops up (0.05 - 0.2) - Faster & Smoother growth
     _logoMixScaleAnimation = Tween<double>(begin: 0.0, end: 1.5).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.1, 0.25, curve: Curves.easeOutBack),
+        curve: const Interval(0.05, 0.2, curve: Curves.easeOut),
       ),
     );
 
-    // Jump UP (0.1 - 0.3) - Moves UP by 100 pixels
-    // Start from 110.0 (below center) so the top of the logo (220/2 = 110) starts at the hole (0)
-    _logoMixJumpUpAnimation = Tween<double>(begin: 110.0, end: -120.0).animate(
+    // Jump UP (0.05 - 0.25) - Faster
+    // Start from 80.0 (deeper) to emphasize emerging from hole
+    _logoMixJumpUpAnimation = Tween<double>(begin: 80.0, end: -120.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.1, 0.3, curve: Curves.easeOut),
+        curve: const Interval(0.05, 0.25, curve: Curves.easeOut),
       ),
     );
 
-    // Drop Down to Center (0.3 - 0.5) - Returns to 0 with bounce
+    // Drop Down to Center (0.25 - 0.45) - Returns to 0 with bounce
     _logoMixDropAnimation = Tween<double>(begin: -120.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _controller,
-        curve: const Interval(0.3, 0.5, curve: Curves.bounceOut),
+        curve: const Interval(0.25, 0.45, curve: Curves.bounceOut),
       ),
     );
 
     // Move to Right (0.5 - 0.65)
     // Shifts the logo to the right before the full logo reveals
-    _logoHorizontalMoveAnimation =
-        Tween<double>(begin: 0.0, end: 78.0).animate(
+    _logoHorizontalMoveAnimation = Tween<double>(begin: 0.0, end: 78.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.5, 0.65, curve: Curves.easeInOut),
@@ -141,12 +141,12 @@ class _SplashScreenState extends State<SplashScreen>
                   child: Transform.scale(
                     scale: _holeScaleAnimation.value,
                     child: Container(
-                      width: 150,
-                      height: 50,
+                      width: 100,
+                      height: 30,
                       decoration: const BoxDecoration(
-                        color: Colors.black,
+                        color: Colors.grey,
                         borderRadius:
-                            BorderRadius.all(Radius.elliptical(150, 50)),
+                            BorderRadius.all(Radius.elliptical(100, 30)),
                       ),
                     ),
                   ),
@@ -154,14 +154,16 @@ class _SplashScreenState extends State<SplashScreen>
 
                 // Phase 2: First Logo (Icon)
                 // Jumps, Drops, then Moves Right
+                // Phase 2: First Logo (Icon)
+                // Jumps, Drops, then Moves Right
                 Transform.translate(
                   offset: Offset(currentX, currentY),
                   child: Transform.scale(
                     scale: _logoMixScaleAnimation.value,
-                    child: Image.asset(
-                      'assets/logo/logo_mix.png',
-                      width: 220, // Increased size
-                      height: 220, // Increased size
+                    child: SvgPicture.asset(
+                      'assets/logo/logo_mix.svg',
+                      width: 220,
+                      height: 220,
                     ),
                   ),
                 ),

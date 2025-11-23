@@ -6,6 +6,7 @@ import 'package:amerli_app/features/auth/app/bloc/auth_event.dart';
 import 'package:amerli_app/core/config/injection.dart' show sl;
 import 'package:amerli_app/features/auth/domain/entities/supermarket.dart';
 import 'package:amerli_app/core/network/api_exception.dart' show ApiException;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class SignUpCubit extends Cubit<SignUpState> {
   final AuthRepositoryImpl repository;
@@ -38,9 +39,21 @@ class SignUpCubit extends Cubit<SignUpState> {
     _safeEmit(
         state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
-      await repository.sendOtp(state.phoneNumber);
+      final response = await repository.sendOtp(state.phoneNumber);
 
-      _safeEmit(state.copyWith(status: VerificationStatus.enteringOtp));
+      String? otp;
+      final mod = dotenv.env['MOD'];
+      if (mod == 'dev' || mod == 'test') {
+        // Try to find OTP in response
+        if (response.containsKey('otp')) {
+          otp = response['otp'].toString();
+        } else if (response.containsKey('code')) {
+          otp = response['code'].toString();
+        }
+      }
+
+      _safeEmit(
+          state.copyWith(status: VerificationStatus.enteringOtp, otp: otp));
     } catch (e) {
       String message = e.toString();
       bool isForbidden = false;
@@ -64,8 +77,8 @@ class SignUpCubit extends Cubit<SignUpState> {
       _safeEmit(state.copyWith(errorMessage: 'Code invalide'));
       return;
     }
-    _safeEmit(
-        state.copyWith(status: VerificationStatus.loading, errorMessage: null));
+    _safeEmit(state.copyWith(
+        status: VerificationStatus.verifyingOtp, errorMessage: null));
     try {
       final isRegistered = await repository.validateOtp(state.phoneNumber, otp);
 

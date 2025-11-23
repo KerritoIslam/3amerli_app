@@ -8,6 +8,7 @@ import '../../../../core/notifications/notification_service.dart';
 import '../../../../features/notifications/domain/repositories/notifications_repository.dart';
 import '../../../../core/config/injection.dart';
 import '../../../../core/auth/auth_service.dart';
+import '../../../../utils/constants/app_language.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // Logging methods
@@ -97,7 +98,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final notificationsRepository = sl<NotificationsRepository>();
         final os =
             defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
-        await notificationsRepository.registerFcmToken(newToken, os);
+        await notificationsRepository.registerFcmToken(
+            newToken, os, AppLanguage.current.name);
         logInfo('[AuthBloc] FCM token refresh registered successfully');
       }
     } catch (e) {

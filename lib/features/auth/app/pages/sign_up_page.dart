@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart';
 
 import '../../../../widgets/app_text_feild.dart';
 import '../../../../widgets/app_button.dart';
@@ -274,11 +275,38 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                             (previous.result != current.result &&
                                 current.result == AuthResult.newUser) ||
                             (previous.errorMessage != current.errorMessage &&
-                                current.errorMessage != null),
+                                current.errorMessage != null) ||
+                            (previous.otp != current.otp &&
+                                current.otp != null) ||
+                            (previous.status != current.status &&
+                                current.status == VerificationStatus.verified),
                         listener: (context, state) {
                           if (state.errorMessage != null) {
                             TopToast.show(context, state.errorMessage!,
                                 isError: true);
+                          }
+
+                          if (state.otp != null &&
+                              state.status == VerificationStatus.enteringOtp) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('OTP Code: ${state.otp}'),
+                                duration: const Duration(days: 1),
+                                action: SnackBarAction(
+                                  label: 'Copy',
+                                  onPressed: () {
+                                    Clipboard.setData(
+                                        ClipboardData(text: state.otp!));
+                                    ScaffoldMessenger.of(context)
+                                        .hideCurrentSnackBar();
+                                  },
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (state.status == VerificationStatus.verified) {
+                            ScaffoldMessenger.of(context).hideCurrentSnackBar();
                           }
 
                           // Use post-frame callback to avoid navigator locked / hero scope issues
@@ -324,6 +352,24 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                       text: "Réessayer",
                                       onPressed: () => cubit.reset(),
                                       width: 200,
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+
+                            if (state.status ==
+                                VerificationStatus.verifyingOtp) {
+                              return Center(
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const CircularProgressIndicator(),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      "Validation...",
+                                      style: AppTextStyles.body.copyWith(
+                                          fontWeight: FontWeight.w500),
                                     ),
                                   ],
                                 ),
@@ -411,96 +457,158 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                             ),
                                           ),
                                           const SizedBox(height: 24),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: List.generate(4, (index) {
-                                              return SizedBox(
-                                                width: 60,
-                                                height: 60,
-                                                child: TextField(
-                                                  controller:
-                                                      _otpControllers[index],
-                                                  focusNode:
-                                                      _otpFocusNodes[index],
-                                                  keyboardType:
-                                                      TextInputType.number,
-                                                  textAlign: TextAlign.center,
-                                                  maxLength: 1,
-                                                  style:
-                                                      AppTextStyles.headline2,
-                                                  decoration: InputDecoration(
-                                                    counterText: "",
-                                                    filled: true,
-                                                    fillColor: Theme.of(context)
-                                                        .colorScheme
-                                                        .surfaceContainerHighest
-                                                        .withOpacity(0.5),
-                                                    contentPadding:
-                                                        EdgeInsets.zero,
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
-                                                      borderSide: BorderSide(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .outline),
-                                                    ),
-                                                    enabledBorder:
-                                                        OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
-                                                      borderSide: BorderSide(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .outline
-                                                                  .withOpacity(
-                                                                      0.5)),
-                                                    ),
-                                                    focusedBorder:
-                                                        OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              12),
-                                                      borderSide: BorderSide(
-                                                          color:
-                                                              Theme.of(context)
-                                                                  .colorScheme
-                                                                  .primary,
-                                                          width: 2),
+                                          Directionality(
+                                            textDirection: TextDirection.ltr,
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                for (int index = 0;
+                                                    index < 4;
+                                                    index++) ...[
+                                                  if (index > 0)
+                                                    const SizedBox(width: 16),
+                                                  SizedBox(
+                                                    width: 50,
+                                                    height: 60,
+                                                    child: KeyboardListener(
+                                                      focusNode: FocusNode(),
+                                                      onKeyEvent: (event) {
+                                                        if (event
+                                                                is KeyDownEvent &&
+                                                            event.logicalKey ==
+                                                                LogicalKeyboardKey
+                                                                    .backspace) {
+                                                          if (_otpControllers[
+                                                                      index]
+                                                                  .text
+                                                                  .isEmpty &&
+                                                              index > 0) {
+                                                            _otpFocusNodes[
+                                                                    index - 1]
+                                                                .requestFocus();
+                                                          }
+                                                        }
+                                                      },
+                                                      child: TextField(
+                                                        controller:
+                                                            _otpControllers[
+                                                                index],
+                                                        focusNode:
+                                                            _otpFocusNodes[
+                                                                index],
+                                                        keyboardType:
+                                                            TextInputType
+                                                                .number,
+                                                        textAlign:
+                                                            TextAlign.center,
+                                                        // Remove maxLength to allow pasting multiple chars temporarily
+                                                        // maxLength: 1,
+                                                        style: AppTextStyles
+                                                            .headline2,
+                                                        decoration:
+                                                            InputDecoration(
+                                                          counterText: "",
+                                                          filled: true,
+                                                          fillColor: Colors
+                                                              .transparent,
+                                                          contentPadding:
+                                                              EdgeInsets.zero,
+                                                          border:
+                                                              UnderlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .colorScheme
+                                                                    .outline,
+                                                                width: 2),
+                                                          ),
+                                                          enabledBorder:
+                                                              UnderlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .colorScheme
+                                                                    .outline
+                                                                    .withOpacity(
+                                                                        0.5),
+                                                                width: 2),
+                                                          ),
+                                                          focusedBorder:
+                                                              UnderlineInputBorder(
+                                                            borderSide: BorderSide(
+                                                                color: Theme.of(
+                                                                        context)
+                                                                    .colorScheme
+                                                                    .primary,
+                                                                width: 3),
+                                                          ),
+                                                        ),
+                                                        onChanged: (value) {
+                                                          if (value.length >
+                                                              1) {
+                                                            // Paste logic
+                                                            if (index == 0) {
+                                                              for (int i = 0;
+                                                                  i < 4;
+                                                                  i++) {
+                                                                if (i <
+                                                                    value
+                                                                        .length) {
+                                                                  _otpControllers[
+                                                                              i]
+                                                                          .text =
+                                                                      value[i];
+                                                                }
+                                                              }
+                                                              if (value
+                                                                      .length >=
+                                                                  4) {
+                                                                _otpFocusNodes[
+                                                                        3]
+                                                                    .requestFocus();
+                                                                final otp =
+                                                                    _otpControllers
+                                                                        .map((c) =>
+                                                                            c.text)
+                                                                        .join();
+                                                                cubit.verifyOtp(
+                                                                    otp);
+                                                              } else {
+                                                                _otpFocusNodes[
+                                                                        value.length -
+                                                                            1]
+                                                                    .requestFocus();
+                                                              }
+                                                            }
+                                                            return;
+                                                          }
+                                                          if (value
+                                                              .isNotEmpty) {
+                                                            if (index < 3) {
+                                                              _otpFocusNodes[
+                                                                      index + 1]
+                                                                  .requestFocus();
+                                                            } else {
+                                                              _otpFocusNodes[
+                                                                      index]
+                                                                  .unfocus();
+                                                              final otp =
+                                                                  _otpControllers
+                                                                      .map((c) =>
+                                                                          c.text)
+                                                                      .join();
+                                                              cubit.verifyOtp(
+                                                                  otp);
+                                                            }
+                                                          }
+                                                        },
+                                                      ),
                                                     ),
                                                   ),
-                                                  onChanged: (value) {
-                                                    if (value.isNotEmpty) {
-                                                      if (index < 3) {
-                                                        _otpFocusNodes[
-                                                                index + 1]
-                                                            .requestFocus();
-                                                      } else {
-                                                        _otpFocusNodes[index]
-                                                            .unfocus();
-                                                        final otp =
-                                                            _otpControllers
-                                                                .map((c) =>
-                                                                    c.text)
-                                                                .join();
-                                                        cubit.verifyOtp(otp);
-                                                      }
-                                                    } else {
-                                                      if (index > 0) {
-                                                        _otpFocusNodes[
-                                                                index - 1]
-                                                            .requestFocus();
-                                                      }
-                                                    }
-                                                  },
-                                                ),
-                                              );
-                                            }),
+                                                ],
+                                              ],
+                                            ),
                                           ),
                                           const Spacer(),
                                           Center(

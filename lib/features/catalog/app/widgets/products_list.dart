@@ -7,6 +7,7 @@ import 'package:amerli_app/features/catalog/app/bloc/favorites_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/favorites_event.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/core/utils/top_toast.dart';
@@ -106,7 +107,7 @@ class _ProductsListState extends State<ProductsList> {
             crossAxisCount: widget.columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.52, // Changed from 0.6 to 0.52 for taller cards
+            childAspectRatio: 0.64,
           ),
           itemCount: widget.columns * 2,
           itemBuilder: (context, index) => Container(
@@ -119,15 +120,25 @@ class _ProductsListState extends State<ProductsList> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SkeletonBox(
-                    width: double.infinity,
-                    height: 120,
-                    borderRadius: BorderRadius.all(Radius.circular(10))),
-                SizedBox(height: 8),
-                SkeletonBox(width: 200, height: 14),
-                SizedBox(height: 4),
-                SkeletonBox(width: 150, height: 12),
-                SizedBox(height: 6),
-                SkeletonBox(width: 100, height: 16),
+                  height: 120.h,
+                  width: double.infinity,
+                  borderRadius: BorderRadius.circular(22.r),
+                ),
+                SizedBox(height: 8.h),
+                SkeletonBox(
+                  height: 14.h,
+                  width: 100.w,
+                ),
+                SizedBox(height: 4.h),
+                SkeletonBox(
+                  height: 12.h,
+                  width: 60.w,
+                ),
+                const Spacer(),
+                SkeletonBox(
+                  height: 16.h,
+                  width: 80.w,
+                ),
               ],
             ),
           ),
@@ -151,8 +162,7 @@ class _ProductsListState extends State<ProductsList> {
         crossAxisCount: widget.columns,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio:
-            0.58, // Changed from 0.6 to 0.5  - this gives cards more height
+        childAspectRatio: 0.64,
       ),
       itemCount: products.length +
           ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
@@ -168,15 +178,25 @@ class _ProductsListState extends State<ProductsList> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SkeletonBox(
-                    width: double.infinity,
-                    height: 120,
-                    borderRadius: BorderRadius.all(Radius.circular(10))),
-                SizedBox(height: 8),
-                SkeletonBox(width: 200, height: 14),
-                SizedBox(height: 4),
-                SkeletonBox(width: 150, height: 12),
-                SizedBox(height: 6),
-                SkeletonBox(width: 100, height: 16),
+                  height: 120.h,
+                  width: double.infinity,
+                  borderRadius: BorderRadius.circular(22.r),
+                ),
+                SizedBox(height: 8.h),
+                SkeletonBox(
+                  height: 14.h,
+                  width: 100.w,
+                ),
+                SizedBox(height: 4.h),
+                SkeletonBox(
+                  height: 12.h,
+                  width: 60.w,
+                ),
+                const Spacer(),
+                SkeletonBox(
+                  height: 16.h,
+                  width: 80.w,
+                ),
               ],
             ),
           );
@@ -248,6 +268,8 @@ class _ProductsListState extends State<ProductsList> {
           sellerName: product.sellerName,
           brand: product.brand,
           productId: product.id,
+          stock: product.stock,
+          quantityPerBatch: product.quantityPerBatch,
           onTap: () async {
             await Navigator.of(context).push(MaterialPageRoute(
                 builder: (ctx) => ProductDetailsPage(product: product)));

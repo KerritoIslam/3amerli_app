@@ -1,5 +1,6 @@
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_state.dart';
@@ -51,6 +52,10 @@ class _PaiementScreenState extends State<PaiementScreen> {
         _orderCreated = true;
         _createdOrderId = state.order.id; // Store the order ID
         _createdOrder = state.order; // Store the full order
+
+        // Clear the cart
+        context.read<CartBloc>().add(CartClearEvent());
+
         // ignore: avoid_print
         print(
             '✅ Order created! Order ID: $_createdOrderId | CheckoutUrl: $_pendingCheckoutUrl | Payment Method: $_selectedPaymentMethod | Animation complete: $_animationComplete');
@@ -458,7 +463,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
 
   Widget _orderPreview() {
     return BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
-      final cartItems = cartState is CartLoaded ? cartState.items : const [];
+      final List<CartItem> cartItems =
+          cartState is CartLoaded ? cartState.items : const <CartItem>[];
 
       // show up to 3 images
       final images = cartItems
@@ -467,41 +473,235 @@ class _PaiementScreenState extends State<PaiementScreen> {
           .take(3)
           .toList();
 
-      return Container(
-        height: 100,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3))
-            ]),
-        child: Row(
-          children: [
-            for (int i = 0; i < 3; i++)
-              Padding(
-                padding: EdgeInsets.only(right: i == 2 ? 0 : 12),
-                child: _productThumb(i < images.length ? images[i] : null),
-              ),
-            const Spacer(),
-            // small summary
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(AppLanguage.viewDetails,
-                    style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w600)),
-              ],
-            )
-          ],
+      return GestureDetector(
+        onTap: () => _showCartDetails(context, cartItems),
+        child: Container(
+          height: 100,
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 6,
+                    offset: const Offset(0, 3))
+              ]),
+          child: Row(
+            children: [
+              for (int i = 0; i < 3; i++)
+                Padding(
+                  padding: EdgeInsets.only(right: i == 2 ? 0 : 12),
+                  child: _productThumb(i < images.length ? images[i] : null),
+                ),
+              const Spacer(),
+              // small summary
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(AppLanguage.viewDetails,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600)),
+                ],
+              )
+            ],
+          ),
         ),
       );
     });
+  }
+
+  void _showCartDetails(BuildContext context, List<CartItem> cartItems) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (_, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              children: [
+                const SizedBox(height: 12),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    AppLanguage.myCart,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: BlocBuilder<CatalogBloc, CatalogState>(
+                    builder: (context, catalogState) {
+                      List<Product> sourceProducts = [];
+                      if (catalogState is CatalogLoaded ||
+                          catalogState is CatalogLoadingMore) {
+                        sourceProducts =
+                            (catalogState as dynamic).products as List<Product>;
+                      }
+
+                      final productsInCart = cartItems
+                          .map((ci) {
+                            final id = int.tryParse(ci.productId) ?? -1;
+                            final p = sourceProducts.firstWhere(
+                              (sp) => sp.id == id,
+                              orElse: () => Product(
+                                id: id,
+                                name: ci.name,
+                                description: '',
+                                price: ci.price,
+                                stock: 0,
+                                pics: ci.imageUrl != null &&
+                                        ci.imageUrl!.isNotEmpty
+                                    ? [ci.imageUrl!]
+                                    : const [],
+                                brand: ci.brand,
+                                soldBy: ci.soldBy,
+                              ),
+                            );
+                            return Product(
+                              id: p.id,
+                              name: p.name,
+                              description: p.description,
+                              price: p.price,
+                              stock: p.stock,
+                              sellerId: p.sellerId,
+                              soldBy: p.soldBy,
+                              pics: p.pics,
+                              brand: p.brand,
+                              markId: p.markId,
+                              isFavorit: p.isFavorit,
+                              quantity: ci.quantity,
+                            );
+                          })
+                          .where((p) => p.quantity > 0)
+                          .toList();
+
+                      if (productsInCart.isEmpty) {
+                        return Center(child: Text(AppLanguage.emptyCart));
+                      }
+
+                      return ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: productsInCart.length,
+                        itemBuilder: (context, index) {
+                          final product = productsInCart[index];
+                          // Use a simple tile or reuse ProductsTilesList logic
+                          // Since ProductsTilesList is a widget that takes a list, we can't use it inside ListView.builder easily unless we wrap it.
+                          // But ProductsTilesList builds a ListView itself?
+                          // Let's check ProductsTilesList.
+                          // If ProductsTilesList is a ListView, we should use it directly instead of ListView.builder here.
+                          // But DraggableScrollableSheet needs the scrollController.
+                          // If ProductsTilesList doesn't accept scrollController, we might have an issue.
+                          // Let's assume for now we build a simple list here to avoid complexity, or check ProductsTilesList source.
+                          // Actually, let's just use a simple custom tile here to ensure it works with DraggableScrollableSheet.
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    product.pics.isNotEmpty
+                                        ? product.pics.first
+                                        : '',
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 60,
+                                      height: 60,
+                                      color: Colors.grey[200],
+                                      child: const Icon(
+                                          Icons.image_not_supported,
+                                          size: 20,
+                                          color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${product.price.toStringAsFixed(2)} DZD',
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'x${product.quantity}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Widget _productThumb(String? url) {

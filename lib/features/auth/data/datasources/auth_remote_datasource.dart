@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:amerli_app/core/dio/api_service.dart';
 import 'package:amerli_app/core/network/api_exception.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'dart:developer' as developer;
 
 class AuthRemoteDataSource {
@@ -12,7 +13,7 @@ class AuthRemoteDataSource {
       status != null && status >= 200 && status < 300;
 
   /// Request sending OTP to phone number. Endpoint: POST /authentication/otp/send
-  Future<void> sendOtp(String phone) async {
+  Future<Map<String, dynamic>> sendOtp(String phone) async {
     try {
       // debug: sending OTP (keep minimal logging)
       // ignore: avoid_print
@@ -23,19 +24,28 @@ class AuthRemoteDataSource {
       print("Response status code: ${resp.statusCode}");
 
       // Accept any 2xx response as success
-      if (!_isSuccess(resp.statusCode)) {
-        final msg = resp.data is Map && resp.data['message'] != null
-            ? resp.data['message'].toString()
-            : 'Failed to send OTP';
-        throw ApiException(msg, statusCode: resp.statusCode);
+      if (_isSuccess(resp.statusCode)) {
+        if (resp.data is Map<String, dynamic>) {
+          return resp.data as Map<String, dynamic>;
+        }
+        return <String, dynamic>{};
       }
+
+      final msg = resp.data is Map && resp.data['message'] != null
+          ? resp.data['message'].toString()
+          : 'Failed to send OTP';
+      throw ApiException(msg, statusCode: resp.statusCode);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
 
       String? friendlyMsg;
-      if (serverResp is Map && serverResp['message'] != null) {
-        friendlyMsg = serverResp['message'].toString();
+      if (serverResp is Map) {
+        if (serverResp['message'] != null) {
+          friendlyMsg = serverResp['message'].toString();
+        } else if (serverResp['error'] != null) {
+          friendlyMsg = serverResp['error'].toString();
+        }
       } else if (serverResp is String) {
         friendlyMsg = serverResp;
       }
@@ -84,8 +94,12 @@ class AuthRemoteDataSource {
       final serverResp = e.response?.data;
 
       String? friendlyMsg;
-      if (serverResp is Map && serverResp['message'] != null) {
-        friendlyMsg = serverResp['message'].toString();
+      if (serverResp is Map) {
+        if (serverResp['message'] != null) {
+          friendlyMsg = serverResp['message'].toString();
+        } else if (serverResp['error'] != null) {
+          friendlyMsg = serverResp['error'].toString();
+        }
       } else if (serverResp is String) {
         friendlyMsg = serverResp;
       }
@@ -135,8 +149,12 @@ class AuthRemoteDataSource {
       final serverResp = e.response?.data;
 
       String? friendlyMsg;
-      if (serverResp is Map && serverResp['message'] != null) {
-        friendlyMsg = serverResp['message'].toString();
+      if (serverResp is Map) {
+        if (serverResp['message'] != null) {
+          friendlyMsg = serverResp['message'].toString();
+        } else if (serverResp['error'] != null) {
+          friendlyMsg = serverResp['error'].toString();
+        }
       } else if (serverResp is String) {
         friendlyMsg = serverResp;
       }
@@ -174,6 +192,7 @@ class AuthRemoteDataSource {
       final d = Dio(BaseOptions(
           baseUrl: baseUrl, connectTimeout: const Duration(seconds: 10)));
       final resp = await d.post('/authentication/refresh',
+          queryParameters: {'lang': AppLanguage.current.name},
           options: Options(headers: {'Authorization': 'Bearer $refreshToken'}));
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         return Map<String, dynamic>.from(resp.data as Map);
@@ -186,6 +205,22 @@ class AuthRemoteDataSource {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
+      String? friendlyMsg;
+      if (serverResp is Map) {
+        if (serverResp['message'] != null) {
+          friendlyMsg = serverResp['message'].toString();
+        } else if (serverResp['error'] != null) {
+          friendlyMsg = serverResp['error'].toString();
+        }
+      } else if (serverResp is String) {
+        friendlyMsg = serverResp;
+      }
+
+      if (friendlyMsg != null) {
+        throw ApiException(friendlyMsg,
+            statusCode: status, isNetworkError: true);
+      }
+
       final baseMsg = e.message ?? 'Network error while refreshing token';
       final detailed =
           'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
@@ -219,6 +254,23 @@ class AuthRemoteDataSource {
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
+
+      String? friendlyMsg;
+      if (serverResp is Map) {
+        if (serverResp['message'] != null) {
+          friendlyMsg = serverResp['message'].toString();
+        } else if (serverResp['error'] != null) {
+          friendlyMsg = serverResp['error'].toString();
+        }
+      } else if (serverResp is String) {
+        friendlyMsg = serverResp;
+      }
+
+      if (friendlyMsg != null) {
+        throw ApiException(friendlyMsg,
+            statusCode: status, isNetworkError: true);
+      }
+
       final baseMsg = e.message ?? 'Network error while logging out';
       final detailed =
           'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';

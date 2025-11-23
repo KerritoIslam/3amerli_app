@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'dart:developer' show log;
 import 'package:amerli_app/core/auth/auth_service.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 /// Interceptor that attaches access token to requests and attempts to
 /// refresh the token on 401 responses. It queues concurrent requests
@@ -244,6 +245,7 @@ class AuthInterceptor extends Interceptor {
       ));
       // Backend expects refresh via POST /authentication/refresh with Authorization header
       final resp = await d.post('/authentication/refresh',
+          queryParameters: {'lang': AppLanguage.current.name},
           options: Options(headers: {'Authorization': 'Bearer $refresh'}));
 
       log('AuthInterceptor: Refresh response status: ${resp.statusCode}',

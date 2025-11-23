@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'core/notifications/notification_service.dart';
@@ -20,10 +21,16 @@ import 'utils/theme/app_theme.dart';
 import 'core/config/router.dart';
 import 'core/storage/local_storage.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
+import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:amerli_app/core/error/global_error_handler.dart';
 // routing will provide pages and blocs via DI where needed
+
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   // Lock orientation to portrait (vertical) only
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -182,39 +189,48 @@ class _MyAppState extends State<MyApp> {
       valueListenable: AppLanguage.localeNotifier,
       builder: (context, currentLocale, _) {
         // Use key on MultiBlocProvider to force complete widget tree rebuild
-        return MultiBlocProvider(
-          key: ValueKey('app_locale_${currentLocale.name}'),
-          providers: [
-            BlocProvider.value(value: di.sl<CatalogBloc>()),
-            BlocProvider.value(value: di.sl<AuthBloc>()),
-            BlocProvider.value(value: di.sl<NotificationsBloc>()),
-            BlocProvider(create: (_) => di.sl<ProfileBloc>()),
-          ],
-          child: Directionality(
-            textDirection: currentLocale == AppLocale.ar
-                ? TextDirection.rtl
-                : TextDirection.ltr,
-            child: MaterialApp.router(
-              key: ValueKey(
-                  'material_app_${currentLocale.name}'), // Force complete rebuild on language change
-              debugShowCheckedModeBanner: false,
-              title: '3amerli',
-              theme: AppTheme.light,
-              darkTheme: AppTheme.dark,
-              themeMode: ThemeMode.light,
-              routerConfig: _router,
-              locale: Locale(currentLocale.name),
-              // Ensure RTL support for Arabic - double wrap for maximum compatibility
-              builder: (context, child) {
-                return Directionality(
-                  textDirection: currentLocale == AppLocale.ar
-                      ? TextDirection.rtl
-                      : TextDirection.ltr,
-                  child: child ?? const SizedBox.shrink(),
-                );
-              },
-            ),
-          ),
+        return ScreenUtilInit(
+          designSize: const Size(375, 812), // Standard iPhone X design size
+          minTextAdapt: true,
+          splitScreenMode: true,
+          builder: (context, child) {
+            return MultiBlocProvider(
+              key: ValueKey('app_locale_${currentLocale.name}'),
+              providers: [
+                BlocProvider.value(value: di.sl<CatalogBloc>()),
+                BlocProvider.value(value: di.sl<AuthBloc>()),
+                BlocProvider.value(value: di.sl<NotificationsBloc>()),
+                BlocProvider(create: (_) => di.sl<ProfileBloc>()),
+              ],
+              child: Directionality(
+                textDirection: currentLocale == AppLocale.ar
+                    ? TextDirection.rtl
+                    : TextDirection.ltr,
+                child: MaterialApp.router(
+                  key: ValueKey(
+                      'material_app_${currentLocale.name}'), // Force complete rebuild on language change
+                  debugShowCheckedModeBanner: false,
+                  title: '3amerli',
+                  theme: AppTheme.light,
+                  darkTheme: AppTheme.dark,
+                  themeMode: ThemeMode.light,
+                  routerConfig: _router,
+                  locale: Locale(currentLocale.name),
+                  // Ensure RTL support for Arabic - double wrap for maximum compatibility
+                  builder: (context, child) {
+                    return GlobalErrorListener(
+                      child: Directionality(
+                        textDirection: currentLocale == AppLocale.ar
+                            ? TextDirection.rtl
+                            : TextDirection.ltr,
+                        child: child ?? const SizedBox.shrink(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -255,5 +271,41 @@ class _MyAppState extends State<MyApp> {
       // Default navigation if no data
       _router.go('/home');
     }
+  }
+}
+
+class GlobalErrorListener extends StatefulWidget {
+  final Widget child;
+  const GlobalErrorListener({super.key, required this.child});
+
+  @override
+  State<GlobalErrorListener> createState() => _GlobalErrorListenerState();
+}
+
+class _GlobalErrorListenerState extends State<GlobalErrorListener> {
+  StreamSubscription? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      final errorHandler = di.sl<GlobalErrorHandler>();
+      _sub = errorHandler.errorStream.listen((message) {
+        if (mounted) {
+          TopToast.show(context, message, isError: true);
+        }
+      });
+    } catch (_) {}
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }

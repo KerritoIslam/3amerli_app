@@ -406,6 +406,11 @@ class AppLanguage {
       AppLocale.fr: 'Commande',
       AppLocale.ar: 'طلب',
     },
+    'orders': {
+      AppLocale.en: 'Orders',
+      AppLocale.fr: 'Commandes',
+      AppLocale.ar: 'الطلبات',
+    },
     'myOrdersNav': {
       AppLocale.en: 'Orders',
       AppLocale.fr: 'Commandes',
@@ -522,6 +527,16 @@ class AppLanguage {
       AppLocale.en: 'Total',
       AppLocale.fr: 'Total',
       AppLocale.ar: 'المجموع',
+    },
+    'soldByLabel': {
+      AppLocale.en: 'Sold by',
+      AppLocale.fr: 'Vendu par',
+      AppLocale.ar: 'يباع من طرف',
+    },
+    'perBatchOf': {
+      AppLocale.en: 'Per batch of',
+      AppLocale.fr: 'Par lot de',
+      AppLocale.ar: 'لكل دفعة من',
     },
 
     // Status Values
@@ -1191,6 +1206,11 @@ class AppLanguage {
       AppLocale.fr: 'Panneau d\'administration',
       AppLocale.ar: 'لوحة الإدارة',
     },
+    'admin': {
+      AppLocale.en: 'Admin',
+      AppLocale.fr: 'Admin',
+      AppLocale.ar: 'إدارة',
+    },
     'statistics': {
       AppLocale.en: 'Statistics',
       AppLocale.fr: 'Statistiques',
@@ -1417,6 +1437,110 @@ class AppLanguage {
       AppLocale.fr: 'ajouté aux favoris',
       AppLocale.ar: 'تمت الإضافة إلى المفضلة',
     },
+
+    // Dashboard Stats
+    'ordersToday': {
+      AppLocale.en: 'Orders Today',
+      AppLocale.fr: 'Commandes aujourd\'hui',
+      AppLocale.ar: 'طلبات اليوم',
+    },
+    'turnover': {
+      AppLocale.en: 'Turnover',
+      AppLocale.fr: 'Chiffre d\'affaires',
+      AppLocale.ar: 'رقم المعاملات',
+    },
+    'activeSupermarkets': {
+      AppLocale.en: 'Active Supermarkets',
+      AppLocale.fr: 'Supérettes actives',
+      AppLocale.ar: 'المتاجر النشطة',
+    },
+    'deliveriesInProgress': {
+      AppLocale.en: 'Deliveries in Progress',
+      AppLocale.fr: 'Livraisons en cours',
+      AppLocale.ar: 'التوصيلات قيد التنفيذ',
+    },
+    'performance': {
+      AppLocale.en: 'Performance',
+      AppLocale.fr: 'Performance',
+      AppLocale.ar: 'الأداء',
+    },
+    'salesEvolution': {
+      AppLocale.en: 'Sales Evolution',
+      AppLocale.fr: 'Évolution des ventes',
+      AppLocale.ar: 'تطور المبيعات',
+    },
+    'salesEvolutionDesc': {
+      AppLocale.en: 'Sales evolution over the last months',
+      AppLocale.fr: 'Évolution des ventes sur les derniers mois',
+      AppLocale.ar: 'تطور المبيعات خلال الأشهر الماضية',
+    },
+    'topProducts': {
+      AppLocale.en: 'Top Products',
+      AppLocale.fr: 'Meilleurs produits',
+      AppLocale.ar: 'أفضل المنتجات',
+    },
+
+    // Months
+    'jan': {
+      AppLocale.en: 'Jan',
+      AppLocale.fr: 'Jan',
+      AppLocale.ar: 'يناير',
+    },
+    'feb': {
+      AppLocale.en: 'Feb',
+      AppLocale.fr: 'Fév',
+      AppLocale.ar: 'فبراير',
+    },
+    'mar': {
+      AppLocale.en: 'Mar',
+      AppLocale.fr: 'Mar',
+      AppLocale.ar: 'مارس',
+    },
+    'apr': {
+      AppLocale.en: 'Apr',
+      AppLocale.fr: 'Avr',
+      AppLocale.ar: 'أبريل',
+    },
+    'may': {
+      AppLocale.en: 'May',
+      AppLocale.fr: 'Mai',
+      AppLocale.ar: 'مايو',
+    },
+    'jun': {
+      AppLocale.en: 'Jun',
+      AppLocale.fr: 'Juin',
+      AppLocale.ar: 'يونيو',
+    },
+    'jul': {
+      AppLocale.en: 'Jul',
+      AppLocale.fr: 'Juil',
+      AppLocale.ar: 'يوليو',
+    },
+    'aug': {
+      AppLocale.en: 'Aug',
+      AppLocale.fr: 'Août',
+      AppLocale.ar: 'أغسطس',
+    },
+    'sep': {
+      AppLocale.en: 'Sep',
+      AppLocale.fr: 'Sep',
+      AppLocale.ar: 'سبتمبر',
+    },
+    'oct': {
+      AppLocale.en: 'Oct',
+      AppLocale.fr: 'Oct',
+      AppLocale.ar: 'أكتوبر',
+    },
+    'nov': {
+      AppLocale.en: 'Nov',
+      AppLocale.fr: 'Nov',
+      AppLocale.ar: 'نوفمبر',
+    },
+    'dec': {
+      AppLocale.en: 'Dec',
+      AppLocale.fr: 'Déc',
+      AppLocale.ar: 'ديسمبر',
+    },
   };
 
   static String _t(String key) => _translations[key]?[current] ?? key;
@@ -1526,6 +1650,8 @@ class AppLanguage {
   static String get image => _t('image');
   static String get quantity => _t('quantity');
   static String get total => _t('total');
+  static String get soldByLabel => _t('soldByLabel');
+  static String get perBatchOf => _t('perBatchOf');
 
   // Status Values
   static String get cancelled => _t('cancelled');

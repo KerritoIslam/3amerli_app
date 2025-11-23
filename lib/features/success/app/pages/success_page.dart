@@ -5,6 +5,9 @@ import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/features/orders/presentation/pages/order_tracking_page.dart';
 import 'package:amerli_app/features/orders/domain/entities/order.dart';
 import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 
 /// Minimal, clean SuccessPage implementation.
 class SuccessPage extends StatefulWidget {
@@ -56,7 +59,17 @@ class _SuccessPageState extends State<SuccessPage>
       if (s == AnimationStatus.completed) {
         // after arc+check finish, move the circle up, then reveal content
         setState(() => _moved = true);
-        Future.delayed(_moveDuration, () => setState(() => _done = true));
+        Future.delayed(_moveDuration, () {
+          if (mounted) {
+            setState(() => _done = true);
+            // Clear cart only after animation is done and content is revealed
+            try {
+              context.read<CartBloc>().add(CartClearEvent());
+            } catch (e) {
+              debugPrint('Could not clear cart: $e');
+            }
+          }
+        });
       }
     });
     _controller.forward();

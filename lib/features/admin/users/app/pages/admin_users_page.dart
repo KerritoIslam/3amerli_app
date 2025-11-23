@@ -347,186 +347,195 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        decoration: BoxDecoration(
-          border: Border.all(color: AppColors.lightPrimary, width: 1),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(12),
-            topRight: Radius.circular(12),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Table Header (reduced vertical padding for denser rows)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              child: Row(
-                children: [
-                  // Select All Checkbox
-                  SizedBox(
-                    width: 24,
-                    child: Checkbox(
-                      value: _selectedUserIds.length == filteredUsers.length &&
-                          filteredUsers.isNotEmpty,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedUserIds
-                                .addAll(filteredUsers.map((u) => u.id));
-                          } else {
-                            _selectedUserIds.clear();
-                          }
-                        });
-                      },
-                      shape: const CircleBorder(),
-                      activeColor: AppColors.brandDeep,
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
-                  const Expanded(
-                    flex: 3,
-                    child: Text(
-                      'Nom',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Expanded(
-                    flex: 3,
-                    child: Text(
-                      'Tél',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Expanded(
-                    flex: 3,
-                    child: Text(
-                      'Rôle',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  const SizedBox(
-                    width: 80,
-                    child: Text(
-                      'Action',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
-                  ),
-                ],
+      child: Column(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.lightPrimary, width: 1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
               ),
             ),
-
-            // Table Body (use filtered users)
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                padding: EdgeInsets.zero,
-                itemCount: filteredUsers.length,
-                separatorBuilder: (context, index) => Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withValues(alpha: 0.12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Table Header (reduced vertical padding for denser rows)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF5F5F5),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(12),
+                      topRight: Radius.circular(12),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      // Select All Checkbox
+                      SizedBox(
+                        width: 24,
+                        child: Checkbox(
+                          value:
+                              _selectedUserIds.length == filteredUsers.length &&
+                                  filteredUsers.isNotEmpty,
+                          onChanged: (value) {
+                            setState(() {
+                              if (value == true) {
+                                _selectedUserIds
+                                    .addAll(filteredUsers.map((u) => u.id));
+                              } else {
+                                _selectedUserIds.clear();
+                              }
+                            });
+                          },
+                          shape: const CircleBorder(),
+                          activeColor: AppColors.brandDeep,
+                          visualDensity: VisualDensity.compact,
+                          materialTapTargetSize:
+                              MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Nom',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Tél',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Expanded(
+                        flex: 3,
+                        child: Text(
+                          'Rôle',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const SizedBox(
+                        width: 80,
+                        child: Text(
+                          'Action',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                          textAlign: TextAlign.right,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                itemBuilder: (context, index) {
-                  final u = filteredUsers[index];
-                  return _UserRow(
-                    user: u,
-                    isSelected: _selectedUserIds.contains(u.id),
-                    onSelectionChanged: (selected) {
-                      setState(() {
-                        if (selected) {
-                          _selectedUserIds.add(u.id);
-                        } else {
-                          _selectedUserIds.remove(u.id);
-                        }
-                      });
-                    },
-                    onView: () {
-                      context.push('/admin/users/${u.id}');
-                    },
-                    onDelete: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext dialogContext) {
-                          return AlertDialog(
-                            title: const Text('Confirmer la suppression'),
-                            content: Text(
-                              'Voulez-vous vraiment supprimer ${u.name} ?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.of(dialogContext).pop(),
-                                child: const Text('Annuler'),
-                              ),
-                              TextButton(
-                                onPressed: () {
-                                  context.read<AdminUsersBloc>().add(
-                                        AdminUsersDeleteEvent(
-                                          userId: u.id,
-                                        ),
-                                      );
-                                  Navigator.of(dialogContext).pop();
-                                  _loadUsers();
-                                },
-                                style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red,
+
+                // Table Body (use filtered users)
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    padding: EdgeInsets.zero,
+                    itemCount: filteredUsers.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary
+                          .withValues(alpha: 0.12),
+                    ),
+                    itemBuilder: (context, index) {
+                      final u = filteredUsers[index];
+                      return _UserRow(
+                        user: u,
+                        isSelected: _selectedUserIds.contains(u.id),
+                        onSelectionChanged: (selected) {
+                          setState(() {
+                            if (selected) {
+                              _selectedUserIds.add(u.id);
+                            } else {
+                              _selectedUserIds.remove(u.id);
+                            }
+                          });
+                        },
+                        onView: () {
+                          context.push('/admin/users/${u.id}');
+                        },
+                        onDelete: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext dialogContext) {
+                              return AlertDialog(
+                                title: const Text('Confirmer la suppression'),
+                                content: Text(
+                                  'Voulez-vous vraiment supprimer ${u.name} ?',
                                 ),
-                                child: const Text('Supprimer'),
-                              ),
-                            ],
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.of(dialogContext).pop(),
+                                    child: const Text('Annuler'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      context.read<AdminUsersBloc>().add(
+                                            AdminUsersDeleteEvent(
+                                              userId: u.id,
+                                            ),
+                                          );
+                                      Navigator.of(dialogContext).pop();
+                                      _loadUsers();
+                                    },
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('Supprimer'),
+                                  ),
+                                ],
+                              );
+                            },
                           );
+                        },
+                        onSuspendToggle: () {
+                          if (_selectedTab == 'Suspendu') {
+                            // User is in blacklist, restore them
+                            context.read<AdminUsersBloc>().add(
+                                  AdminUsersRestoreFromBlacklistEvent(
+                                      userId: u.id),
+                                );
+                          } else {
+                            // User is not in blacklist, add them
+                            context.read<AdminUsersBloc>().add(
+                                  AdminUsersAddToBlacklistEvent(userId: u.id),
+                                );
+                          }
                         },
                       );
                     },
-                    onSuspendToggle: () {
-                      if (_selectedTab == 'Suspendu') {
-                        // User is in blacklist, restore them
-                        context.read<AdminUsersBloc>().add(
-                              AdminUsersRestoreFromBlacklistEvent(userId: u.id),
-                            );
-                      } else {
-                        // User is not in blacklist, add them
-                        context.read<AdminUsersBloc>().add(
-                              AdminUsersAddToBlacklistEvent(userId: u.id),
-                            );
-                      }
-                    },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 80),
+        ],
       ),
     );
   }
