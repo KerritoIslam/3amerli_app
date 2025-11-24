@@ -13,6 +13,7 @@ import '../../../../utils/constants/app_dimensions.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 
 import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CompleteProfilePage extends StatefulWidget {
   const CompleteProfilePage({super.key});
@@ -209,8 +210,8 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
               },
               indicatorColor: Theme.of(context).colorScheme.primary,
               inactiveColor: Theme.of(context).hintColor,
-              indicatorHeight: AppDimensions.spacingXS,
-              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              indicatorHeight: AppDimensions.spacingXS.h,
+              padding: EdgeInsets.symmetric(vertical: 12.0.h),
             ),
             Expanded(
               child: PageView(
@@ -220,7 +221,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                 children: [
                   // Credentials
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(20.0.r),
                     child: Form(
                       key: _credentialsKey,
                       child: LayoutBuilder(builder: (context, constraints) {
@@ -232,24 +233,27 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8.h),
                                   Text(AppLanguage.completeYourProfile,
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineMedium
                                           ?.copyWith(
-                                              fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 12),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24.sp)),
+                                  SizedBox(height: 12.h),
                                   Text(AppLanguage.completeProfileSubtitle,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyMedium),
-                                  const SizedBox(height: 24),
+                                          .bodyMedium
+                                          ?.copyWith(fontSize: 14.sp)),
+                                  SizedBox(height: 24.h),
                                   Text(AppLanguage.storeNameLabel,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodySmall),
-                                  const SizedBox(height: 8),
+                                          .bodySmall
+                                          ?.copyWith(fontSize: 12.sp)),
+                                  SizedBox(height: 8.h),
                                   AppTextField(
                                       controller: _storeNameController,
                                       validator: (v) {
@@ -257,19 +261,20 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                                           return AppLanguage.fieldRequired;
                                         return null;
                                       }),
-                                  const SizedBox(height: 16),
+                                  SizedBox(height: 16.h),
                                   Text(AppLanguage.representativeNameLabel,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodySmall),
-                                  const SizedBox(height: 8),
+                                          .bodySmall
+                                          ?.copyWith(fontSize: 12.sp)),
+                                  SizedBox(height: 8.h),
                                   AppTextField(controller: _repNameController),
                                   const Spacer(),
                                   AppButton(
                                       onPressed: _onCredentialsValidate,
                                       text: AppLanguage.validateAndContinue,
                                       width: double.infinity,
-                                      height: 50),
+                                      height: 50.h),
                                 ],
                               ),
                             ),
@@ -281,7 +286,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
 
                   // Location
                   Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: EdgeInsets.all(20.0.r),
                     child: Form(
                       key: _locationKey,
                       child: LayoutBuilder(builder: (context, constraints) {
@@ -293,25 +298,28 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8.h),
                                   Text(AppLanguage.defineYourLocation,
                                       style: Theme.of(context)
                                           .textTheme
                                           .headlineMedium
                                           ?.copyWith(
-                                              fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 12),
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24.sp)),
+                                  SizedBox(height: 12.h),
                                   Text(AppLanguage.enterAddressHint,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodyMedium),
-                                  const SizedBox(height: 24),
+                                          .bodyMedium
+                                          ?.copyWith(fontSize: 14.sp)),
+                                  SizedBox(height: 24.h),
 
                                   Text(AppLanguage.streetAndNumber,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodySmall),
-                                  const SizedBox(height: 8),
+                                          .bodySmall
+                                          ?.copyWith(fontSize: 12.sp)),
+                                  SizedBox(height: 8.h),
                                   AppTextField(
                                       controller: _streetController,
                                       validator: (v) {
@@ -319,67 +327,71 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                                           return AppLanguage.fieldRequired;
                                         return null;
                                       }),
-                                  const SizedBox(height: 16),
+                                  SizedBox(height: 16.h),
 
                                   Text(AppLanguage.districtOrCommune,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodySmall),
-                                  const SizedBox(height: 8),
+                                          .bodySmall
+                                          ?.copyWith(fontSize: 12.sp)),
+                                  SizedBox(height: 8.h),
                                   AppTextField(controller: _quarterController),
-                                  const SizedBox(height: 16),
+                                  SizedBox(height: 16.h),
 
                                   Text(AppLanguage.cityLabel,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .bodySmall),
-                                  const SizedBox(height: 8),
+                                          .bodySmall
+                                          ?.copyWith(fontSize: 12.sp)),
+                                  SizedBox(height: 8.h),
                                   AppTextField(controller: _cityController),
-                                  const SizedBox(height: 12),
+                                  SizedBox(height: 12.h),
                                   // push the button and the trigger down a bit
                                   const Spacer(),
                                   Padding(
-                                    padding:
-                                        const EdgeInsets.only(bottom: 12.0),
+                                    padding: EdgeInsets.only(bottom: 12.0.h),
                                     child: AppButton(
                                         onPressed: _onLocationValidate,
                                         text: AppLanguage.validateAddress,
                                         width: double.infinity,
-                                        height: 50),
+                                        height: 50.h),
                                   ),
                                   // place the location trigger under the button and center it
                                   Center(
                                     child: _isFetchingLocation
                                         ? Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 6.0),
+                                            padding: EdgeInsets.symmetric(
+                                                vertical: 6.0.h),
                                             child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  const SizedBox(
-                                                      width: 16,
-                                                      height: 16,
+                                                  SizedBox(
+                                                      width: 16.w,
+                                                      height: 16.w,
                                                       child:
                                                           CircularProgressIndicator(
                                                               strokeWidth:
-                                                                  2.0)),
-                                                  const SizedBox(width: 12),
-                                                  Text(AppLanguage
-                                                      .gettingLocation),
+                                                                  2.0.w)),
+                                                  SizedBox(width: 12.w),
+                                                  Text(
+                                                      AppLanguage
+                                                          .gettingLocation,
+                                                      style: TextStyle(
+                                                          fontSize: 14.sp)),
                                                 ]),
                                           )
                                         : GestureDetector(
                                             onTap: _useCurrentLocation,
                                             child: Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 8.0),
+                                              padding: EdgeInsets.symmetric(
+                                                  vertical: 8.0.h),
                                               child: Text(
                                                 AppLanguage.useCurrentLocation,
                                                 style: Theme.of(context)
                                                     .textTheme
                                                     .bodyMedium
                                                     ?.copyWith(
+                                                      fontSize: 14.sp,
                                                       decoration: TextDecoration
                                                           .underline,
                                                       decorationColor:
@@ -394,7 +406,7 @@ class _CompleteProfilePageState extends State<CompleteProfilePage> {
                                             ),
                                           ),
                                   ),
-                                  const SizedBox(height: 6),
+                                  SizedBox(height: 6.h),
                                 ],
                               ),
                             ),

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:amerli_app/core/dio/api_service.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/repositories/admin_categories_repository.dart';
@@ -13,6 +14,18 @@ class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
     if (data is Map && data['data'] is List) return data['data'] as List;
     if (data is Map && data['items'] is List) return data['items'] as List;
     return [];
+  }
+
+  Never _handleError(dynamic e) {
+    if (e is DioException && e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map && data['message'] != null) {
+        final msg = data['message'];
+        if (msg is List) throw Exception(msg.join('\n'));
+        throw Exception(msg.toString());
+      }
+    }
+    throw e;
   }
 
   @override
@@ -93,17 +106,60 @@ class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
 
   // Mutating methods remain unsupported in this remote implementation for now
   @override
-  Future<void> addCategory(Category category) async => throw UnsupportedError(
-      'addCategory not implemented for remote admin API');
+  Future<void> addCategory(Category category) async {
+    try {
+      final map = <String, dynamic>{'label': category.name};
+      if (category.parentId != null) {
+        map['parentId'] = category.parentId;
+      }
+      final formData = FormData.fromMap(map);
+
+      if (category.imageUrl != null &&
+          category.imageUrl!.isNotEmpty &&
+          !category.imageUrl!.startsWith('http')) {
+        final file = await MultipartFile.fromFile(
+          category.imageUrl!,
+          filename: category.imageUrl!.split('/').last,
+        );
+        formData.files.add(MapEntry('picture', file));
+      }
+
+      await apiService.post('/categories', data: formData);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
 
   @override
-  Future<void> updateCategory(Category category) async =>
-      throw UnsupportedError(
-          'updateCategory not implemented for remote admin API');
+  Future<void> updateCategory(Category category) async {
+    try {
+      final map = <String, dynamic>{'label': category.name};
+      final formData = FormData.fromMap(map);
+
+      if (category.imageUrl != null &&
+          category.imageUrl!.isNotEmpty &&
+          !category.imageUrl!.startsWith('http')) {
+        final file = await MultipartFile.fromFile(
+          category.imageUrl!,
+          filename: category.imageUrl!.split('/').last,
+        );
+        formData.files.add(MapEntry('picture', file));
+      }
+
+      await apiService.put('/categories/${category.id}', data: formData);
+    } catch (e) {
+      _handleError(e);
+    }
+  }
 
   @override
-  Future<void> deleteCategory(String id) async => throw UnsupportedError(
-      'deleteCategory not implemented for remote admin API');
+  Future<void> deleteCategory(String id) async {
+    try {
+      await apiService.delete('/categories/$id');
+    } catch (e) {
+      _handleError(e);
+    }
+  }
 
   @override
   Future<void> deleteMultipleCategories(List<String> ids) async =>

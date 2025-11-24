@@ -12,6 +12,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:amerli_app/core/utils/top_toast.dart';
 import 'package:amerli_app/core/utils/csv_export_helper.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({super.key});
@@ -21,7 +22,7 @@ class AdminUsersPage extends StatefulWidget {
 }
 
 class _AdminUsersPageState extends State<AdminUsersPage> {
-  String _selectedTab = 'Tous';
+  String _selectedTab = 'all';
   String _searchQuery = '';
   final Set<String> _selectedUserIds = {};
 
@@ -63,7 +64,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
   }
 
   void _loadUsers() {
-    if (_selectedTab == 'Suspendu') {
+    if (_selectedTab == 'suspended') {
       // Load from blacklist endpoint
       context.read<AdminUsersBloc>().add(const AdminUsersLoadBlacklistEvent());
     } else {
@@ -103,19 +104,19 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     }
 
     if (usersToExport.isEmpty) {
-      TopToast.show(context, 'Aucun utilisateur à exporter', isError: true);
+      TopToast.show(context, AppLanguage.noUsersToExport, isError: true);
       return;
     }
 
     try {
       final headers = [
-        'ID',
-        'Name',
-        'Phone',
-        'Role',
-        'Status',
-        'Store',
-        'Address'
+        AppLanguage.id,
+        AppLanguage.name,
+        AppLanguage.phone,
+        AppLanguage.role,
+        AppLanguage.status,
+        AppLanguage.storeName,
+        AppLanguage.address
       ];
 
       final data = usersToExport.map((u) {
@@ -137,8 +138,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       );
     } catch (e) {
       if (!mounted) return;
-      TopToast.show(context, 'Erreur lors de l\'exportation CSV',
-          isError: true);
+      TopToast.show(context, AppLanguage.csvExportError, isError: true);
     }
   }
 
@@ -149,14 +149,14 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       context: context,
       builder: (BuildContext dialogContext) {
         return AlertDialog(
-          title: const Text('Confirmer la suppression'),
+          title: Text(AppLanguage.confirmDelete),
           content: Text(
-            'Voulez-vous vraiment supprimer ${_selectedUserIds.length} utilisateur(s) ?',
+            '${AppLanguage.confirmDeleteUsers} (${_selectedUserIds.length})',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Annuler'),
+              child: Text(AppLanguage.cancel),
             ),
             TextButton(
               onPressed: () {
@@ -174,7 +174,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               style: TextButton.styleFrom(
                 foregroundColor: Colors.red,
               ),
-              child: const Text('Supprimer'),
+              child: Text(AppLanguage.delete),
             ),
           ],
         );
@@ -184,157 +184,168 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          // Header (centered title)
-          Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-            child: Row(
-              children: const [
-                SizedBox(width: 40),
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'Utilisateurs',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          body: Column(
+            children: [
+              // Header (centered title)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                child: Row(
+                  children: [
+                    const SizedBox(width: 40),
+                    Expanded(
+                      child: Center(
+                        child: Text(
+                          AppLanguage.users,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 40),
+                  ],
+                ),
+              ),
+
+              // Compact Search + Export row (match products: 40px height)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: SizedBox(
+                  height: 40,
+                  child: Row(
+                    children: [
+                      Expanded(
+                          child: SizedBox(
+                              height: 40,
+                              child:
+                                  AppSearchbar(onChanged: _onSearchChanged))),
+                      const SizedBox(width: 8),
+                      if (_selectedUserIds.isNotEmpty) ...[
+                        ElevatedButton(
+                          onPressed: _onDeleteSelected,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            minimumSize: const Size(0, 40),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20)),
+                          ),
+                          child: Text(
+                              '${AppLanguage.delete} (${_selectedUserIds.length})',
+                              style: const TextStyle(fontSize: 13)),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                      ElevatedButton(
+                        onPressed: _onExportCSV,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              Theme.of(context).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          minimumSize: const Size(0, 40),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20)),
+                        ),
+                        child: Text(AppLanguage.exportCSV,
+                            style: const TextStyle(fontSize: 13)),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(width: 40),
-              ],
-            ),
-          ),
+              ),
 
-          // Compact Search + Export row (match products: 40px height)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: SizedBox(
-              height: 40,
-              child: Row(
-                children: [
-                  Expanded(
-                      child: SizedBox(
-                          height: 40,
-                          child: AppSearchbar(onChanged: _onSearchChanged))),
-                  const SizedBox(width: 8),
-                  if (_selectedUserIds.isNotEmpty) ...[
-                    ElevatedButton(
-                      onPressed: _onDeleteSelected,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 12, vertical: 10),
-                        minimumSize: const Size(0, 40),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20)),
-                      ),
-                      child: Text('Supprimer (${_selectedUserIds.length})',
-                          style: const TextStyle(fontSize: 13)),
+              const SizedBox(height: 4),
+
+              // Tabs
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  children: [
+                    _TabButton(
+                      label: AppLanguage.all,
+                      isSelected: _selectedTab == 'all',
+                      onTap: () => _onTabChanged('all'),
                     ),
                     const SizedBox(width: 8),
-                  ],
-                  ElevatedButton(
-                    onPressed: _onExportCSV,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 10),
-                      minimumSize: const Size(0, 40),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20)),
+                    _TabButton(
+                      label: AppLanguage.suspended,
+                      isSelected: _selectedTab == 'suspended',
+                      onTap: () => _onTabChanged('suspended'),
                     ),
-                    child: const Text('Exporter CSV',
-                        style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 4),
+
+              // Users Table
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    _loadUsers();
+                  },
+                  child: SingleChildScrollView(
+                    controller: _scrollController,
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: BlocConsumer<AdminUsersBloc, AdminUsersState>(
+                      listener: (context, state) {
+                        if (state is AdminUsersOperationSuccess) {
+                          TopToast.show(context, state.message);
+                          _loadUsers();
+                        }
+                      },
+                      builder: (context, state) {
+                        if (state is AdminUsersLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        } else if (state is AdminUsersLoaded) {
+                          return Column(
+                            children: [
+                              _buildUsersTable(state.users),
+                              if (state.isLoadingMore)
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Center(
+                                      child: CircularProgressIndicator()),
+                                ),
+                            ],
+                          );
+                        } else if (state is AdminUsersBlacklistLoaded) {
+                          return Column(
+                            children: [
+                              _buildUsersTable(state.blacklistedUsers),
+                              if (state.isLoadingMore)
+                                const Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: Center(
+                                      child: CircularProgressIndicator()),
+                                ),
+                            ],
+                          );
+                        } else if (state is AdminUsersError) {
+                          return Center(child: Text(state.message));
+                        }
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          // Tabs
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              children: [
-                _TabButton(
-                  label: 'Tous',
-                  isSelected: _selectedTab == 'Tous',
-                  onTap: () => _onTabChanged('Tous'),
-                ),
-                const SizedBox(width: 8),
-                _TabButton(
-                  label: 'Suspendu',
-                  isSelected: _selectedTab == 'Suspendu',
-                  onTap: () => _onTabChanged('Suspendu'),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          // Users Table
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                _loadUsers();
-              },
-              child: SingleChildScrollView(
-                controller: _scrollController,
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: BlocConsumer<AdminUsersBloc, AdminUsersState>(
-                  listener: (context, state) {
-                    if (state is AdminUsersOperationSuccess) {
-                      TopToast.show(context, state.message);
-                      _loadUsers();
-                    }
-                  },
-                  builder: (context, state) {
-                    if (state is AdminUsersLoading) {
-                      return const Center(child: CircularProgressIndicator());
-                    } else if (state is AdminUsersLoaded) {
-                      return Column(
-                        children: [
-                          _buildUsersTable(state.users),
-                          if (state.isLoadingMore)
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                        ],
-                      );
-                    } else if (state is AdminUsersBlacklistLoaded) {
-                      return Column(
-                        children: [
-                          _buildUsersTable(state.blacklistedUsers),
-                          if (state.isLoadingMore)
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Center(child: CircularProgressIndicator()),
-                            ),
-                        ],
-                      );
-                    } else if (state is AdminUsersError) {
-                      return Center(child: Text(state.message));
-                    }
-                    return const SizedBox.shrink();
-                  },
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -398,44 +409,44 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Expanded(
+                      Expanded(
                         flex: 3,
                         child: Text(
-                          'Nom',
-                          style: TextStyle(
+                          AppLanguage.name,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                           ),
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Expanded(
+                      Expanded(
                         flex: 3,
                         child: Text(
-                          'Tél',
-                          style: TextStyle(
+                          AppLanguage.phone,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                           ),
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Expanded(
+                      Expanded(
                         flex: 3,
                         child: Text(
-                          'Rôle',
-                          style: TextStyle(
+                          AppLanguage.role,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                           ),
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const SizedBox(
+                      SizedBox(
                         width: 80,
                         child: Text(
-                          'Action',
-                          style: TextStyle(
+                          AppLanguage.actions,
+                          style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 11,
                           ),
@@ -483,15 +494,15 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                             context: context,
                             builder: (BuildContext dialogContext) {
                               return AlertDialog(
-                                title: const Text('Confirmer la suppression'),
+                                title: Text(AppLanguage.confirmDelete),
                                 content: Text(
-                                  'Voulez-vous vraiment supprimer ${u.name} ?',
+                                  '${AppLanguage.confirmDeleteUser} (${u.name})',
                                 ),
                                 actions: [
                                   TextButton(
                                     onPressed: () =>
                                         Navigator.of(dialogContext).pop(),
-                                    child: const Text('Annuler'),
+                                    child: Text(AppLanguage.cancel),
                                   ),
                                   TextButton(
                                     onPressed: () {
@@ -506,7 +517,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                     style: TextButton.styleFrom(
                                       foregroundColor: Colors.red,
                                     ),
-                                    child: const Text('Supprimer'),
+                                    child: Text(AppLanguage.delete),
                                   ),
                                 ],
                               );
@@ -514,7 +525,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                           );
                         },
                         onSuspendToggle: () {
-                          if (_selectedTab == 'Suspendu') {
+                          if (_selectedTab == 'suspended') {
                             // User is in blacklist, restore them
                             context.read<AdminUsersBloc>().add(
                                   AdminUsersRestoreFromBlacklistEvent(
@@ -667,7 +678,16 @@ class _UserRow extends StatelessWidget {
                 decoration: BoxDecoration(
                     color: bgColor, borderRadius: BorderRadius.circular(8)),
                 child: Text(
-                  user.role,
+                  roleKey.contains('supermarket') ||
+                          roleKey.contains('supérette')
+                      ? AppLanguage.supermarket
+                      : roleKey.contains('gros') ||
+                              roleKey.contains('gross') ||
+                              roleKey.contains('grosist')
+                          ? AppLanguage.wholesaler
+                          : roleKey.contains('admin')
+                              ? AppLanguage.admin
+                              : AppLanguage.client,
                   style: TextStyle(
                       color: textColor,
                       fontSize: 9,

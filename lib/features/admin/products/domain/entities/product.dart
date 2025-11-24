@@ -3,6 +3,8 @@ class Product {
   final String name;
   final String category;
   final String brand;
+  final String? categoryId;
+  final String? brandId;
   final int quantityPerLot;
   final List<String> specifications;
   final DateTime? expirationDate;
@@ -17,6 +19,8 @@ class Product {
     required this.name,
     required this.category,
     required this.brand,
+    this.categoryId,
+    this.brandId,
     required this.quantityPerLot,
     required this.specifications,
     this.expirationDate,
@@ -32,6 +36,8 @@ class Product {
     String? name,
     String? category,
     String? brand,
+    String? categoryId,
+    String? brandId,
     int? quantityPerLot,
     List<String>? specifications,
     DateTime? expirationDate,
@@ -46,6 +52,8 @@ class Product {
       name: name ?? this.name,
       category: category ?? this.category,
       brand: brand ?? this.brand,
+      categoryId: categoryId ?? this.categoryId,
+      brandId: brandId ?? this.brandId,
       quantityPerLot: quantityPerLot ?? this.quantityPerLot,
       specifications: specifications ?? this.specifications,
       expirationDate: expirationDate ?? this.expirationDate,

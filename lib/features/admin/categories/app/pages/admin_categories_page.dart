@@ -97,6 +97,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                           'assets/icons/back_arrow.svg',
                           width: 16,
                           height: 16,
+                          matchTextDirection: true,
                           color: Theme.of(context).colorScheme.onPrimary,
                           placeholderBuilder: (context) => Icon(
                               Icons.arrow_back,
@@ -352,8 +353,9 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         InkWell(
-                          onTap: () => context
-                              .push('/admin/categories/edit/${category.id}'),
+                          onTap: () => context.push(
+                              '/admin/categories/edit/${category.id}',
+                              extra: category),
                           child: SvgPicture.asset(
                             'assets/icons/small_edit.svg',
                             width: 16,
@@ -574,6 +576,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
   }
 
   void _onDeleteDialog(String categoryId) {
+    final bloc = context.read<AdminCategoriesBloc>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -585,9 +588,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
               child: Text(AppLanguage.cancel)),
           TextButton(
             onPressed: () {
-              context
-                  .read<AdminCategoriesBloc>()
-                  .add(AdminCategoriesDeleteEvent(categoryId));
+              bloc.add(AdminCategoriesDeleteEvent(categoryId));
               Navigator.pop(context);
             },
             child: Text(AppLanguage.delete,
@@ -599,6 +600,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
   }
 
   void _onDeleteSubDialog(String id) {
+    final bloc = context.read<AdminCategoriesBloc>();
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -610,9 +612,7 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
               child: Text(AppLanguage.cancel)),
           TextButton(
             onPressed: () {
-              context
-                  .read<AdminCategoriesBloc>()
-                  .add(AdminSubCategoriesDeleteEvent(id));
+              bloc.add(AdminSubCategoriesDeleteEvent(id));
               Navigator.pop(context);
             },
             child: Text(AppLanguage.delete,

@@ -3,19 +3,11 @@ import 'package:amerli_app/core/auth/auth_service.dart';
 import 'package:amerli_app/core/dio/auth_interceptor.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 
-import 'package:amerli_app/core/error/global_error_handler.dart';
-
 class ApiService {
   final Dio _dio;
-  final GlobalErrorHandler? _globalErrorHandler;
 
-  ApiService(
-      {Dio? dio,
-      String? baseUrl,
-      AuthService? authService,
-      GlobalErrorHandler? globalErrorHandler})
-      : _globalErrorHandler = globalErrorHandler,
-        _dio = dio ??
+  ApiService({Dio? dio, String? baseUrl, AuthService? authService})
+      : _dio = dio ??
             Dio(BaseOptions(
               connectTimeout: const Duration(seconds: 10),
               validateStatus: (status) =>
@@ -90,15 +82,6 @@ class ApiService {
             // ignore: avoid_print
             print(
                 '$red[HTTP RESPONSE ERROR] $method $path -> $status${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: $bodyPreview');
-
-            // Report error to global handler
-            if (response.data is Map) {
-              final message =
-                  response.data['message'] ?? response.data['error'];
-              if (message != null && message is String) {
-                _globalErrorHandler?.reportError(message);
-              }
-            }
           } else {
             // ignore: avoid_print
             print(
@@ -145,14 +128,6 @@ class ApiService {
             // ignore: avoid_print
             print('$red[HTTP ERROR - EXCEPTION] ${error.message}$reset');
           } catch (_) {}
-
-          // Report backend error message to global handler
-          if (serverBody != null && serverBody is Map) {
-            final message = serverBody['message'] ?? serverBody['error'];
-            if (message != null && message is String) {
-              _globalErrorHandler?.reportError(message);
-            }
-          }
 
           return handler.next(error);
         },

@@ -118,26 +118,43 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
 
   Color _getStatusColor(String status) {
     final s = status.toLowerCase();
-    // handle multiple languages and uppercase codes from backend
-    if (s.contains('en attente') ||
-        s.contains('pending') ||
-        s.contains('confirmation') ||
-        s.contains('confirm')) {
-      return const Color(0xFFFFC555);
+
+    // Cancelled (Red)
+    if (s.contains('annul') ||
+        s.contains('cancel') ||
+        s.contains('إلغاء') ||
+        s.contains('ملغ')) {
+      return const Color(0xFFF34141);
     }
-    if (s.contains('préparation') ||
-        s.contains('preparation') ||
-        s.contains('preparing')) {
-      return const Color(0xFF59A8D4);
-    }
+
+    // Delivered / Delivering (Green)
     if (s.contains('livré') ||
         s.contains('livree') ||
         s.contains('deliv') ||
-        s.contains('delivered')) {
+        s.contains('delivered') ||
+        s.contains('توصيل') ||
+        s.contains('مستلم') ||
+        s.contains('تم التسليم')) {
       return const Color(0xFF4AA785);
     }
-    if (s.contains('annul') || s.contains('canceled') || s.contains('cancel')) {
-      return const Color(0xFFF34141);
+
+    // Preparing (Blue)
+    if (s.contains('préparation') ||
+        s.contains('preparation') ||
+        s.contains('preparing') ||
+        s.contains('تحضير') ||
+        s.contains('تجهيز')) {
+      return const Color(0xFF59A8D4);
+    }
+
+    // Pending (Yellow)
+    if (s.contains('en attente') ||
+        s.contains('pending') ||
+        s.contains('confirmation') ||
+        s.contains('confirm') ||
+        s.contains('انتظار') ||
+        s.contains('معلق')) {
+      return const Color(0xFFFFC555);
     }
 
     return Colors.grey;

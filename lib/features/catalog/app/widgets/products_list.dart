@@ -61,13 +61,12 @@ class _ProductsListState extends State<ProductsList> {
   }
 
   void _onScroll() {
-    if (widget.onLoadMore == null) return;
-    if (_isRequestingMore) return;
+    if (!widget.hasMore) return;
 
-    final totalItems = widget.products.length;
-    final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
+    // final totalItems = widget.products.length;
+    // final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
 
-    if (totalItems <= thresholdIndex) return;
+    // if (totalItems <= thresholdIndex) return;
 
     final maxScroll = _scrollController.position.maxScrollExtent;
     final current = _scrollController.position.pixels;
@@ -204,17 +203,21 @@ class _ProductsListState extends State<ProductsList> {
 
         final product = products[index];
 
-        final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
+        final itemsFromEnd = widget.rowsToTrigger * widget.columns;
+        final thresholdIndex =
+            (products.length - itemsFromEnd).clamp(0, products.length);
+
         if (!_isRequestingMore &&
+            widget.hasMore &&
             widget.onLoadMore != null &&
-            index == thresholdIndex) {
+            index >= thresholdIndex) {
           _isRequestingMore = true;
           final future = widget.onLoadMore!.call();
           future.whenComplete(() {
             _isRequestingMore = false;
           });
           debugPrint(
-              'ProductsList: load more triggered by builder at index $index (row ${widget.rowsToTrigger})');
+              'ProductsList: load more triggered by builder at index $index (threshold $thresholdIndex)');
         }
 
         if (widget.itemBuilder != null) {

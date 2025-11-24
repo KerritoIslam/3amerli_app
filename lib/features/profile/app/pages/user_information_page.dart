@@ -154,56 +154,53 @@ class _UserInformationPageState extends State<UserInformationPage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 16.0, vertical: 8.0),
-                  child: Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Row(
-                      children: [
-                        // Back button matching product details style
-                        InkWell(
-                          onTap: () => Navigator.of(context).maybePop(),
-                          borderRadius: BorderRadius.circular(24),
-                          child: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .tertiaryContainer,
-                              shape: BoxShape.circle,
-                            ),
-                            alignment: Alignment.center,
-                            child: SvgPicture.asset(
-                              'assets/icons/back_arrow.svg',
-                              width: 16,
-                              height: 16,
-                              colorFilter: ColorFilter.mode(
-                                  Theme.of(context).colorScheme.onPrimary,
-                                  BlendMode.srcIn),
-                              placeholderBuilder: (context) =>
-                                  const Icon(Icons.arrow_back, size: 16),
-                            ),
+                  child: Row(
+                    children: [
+                      // Back button matching product details style
+                      InkWell(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).colorScheme.tertiaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: SvgPicture.asset(
+                            'assets/icons/back_arrow.svg',
+                            width: 16,
+                            height: 16,
+                            matchTextDirection: true,
+                            colorFilter: ColorFilter.mode(
+                                Theme.of(context).colorScheme.onPrimary,
+                                BlendMode.srcIn),
+                            placeholderBuilder: (context) =>
+                                const Icon(Icons.arrow_back, size: 16),
                           ),
                         ),
+                      ),
 
-                        const Spacer(),
+                      const Spacer(),
 
-                        Expanded(
-                          flex: 2,
-                          child: Center(
-                            child: Text(
-                              AppLanguage.personalInformation,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleLarge
-                                  ?.copyWith(fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.center,
-                            ),
+                      Expanded(
+                        flex: 2,
+                        child: Center(
+                          child: Text(
+                            AppLanguage.personalInformation,
+                            style: Theme.of(context)
+                                .textTheme
+                                .titleLarge
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                            textAlign: TextAlign.center,
                           ),
                         ),
+                      ),
 
-                        const Spacer(flex: 1),
-                      ],
-                    ),
+                      const Spacer(flex: 1),
+                    ],
                   ),
                 ),
 

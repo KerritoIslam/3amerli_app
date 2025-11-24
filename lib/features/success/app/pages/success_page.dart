@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/features/orders/presentation/pages/order_tracking_page.dart';
 import 'package:amerli_app/features/orders/domain/entities/order.dart';
@@ -93,8 +94,7 @@ class _SuccessPageState extends State<SuccessPage>
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-              '/cart', (route) => route.settings.name == '/'),
+          onPressed: () => context.go('/home?tab=1'), // Go back to cart tab
         ),
         title: Text(AppLanguage.success,
             style: Theme.of(context)
@@ -167,8 +167,7 @@ class _SuccessPageState extends State<SuccessPage>
                         child: ElevatedButton(
                           onPressed: () {
                             // Navigate to home page (catalog is at index 0)
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                                '/home', (route) => false);
+                            context.go('/home');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:

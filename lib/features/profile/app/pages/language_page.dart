@@ -111,38 +111,40 @@ class _LanguagePageState extends State<LanguagePage> {
           children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-              child: Directionality(
-                textDirection: TextDirection.ltr,
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.of(context).maybePop(),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        alignment: Alignment.center,
-                        child: SvgPicture.asset('assets/icons/back_arrow.svg',
-                            width: 18,
-                            height: 18,
-                            colorFilter:
-                                ColorFilter.mode(_darkGreen, BlendMode.srcIn),
-                            placeholderBuilder: (_) => const Icon(
-                                Icons.arrow_back,
-                                color: _darkGreen)),
+              child: Row(
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.of(context).maybePop(),
+                    borderRadius: BorderRadius.circular(24),
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
+                        shape: BoxShape.circle,
                       ),
+                      child: SvgPicture.asset('assets/icons/back_arrow.svg',
+                          width: 16,
+                          height: 16,
+                          matchTextDirection: true,
+                          colorFilter: ColorFilter.mode(
+                              Theme.of(context).colorScheme.onPrimary,
+                              BlendMode.srcIn),
+                          placeholderBuilder: (_) => Icon(Icons.arrow_back,
+                              color: Theme.of(context).colorScheme.onPrimary)),
                     ),
-                    const Spacer(),
-                    Center(
-                        child: Text(AppLanguage.language,
-                            style: const TextStyle(
-                                fontFamily: 'Geist',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 20,
-                                color: _darkGreen))),
-                    const Spacer(flex: 2),
-                  ],
-                ),
+                  ),
+                  const Spacer(),
+                  Center(
+                      child: Text(AppLanguage.language,
+                          style: const TextStyle(
+                              fontFamily: 'Geist',
+                              fontWeight: FontWeight.w700,
+                              fontSize: 20,
+                              color: _darkGreen))),
+                  const Spacer(flex: 2),
+                ],
               ),
             ),
 

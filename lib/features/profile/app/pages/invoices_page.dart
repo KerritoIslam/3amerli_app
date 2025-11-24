@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:amerli_app/core/config/injection.dart' as di;
@@ -132,7 +133,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
   Future<void> _openPdf(String? pdf) async {
     if (pdf == null) {
       if (!mounted) return;
-      TopToast.show(context, 'Aucun PDF disponible', isError: true);
+      TopToast.show(context, AppLanguage.noPdfAvailable, isError: true);
       return;
     }
     final uri = Uri.parse(pdf);
@@ -142,7 +143,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
       return;
     }
     if (!mounted) return;
-    TopToast.show(context, 'Impossible de télécharger le PDF', isError: true);
+    TopToast.show(context, AppLanguage.pdfDownloadError, isError: true);
   }
 
   @override
@@ -198,7 +199,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
                     Expanded(
                       child: Center(
                         child: Text(
-                          'Mes Factures',
+                          AppLanguage.myInvoices,
                           style: Theme.of(context)
                               .textTheme
                               .headlineLarge
@@ -272,7 +273,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
                           // ID column (expandable)
                           Expanded(
                             child: Text(
-                              'ID Commande',
+                              AppLanguage.orderId,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: tableHeaderStyle,
@@ -282,13 +283,13 @@ class _InvoicesPageState extends State<InvoicesPage> {
                           // Date column (fixed width)
                           SizedBox(
                               width: 120,
-                              child: Text('Date de Facture',
+                              child: Text(AppLanguage.invoiceDate,
                                   style: tableHeaderStyle)),
 
                           // Actions column (narrower)
                           SizedBox(
                               width: 72,
-                              child: Text('Actions',
+                              child: Text(AppLanguage.actions,
                                   textAlign: TextAlign.right,
                                   style: tableHeaderStyle)),
                         ],

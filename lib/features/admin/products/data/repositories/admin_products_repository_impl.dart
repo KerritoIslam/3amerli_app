@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 
 import 'package:amerli_app/core/dio/api_service.dart';
 import '../../domain/entities/product.dart';
@@ -136,12 +137,87 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
   // Create/update/delete are still not implemented against multipart endpoints.
   // Keep the existing signatures but throw to avoid accidental use.
   @override
-  Future<void> addProduct(Product product) async =>
-      throw UnsupportedError('addProduct not implemented for remote admin API');
+  Future<void> addProduct(Product product) async {
+    try {
+      final formData = await _createProductFormData(product);
+      final resp = await apiService.post('/products/create', data: formData);
+      if (resp.statusCode == null ||
+          resp.statusCode! < 200 ||
+          resp.statusCode! >= 300) {
+        throw Exception('Failed to add product: ${resp.statusCode}');
+      }
+    } catch (e) {
+      print('[ADMIN PRODUCTS] Add product error: $e');
+      _handleError(e);
+    }
+  }
+
+  Never _handleError(dynamic e) {
+    if (e is DioException && e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map && data['message'] != null) {
+        final msg = data['message'];
+        if (msg is List) throw Exception(msg.join('\n'));
+        throw Exception(msg.toString());
+      }
+    }
+    throw e;
+  }
 
   @override
-  Future<void> updateProduct(Product product) async => throw UnsupportedError(
-      'updateProduct not implemented for remote admin API');
+  Future<void> updateProduct(Product product) async {
+    try {
+      final formData = await _createProductFormData(product);
+      final resp =
+          await apiService.put('/products/${product.id}', data: formData);
+      if (resp.statusCode == null ||
+          resp.statusCode! < 200 ||
+          resp.statusCode! >= 300) {
+        throw Exception('Failed to update product: ${resp.statusCode}');
+      }
+    } catch (e) {
+      print('[ADMIN PRODUCTS] Update product error: $e');
+      _handleError(e);
+    }
+  }
+
+  Future<FormData> _createProductFormData(Product product) async {
+    final map = <String, dynamic>{
+      'name': product.name,
+      'categoryId': int.tryParse(product.categoryId ?? '') ?? 0,
+      'brandId': int.tryParse(product.brandId ?? '') ?? 0,
+      'quantityPerBatch': product.quantityPerLot,
+      'price': product.pricePerLot,
+      'quantity': product.availableQuantity,
+      'specification': product.specifications.join(', '),
+    };
+
+    if (product.expirationDate != null) {
+      map['expirationDate'] =
+          product.expirationDate!.toIso8601String().split('T')[0];
+    }
+
+    final formData = FormData.fromMap(map);
+
+    // Add images
+    for (var i = 0; i < product.images.length; i++) {
+      final imagePath = product.images[i];
+      // Only upload local files (not starting with http)
+      if (!imagePath.startsWith('http')) {
+        try {
+          final file = await MultipartFile.fromFile(
+            imagePath,
+            filename: imagePath.split('/').last,
+          );
+          formData.files.add(MapEntry('pictures', file));
+        } catch (e) {
+          print('Error loading image file: $imagePath - $e');
+        }
+      }
+    }
+
+    return formData;
+  }
 
   @override
   Future<void> deleteProduct(String id) async {
@@ -155,7 +231,7 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN PRODUCTS] Delete product error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 

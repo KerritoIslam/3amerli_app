@@ -611,8 +611,8 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
       constraints: const BoxConstraints(
         minWidth: 183,
         maxWidth: 183,
-        minHeight: 152,
-        maxHeight: 152,
+        minHeight: 119,
+        maxHeight: 119,
       ),
       items: [
         PopupMenuItem(
@@ -656,20 +656,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           },
           child: Text(
             AppLanguage.exportProducts,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-        ),
-        PopupMenuItem(
-          height: 37,
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          onTap: () {
-            // TODO: Implement settings functionality
-          },
-          child: Text(
-            AppLanguage.settings,
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -797,8 +783,11 @@ class _ProductRow extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Status icon and colored text (use svg icons and brand color for "En stock")
-                if (product.stockStatus.toLowerCase() == 'en stock') ...[
+                // Status icon and colored text
+                if (product.stockStatus.toLowerCase().contains('stock') ||
+                    product.stockStatus.toLowerCase().contains('disponible') ||
+                    (product.stockStatus.contains('متوفر') &&
+                        !product.stockStatus.contains('غير'))) ...[
                   SvgPicture.asset(
                     'assets/icons/bag.svg',
                     width: 12,
@@ -809,7 +798,7 @@ class _ProductRow extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      product.stockStatus,
+                      AppLanguage.inStock,
                       style: const TextStyle(
                         fontSize: 10,
                         color: Color(0xFFA1E3CB),
@@ -830,7 +819,7 @@ class _ProductRow extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      product.stockStatus,
+                      AppLanguage.outOfStock,
                       style: const TextStyle(
                         fontSize: 10,
                         color: Colors.red,

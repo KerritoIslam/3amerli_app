@@ -7,6 +7,8 @@ class ProductModel extends Product {
     required super.name,
     required super.category,
     required super.brand,
+    super.categoryId,
+    super.brandId,
     required super.quantityPerLot,
     required super.specifications,
     super.expirationDate,
@@ -30,11 +32,13 @@ class ProductModel extends Product {
     if (json['category'] is String) {
       category = json['category'] as String;
     } else if (json['category'] is Map) {
-      category = (json['category']['label'] ?? json['category']['name'] ?? '') as String;
+      category = (json['category']['label'] ?? json['category']['name'] ?? '')
+          as String;
     } else if (json['categoryName'] != null) {
       category = json['categoryName'] as String;
     } else if (json['category_id'] != null || json['categoryId'] != null) {
-      category = (json['categoryName'] ?? '') as String; // backend may choose not to provide name
+      category = (json['categoryName'] ?? '')
+          as String; // backend may choose not to provide name
     }
 
     String brand = '';
@@ -42,16 +46,36 @@ class ProductModel extends Product {
       brand = json['brand'] as String;
     } else if (json['brand'] is Map) {
       brand = (json['brand']['label'] ?? json['brand']['name'] ?? '') as String;
-    } else if (json['brandName'] != null) {
       brand = json['brandName'] as String;
     }
 
-  int quantityPerLot = 0;
-  final qtyRaw = json['quantity_per_lot'] ?? json['quantityPerBatch'] ?? json['quantityPerLot'] ?? json['quantity'] ?? 0;
-  if (qtyRaw is int) {
-    quantityPerLot = qtyRaw;
-  } else if (qtyRaw is num) quantityPerLot = qtyRaw.toInt();
-  else if (qtyRaw is String) quantityPerLot = int.tryParse(qtyRaw) ?? 0;
+    String? categoryId;
+    if (json['category_id'] != null)
+      categoryId = json['category_id'].toString();
+    else if (json['categoryId'] != null)
+      categoryId = json['categoryId'].toString();
+    else if (json['category'] is Map && json['category']['id'] != null)
+      categoryId = json['category']['id'].toString();
+
+    String? brandId;
+    if (json['brand_id'] != null)
+      brandId = json['brand_id'].toString();
+    else if (json['brandId'] != null)
+      brandId = json['brandId'].toString();
+    else if (json['brand'] is Map && json['brand']['id'] != null)
+      brandId = json['brand']['id'].toString();
+
+    int quantityPerLot = 0;
+    final qtyRaw = json['quantity_per_lot'] ??
+        json['quantityPerBatch'] ??
+        json['quantityPerLot'] ??
+        json['quantity'] ??
+        0;
+    if (qtyRaw is int) {
+      quantityPerLot = qtyRaw;
+    } else if (qtyRaw is num)
+      quantityPerLot = qtyRaw.toInt();
+    else if (qtyRaw is String) quantityPerLot = int.tryParse(qtyRaw) ?? 0;
 
     List<String> specifications = [];
     final specsRaw = json['specifications'] ?? json['specs'];
@@ -59,7 +83,11 @@ class ProductModel extends Product {
       specifications = specsRaw.map((e) => e.toString()).toList();
     } else if (specsRaw is String) {
       // comma-separated
-      specifications = specsRaw.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
+      specifications = specsRaw
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
     }
 
     DateTime? expirationDate;
@@ -71,20 +99,25 @@ class ProductModel extends Product {
     }
 
     double pricePerLot = 0.0;
-    final priceRaw = json['price_per_lot'] ?? json['price'] ?? json['pricePerLot'];
+    final priceRaw =
+        json['price_per_lot'] ?? json['price'] ?? json['pricePerLot'];
     if (priceRaw != null) {
       if (priceRaw is num) {
         pricePerLot = priceRaw.toDouble();
       } else if (priceRaw is String) {
         // try parsing string numbers (may contain commas or spaces)
         final cleaned = priceRaw.replaceAll(',', '').trim();
-        pricePerLot = double.tryParse(cleaned) ?? (int.tryParse(cleaned)?.toDouble() ?? 0.0);
+        pricePerLot = double.tryParse(cleaned) ??
+            (int.tryParse(cleaned)?.toDouble() ?? 0.0);
       }
     }
 
     // stock status: backend may provide a boolean `disponibility` or numeric `quantity`/`available_quantity`
     String stockStatus = 'Inconnu';
-    final disponibility = json['disponibility'] ?? json['disponible'] ?? json['available'] ?? json['isAvailable'];
+    final disponibility = json['disponibility'] ??
+        json['disponible'] ??
+        json['available'] ??
+        json['isAvailable'];
     if (disponibility != null) {
       if (disponibility is bool) {
         stockStatus = disponibility ? 'En stock' : 'Rupture';
@@ -92,22 +125,30 @@ class ProductModel extends Product {
         final d = disponibility.toLowerCase();
         if (d == 'true' || d == '1' || d == 'yes' || d == 'y') {
           stockStatus = 'En stock';
-        } else if (d == 'false' || d == '0' || d == 'no' || d == 'n') stockStatus = 'Rupture';
+        } else if (d == 'false' || d == '0' || d == 'no' || d == 'n')
+          stockStatus = 'Rupture';
       } else if (disponibility is num) {
         stockStatus = disponibility > 0 ? 'En stock' : 'Rupture';
       }
     } else {
-      stockStatus = (json['stock_status'] ?? json['stockStatus'] ?? 'Inconnu') as String;
+      stockStatus =
+          (json['stock_status'] ?? json['stockStatus'] ?? 'Inconnu') as String;
     }
 
     // available quantity: try multiple keys
     int availableQuantity = 0;
-    final availRaw = json['available_quantity'] ?? json['availableQuantity'] ?? json['quantity'] ?? json['stock'] ?? json['qty'];
+    final availRaw = json['available_quantity'] ??
+        json['availableQuantity'] ??
+        json['quantity'] ??
+        json['stock'] ??
+        json['qty'];
     if (availRaw != null) {
       if (availRaw is int) {
         availableQuantity = availRaw;
-      } else if (availRaw is num) availableQuantity = availRaw.toInt();
-      else if (availRaw is String) availableQuantity = int.tryParse(availRaw) ?? 0;
+      } else if (availRaw is num)
+        availableQuantity = availRaw.toInt();
+      else if (availRaw is String)
+        availableQuantity = int.tryParse(availRaw) ?? 0;
     }
 
     List<String> images = [];
@@ -118,7 +159,8 @@ class ProductModel extends Product {
       images = [resolveImageUrl(imgs)];
     }
     // Some backends return a single main picture field
-    final mainPic = json['mainpicture'] ?? json['main_picture'] ?? json['mainPicture'];
+    final mainPic =
+        json['mainpicture'] ?? json['main_picture'] ?? json['mainPicture'];
     if (mainPic != null && mainPic is String && mainPic.isNotEmpty) {
       final mainResolved = resolveImageUrl(mainPic);
       if (images.isEmpty) images = [mainResolved];
@@ -126,18 +168,23 @@ class ProductModel extends Product {
       if (!images.contains(mainResolved)) images.insert(0, mainResolved);
     }
 
-  final mainImageIndexRaw = json['main_image_index'] ?? json['mainImageIndex'] ?? 0;
-  int mainImageIndex = 0;
-  if (mainImageIndexRaw is int) {
-    mainImageIndex = mainImageIndexRaw;
-  } else if (mainImageIndexRaw is num) mainImageIndex = mainImageIndexRaw.toInt();
-  else if (mainImageIndexRaw is String) mainImageIndex = int.tryParse(mainImageIndexRaw) ?? 0;
+    final mainImageIndexRaw =
+        json['main_image_index'] ?? json['mainImageIndex'] ?? 0;
+    int mainImageIndex = 0;
+    if (mainImageIndexRaw is int) {
+      mainImageIndex = mainImageIndexRaw;
+    } else if (mainImageIndexRaw is num)
+      mainImageIndex = mainImageIndexRaw.toInt();
+    else if (mainImageIndexRaw is String)
+      mainImageIndex = int.tryParse(mainImageIndexRaw) ?? 0;
 
     return ProductModel(
       id: id,
       name: name,
       category: category,
       brand: brand,
+      categoryId: categoryId,
+      brandId: brandId,
       quantityPerLot: quantityPerLot,
       specifications: specifications,
       expirationDate: expirationDate,
@@ -155,6 +202,8 @@ class ProductModel extends Product {
       'name': name,
       'category': category,
       'brand': brand,
+      'categoryId': categoryId,
+      'brandId': brandId,
       'quantity_per_lot': quantityPerLot,
       'specifications': specifications,
       'expiration_date': expirationDate?.toIso8601String(),
@@ -172,6 +221,8 @@ class ProductModel extends Product {
       name: product.name,
       category: product.category,
       brand: product.brand,
+      categoryId: product.categoryId,
+      brandId: product.brandId,
       quantityPerLot: product.quantityPerLot,
       specifications: product.specifications,
       expirationDate: product.expirationDate,

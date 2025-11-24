@@ -1,25 +1,26 @@
-import 'package:amerli_app/features/catalog/domain/entities/product.dart';
-import 'package:amerli_app/features/catalog/data/datasources/catalog_remote_datasource.dart';
-import 'package:amerli_app/utils/constants/app_colors.dart';
-import 'package:amerli_app/utils/constants/app_language.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
-import 'package:collection/collection.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
-import 'package:amerli_app/core/config/injection.dart';
-import 'package:amerli_app/core/utils/top_toast.dart';
-import 'package:amerli_app/features/catalog/app/bloc/favorites_bloc.dart';
-import 'package:amerli_app/features/catalog/app/bloc/favorites_event.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
+import 'package:amerli_app/features/catalog/data/datasources/catalog_remote_datasource.dart';
+import 'package:amerli_app/features/catalog/domain/entities/product.dart';
+import 'package:amerli_app/features/catalog/app/bloc/favorites_bloc.dart';
+import 'package:amerli_app/features/catalog/app/bloc/favorites_event.dart';
+import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
+
   const ProductDetailsPage({super.key, required this.product});
 
   @override
@@ -28,7 +29,7 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   int _quantity = 1;
-  late bool _localFavorite;
+  bool _localFavorite = false;
   int _loveCount = 0;
   Product? _loadedProduct;
   bool _isLoading = true;
@@ -94,146 +95,140 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Top row: back, title, favorite - FORCE LTR
-                          Directionality(
-                            textDirection: TextDirection.ltr,
-                            child: Row(
-                              children: [
-                                InkWell(
-                                  onTap: () => Navigator.of(context).pop(),
-                                  borderRadius: BorderRadius.circular(24),
+                          // Top row: back, title, favorite
+                          Row(
+                            children: [
+                              InkWell(
+                                onTap: () => Navigator.of(context).pop(),
+                                borderRadius: BorderRadius.circular(24.r),
+                                child: Container(
+                                  width: 40.w,
+                                  height: 40.w,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .tertiaryContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: SvgPicture.asset(
+                                    'assets/icons/back_arrow.svg',
+                                    width: 16.w,
+                                    height: 16.h,
+                                    matchTextDirection: true,
+                                    colorFilter: ColorFilter.mode(
+                                        Theme.of(context).colorScheme.onPrimary,
+                                        BlendMode.srcIn),
+                                    placeholderBuilder: (context) => Icon(
+                                      Icons.arrow_back,
+                                      size: 16.w,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                child: Center(
+                                  child: Text(
+                                    AppLanguage.details,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .headlineLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 24.sp,
+                                        ),
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                width: 40.w,
+                                height: 40.w,
+                                alignment: Alignment.center,
+                                child: InkWell(
+                                  onTap: () {
+                                    final favoritesBloc = sl<FavoritesBloc>();
+
+                                    if (_localFavorite) {
+                                      favoritesBloc.add(
+                                          FavoritesRemoveEvent(id: product.id));
+                                      TopToast.show(
+                                        context,
+                                        '${product.name} ${AppLanguage.removedFromFavorites}',
+                                      );
+                                    } else {
+                                      favoritesBloc.add(FavoritesAddEvent(
+                                          userId: 0, productId: product.id));
+                                      TopToast.show(
+                                        context,
+                                        '${product.name} ${AppLanguage.addedToFavorites}',
+                                      );
+                                    }
+
+                                    // Update local state immediately for instant UI feedback
+                                    setState(() {
+                                      _localFavorite = !_localFavorite;
+                                      if (_localFavorite) {
+                                        _loveCount++;
+                                      } else {
+                                        if (_loveCount > 0) _loveCount--;
+                                      }
+                                    });
+
+                                    // Refresh catalog after a short delay to update the product list
+                                    Future.delayed(
+                                        const Duration(milliseconds: 500), () {
+                                      try {
+                                        sl<CatalogBloc>()
+                                            .add(CatalogLoadEvent());
+                                      } catch (e) {
+                                        // Catalog bloc might not be available
+                                      }
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(24.r),
                                   child: Container(
                                     width: 40.w,
                                     height: 40.w,
                                     decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .tertiaryContainer,
+                                      color: Colors.transparent,
                                       shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        width: 1.w,
+                                      ),
                                     ),
                                     alignment: Alignment.center,
                                     child: SvgPicture.asset(
-                                      'assets/icons/back_arrow.svg',
-                                      width: 16.w,
-                                      height: 16.h,
+                                      _localFavorite
+                                          ? 'assets/icons/favoris.svg'
+                                          : 'assets/icons/favoris_reversed.svg',
+                                      width: 24.w,
+                                      height: 24.h,
                                       colorFilter: ColorFilter.mode(
-                                          Theme.of(context)
-                                              .colorScheme
-                                              .onPrimary,
+                                          Theme.of(context).colorScheme.primary,
                                           BlendMode.srcIn),
                                       placeholderBuilder: (context) => Icon(
-                                        Icons.arrow_back,
-                                        size: 16.w,
+                                        _localFavorite
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        size: 20.w,
                                         color: Theme.of(context)
                                             .colorScheme
-                                            .onPrimary,
+                                            .primary,
                                       ),
                                     ),
                                   ),
                                 ),
-                                Expanded(
-                                  child: Center(
-                                    child: Text(
-                                      AppLanguage.details,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .headlineLarge
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  width: 40.w,
-                                  height: 40.w,
-                                  alignment: Alignment.center,
-                                  child: InkWell(
-                                    onTap: () {
-                                      final favoritesBloc = sl<FavoritesBloc>();
-
-                                      if (_localFavorite) {
-                                        favoritesBloc.add(FavoritesRemoveEvent(
-                                            id: product.id));
-                                        TopToast.show(
-                                          context,
-                                          '${product.name} ${AppLanguage.removedFromFavorites}',
-                                        );
-                                      } else {
-                                        favoritesBloc.add(FavoritesAddEvent(
-                                            userId: 0, productId: product.id));
-                                        TopToast.show(
-                                          context,
-                                          '${product.name} ${AppLanguage.addedToFavorites}',
-                                        );
-                                      }
-
-                                      // Update local state immediately for instant UI feedback
-                                      setState(() {
-                                        _localFavorite = !_localFavorite;
-                                        if (_localFavorite) {
-                                          _loveCount++;
-                                        } else {
-                                          if (_loveCount > 0) _loveCount--;
-                                        }
-                                      });
-
-                                      // Refresh catalog after a short delay to update the product list
-                                      Future.delayed(
-                                          const Duration(milliseconds: 500),
-                                          () {
-                                        try {
-                                          sl<CatalogBloc>()
-                                              .add(CatalogLoadEvent());
-                                        } catch (e) {
-                                          // Catalog bloc might not be available
-                                        }
-                                      });
-                                    },
-                                    borderRadius: BorderRadius.circular(24),
-                                    child: Container(
-                                      width: 40.w,
-                                      height: 40.w,
-                                      decoration: BoxDecoration(
-                                        color: Colors.transparent,
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                          width: 1,
-                                        ),
-                                      ),
-                                      alignment: Alignment.center,
-                                      child: SvgPicture.asset(
-                                        _localFavorite
-                                            ? 'assets/icons/favoris.svg'
-                                            : 'assets/icons/favoris_reversed.svg',
-                                        width: 24.w,
-                                        height: 24.h,
-                                        colorFilter: ColorFilter.mode(
-                                            Theme.of(context)
-                                                .colorScheme
-                                                .primary,
-                                            BlendMode.srcIn),
-                                        placeholderBuilder: (context) => Icon(
-                                          _localFavorite
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          size: 20.w,
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .primary,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
 
-                          const SizedBox(height: 12),
+                          SizedBox(height: 12.h),
 
                           // Loading indicator
                           if (_isLoading)
@@ -250,7 +245,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               children: [
                                 Center(
                                   child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(16.r),
                                     child: SizedBox(
                                       width: double.infinity,
                                       height: 260.h,
@@ -307,14 +302,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   ),
                                 ),
                                 if (product.pics.length > 1) ...[
-                                  const SizedBox(height: 8),
+                                  SizedBox(height: 8.h),
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     children: List.generate(
                                       product.pics.length,
                                       (index) => Container(
-                                        margin: const EdgeInsets.symmetric(
-                                            horizontal: 4),
+                                        margin: EdgeInsets.symmetric(
+                                            horizontal: 4.w),
                                         width: 8.w,
                                         height: 8.h,
                                         decoration: BoxDecoration(
@@ -333,7 +328,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             ),
 
                           if (!_isLoading) ...[
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8.h),
 
                             // Name and brand
                             Text(
@@ -343,12 +338,13 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   .headlineMedium
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
+                                    fontSize: 24.sp,
                                   ),
                             ),
 
                             if (product.brand != null &&
                                 product.brand!.isNotEmpty) ...[
-                              const SizedBox(height: 6),
+                              SizedBox(height: 6.h),
                               Text(
                                 product.brand!,
                                 style: Theme.of(context)
@@ -362,13 +358,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                       decorationColor: Theme.of(context)
                                           .extension<BrandColors>()
                                           ?.brandTeal,
+                                      fontSize: 12.sp,
                                     ),
                               ),
                             ],
 
                             if (product.category != null &&
                                 product.category!.isNotEmpty) ...[
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4.h),
                               Text(
                                 product.category!,
                                 style: Theme.of(context)
@@ -376,11 +373,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     .bodySmall
                                     ?.copyWith(
                                       color: Colors.grey[600],
+                                      fontSize: 12.sp,
                                     ),
                               ),
                             ],
 
-                            const SizedBox(height: 8),
+                            SizedBox(height: 8.h),
 
                             // Quantity per batch and price
                             Row(
@@ -397,6 +395,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                           color: Theme.of(context)
                                               .extension<BrandColors>()
                                               ?.brandTeal,
+                                          fontSize: 12.sp,
                                         ),
                                   ),
                                 Text(
@@ -412,7 +411,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               ],
                             ),
 
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12.h),
 
                             // Small action buttons row
                             Row(
@@ -439,7 +438,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                         color: Colors.red,
                                       ),
                                     ),
-                                    const SizedBox(width: 4),
+                                    SizedBox(width: 4.w),
                                     Text(
                                       '$_loveCount',
                                       style: Theme.of(context)
@@ -448,6 +447,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                           ?.copyWith(
                                             fontWeight: FontWeight.w500,
                                             color: Colors.red,
+                                            fontSize: 14.sp,
                                           ),
                                     ),
                                   ],
@@ -461,14 +461,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               ],
                             ),
 
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12.h),
 
                             Container(
-                                height: 1,
+                                height: 1.h,
                                 width: double.infinity,
                                 color: Colors.grey.withOpacity(0.3)),
 
-                            const SizedBox(height: 12),
+                            SizedBox(height: 12.h),
 
                             // Specifications
                             if (product.specifications != null &&
@@ -483,15 +483,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8.h),
                               ...product.specifications!.map((spec) => Padding(
                                     padding: const EdgeInsets.only(bottom: 4.0),
                                     child: Text('• $spec',
                                         style: Theme.of(context)
                                             .textTheme
-                                            .bodySmall),
+                                            .bodySmall
+                                            ?.copyWith(fontSize: 14.sp)),
                                   )),
-                              const SizedBox(height: 12),
+                              SizedBox(height: 12.h),
                             ],
 
                             // Description
@@ -506,10 +507,13 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8.h),
                               Text(product.description,
-                                  style: Theme.of(context).textTheme.bodySmall),
-                              const SizedBox(height: 24),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(fontSize: 14.sp)),
+                              SizedBox(height: 24.h),
                             ],
                           ],
                         ],
@@ -520,7 +524,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
                 // Bottom fixed controls
                 Container(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  padding: EdgeInsets.symmetric(vertical: 8.0.h),
                   child: Row(
                     children: [
                       Expanded(
@@ -604,7 +608,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           TopToast.show(
                               context, AppLanguage.productAddedToCart);
                         },
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(24.r),
                         child: Container(
                           width: 48.w,
                           height: 48.w,
@@ -655,7 +659,7 @@ class IconTextButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: () => onTap(),
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(8.r),
       child: Container(
         color: Colors.transparent,
         child: Row(
@@ -680,6 +684,7 @@ class IconTextButton extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                     color:
                         color ?? Theme.of(context).textTheme.bodyMedium?.color,
+                    fontSize: 14.sp,
                   ),
             ),
           ],

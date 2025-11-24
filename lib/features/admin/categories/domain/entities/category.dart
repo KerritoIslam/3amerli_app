@@ -15,7 +15,10 @@ class Category {
     required this.productCount,
     required this.createdAt,
     required this.updatedAt,
+    this.parentId,
   });
+
+  final String? parentId;
 }
 
 class SubCategory {

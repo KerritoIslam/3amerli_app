@@ -1,4 +1,5 @@
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../domain/entities/order.dart';
@@ -165,7 +166,7 @@ class OrderTrackingPage extends StatelessWidget {
                     ),
                   ),
                   const Spacer(),
-                  Text('Suivre \nMa Commande',
+                  Text(AppLanguage.trackMyOrder,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           fontSize: 22,
@@ -180,7 +181,7 @@ class OrderTrackingPage extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Commande #${order.id}',
+                    child: Text('${AppLanguage.orderNumberPrefix}${order.id}',
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -246,19 +247,19 @@ class OrderTrackingPage extends StatelessWidget {
   }
 
   String _month(int m) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+    final months = [
+      AppLanguage.jan,
+      AppLanguage.feb,
+      AppLanguage.mar,
+      AppLanguage.apr,
+      AppLanguage.may,
+      AppLanguage.jun,
+      AppLanguage.jul,
+      AppLanguage.aug,
+      AppLanguage.sep,
+      AppLanguage.oct,
+      AppLanguage.nov,
+      AppLanguage.dec
     ];
     return months[(m - 1).clamp(0, 11)];
   }
@@ -266,7 +267,7 @@ class OrderTrackingPage extends StatelessWidget {
   String _formatTime(DateTime dt) {
     final hour = dt.hour;
     final minute = dt.minute.toString().padLeft(2, '0');
-    final suffix = hour >= 12 ? 'PM' : 'AM';
+    final suffix = hour >= 12 ? AppLanguage.pm : AppLanguage.am;
     final h12 = hour % 12 == 0 ? 12 : hour % 12;
     return '$h12:$minute $suffix';
   }

@@ -11,6 +11,7 @@ import 'package:amerli_app/features/cart/app/pages/paiement_screen.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_state.dart';
 import 'package:amerli_app/core/config/injection.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -45,7 +46,7 @@ class _CartView extends StatelessWidget {
                     )),
           )),
           body: Padding(
-            padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
+            padding: EdgeInsets.only(top: 20.h, left: 28.w, right: 28.w),
             child:
                 BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
               // debug
@@ -116,7 +117,7 @@ class _CartView extends StatelessWidget {
                     Positioned.fill(
                       child: Padding(
                         padding: EdgeInsets.only(
-                            bottom: kBottomNavigationBarHeight + 120),
+                            bottom: kBottomNavigationBarHeight + 120.h),
                         child: ProductsTilesList(
                           products: productsInCart,
                           onQuantityChange: (index, quantity) {
@@ -141,7 +142,7 @@ class _CartView extends StatelessWidget {
                     Positioned(
                       left: 0,
                       right: 0,
-                      bottom: kBottomNavigationBarHeight + 64,
+                      bottom: kBottomNavigationBarHeight + 64.h,
                       child: Center(
                         child: BottomCartSummary(
                           total: total,

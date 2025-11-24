@@ -22,11 +22,11 @@ import 'core/config/router.dart';
 import 'core/storage/local_storage.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
-import 'package:amerli_app/core/utils/top_toast.dart';
-import 'package:amerli_app/core/error/global_error_handler.dart';
+
 // routing will provide pages and blocs via DI where needed
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'features/cart/app/bloc/cart_bloc.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -63,6 +63,9 @@ void main() async {
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
   @override
   State<MyApp> createState() => _MyAppState();
 }
@@ -79,7 +82,10 @@ class _MyAppState extends State<MyApp> {
     // Initialize router once in initState
     final authBloc = di.sl<AuthBloc>();
     final localStorage = di.sl<LocalStorage>();
-    _router = createRouter(authBloc: authBloc, localStorage: localStorage);
+    _router = createRouter(
+        authBloc: authBloc,
+        localStorage: localStorage,
+        navigatorKey: MyApp.navigatorKey);
 
     // Apply language and listen for changes
     _applyLanguage(_settings.language);
@@ -200,6 +206,7 @@ class _MyAppState extends State<MyApp> {
                 BlocProvider.value(value: di.sl<CatalogBloc>()),
                 BlocProvider.value(value: di.sl<AuthBloc>()),
                 BlocProvider.value(value: di.sl<NotificationsBloc>()),
+                BlocProvider.value(value: di.sl<CartBloc>()), // Added CartBloc
                 BlocProvider(create: (_) => di.sl<ProfileBloc>()),
               ],
               child: Directionality(
@@ -218,13 +225,11 @@ class _MyAppState extends State<MyApp> {
                   locale: Locale(currentLocale.name),
                   // Ensure RTL support for Arabic - double wrap for maximum compatibility
                   builder: (context, child) {
-                    return GlobalErrorListener(
-                      child: Directionality(
-                        textDirection: currentLocale == AppLocale.ar
-                            ? TextDirection.rtl
-                            : TextDirection.ltr,
-                        child: child ?? const SizedBox.shrink(),
-                      ),
+                    return Directionality(
+                      textDirection: currentLocale == AppLocale.ar
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
+                      child: child ?? const SizedBox.shrink(),
                     );
                   },
                 ),
@@ -271,41 +276,5 @@ class _MyAppState extends State<MyApp> {
       // Default navigation if no data
       _router.go('/home');
     }
-  }
-}
-
-class GlobalErrorListener extends StatefulWidget {
-  final Widget child;
-  const GlobalErrorListener({super.key, required this.child});
-
-  @override
-  State<GlobalErrorListener> createState() => _GlobalErrorListenerState();
-}
-
-class _GlobalErrorListenerState extends State<GlobalErrorListener> {
-  StreamSubscription? _sub;
-
-  @override
-  void initState() {
-    super.initState();
-    try {
-      final errorHandler = di.sl<GlobalErrorHandler>();
-      _sub = errorHandler.errorStream.listen((message) {
-        if (mounted) {
-          TopToast.show(context, message, isError: true);
-        }
-      });
-    } catch (_) {}
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return widget.child;
   }
 }

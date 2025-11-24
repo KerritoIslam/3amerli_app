@@ -1226,7 +1226,7 @@
                     "description": "The quantity of the product per batch.",
                     "example": 25
                   },
-                  "specifications": {
+                  "specification": {
                     "type": "string",
                     "description": "Optional: Product specifications, submitted as a single comma-separated string.",
                     "example": "Material: Metal, Screen: 7 inch"
@@ -2909,6 +2909,19 @@
               "default": 10,
               "type": "number"
             }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ar",
+                "fr",
+                "en"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3011,6 +3024,53 @@
           }
         ],
         "summary": "Delete a notification",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/notifications/language": {
+      "patch": {
+        "operationId": "NotificationsController_updateLanguage_api/v1",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fcmToken": {
+                    "type": "string",
+                    "example": "example_fcm_token"
+                  },
+                  "language": {
+                    "type": "string",
+                    "example": "en"
+                  }
+                },
+                "required": [
+                  "language",
+                  "fcmToken"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Notification language updated successfully"
+          },
+          "400": {
+            "description": "Bad Request"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update notification language preference",
         "tags": [
           "Notifications"
         ]
@@ -3338,49 +3398,6 @@
         "summary": "Generate a sample PDF for testing",
         "tags": [
           "invoices"
-        ]
-      }
-    },
-    "/api/v1/settings/language": {
-      "put": {
-        "operationId": "SettingsController_updateLanguage_api/v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLanguageDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Language preference updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Settings"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid language value"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update user language preference",
-        "tags": [
-          "settings"
         ]
       }
     }
@@ -5149,11 +5166,17 @@
               "web"
             ],
             "example": "android"
+          },
+          "lang": {
+            "type": "string",
+            "description": "The preferred language of the user.",
+            "example": "en"
           }
         },
         "required": [
           "fcmToken",
-          "os"
+          "os",
+          "lang"
         ]
       },
       "RegisterTokenResponseDto": {
@@ -5191,7 +5214,7 @@
           },
           "title": {
             "type": "string",
-            "description": "The title of the notification.",
+            "description": "The title i18 key of the notification.",
             "example": "New Message"
           },
           "type": {
@@ -5211,7 +5234,7 @@
           },
           "body": {
             "type": "string",
-            "description": "The body of the notification.",
+            "description": "The i18 body key of the notification.",
             "example": "You have a new message from John Doe."
           },
           "receiverId": {
@@ -5266,62 +5289,6 @@
       "DeleteResult": {
         "type": "object",
         "properties": {}
-      },
-      "UpdateLanguageDto": {
-        "type": "object",
-        "properties": {
-          "language": {
-            "type": "string",
-            "description": "User preferred language",
-            "enum": [
-              "ar",
-              "fr",
-              "en"
-            ],
-            "example": "en"
-          }
-        },
-        "required": [
-          "language"
-        ]
-      },
-      "Settings": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique identifier for the entity",
-            "example": 1
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when the entity was created",
-            "example": "2023-10-05T14:48:00.000Z"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when the entity was last updated",
-            "example": "2023-10-05T14:48:00.000Z"
-          },
-          "language": {
-            "type": "string",
-            "description": "User preferred language",
-            "enum": [
-              "ar",
-              "fr",
-              "en"
-            ],
-            "example": "en"
-          }
-        },
-        "required": [
-          "id",
-          "createdAt",
-          "updatedAt",
-          "language"
-        ]
       }
     }
   }

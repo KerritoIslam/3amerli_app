@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
@@ -87,7 +88,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
                       // Centered title
                       Center(
-                        child: Text('Notifications',
+                        child: Text(AppLanguage.notificationsTitle,
                             textAlign: TextAlign.center,
                             style: Theme.of(context)
                                 .textTheme
@@ -111,7 +112,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       }
 
                       if (state is NotificationsError) {
-                        return Center(child: Text('Erreur: ${state.message}'));
+                        return Center(
+                            child:
+                                Text('${AppLanguage.error}: ${state.message}'));
                       }
 
                       if (state is NotificationsLoaded) {
@@ -147,21 +150,21 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             children: [
                               if (today.isNotEmpty) ...[
                                 const SizedBox(height: 8),
-                                sectionHeaderWithAction('Aujourd\'hui',
+                                sectionHeaderWithAction(AppLanguage.today,
                                     showAction: firstSection == 'today'),
                                 ...today.map(
                                     (n) => _buildDismissibleNotification(n)),
                               ],
                               if (yesterday.isNotEmpty) ...[
                                 const SizedBox(height: 12),
-                                sectionHeaderWithAction('Hier',
+                                sectionHeaderWithAction(AppLanguage.yesterday,
                                     showAction: firstSection == 'yesterday'),
                                 ...yesterday.map(
                                     (n) => _buildDismissibleNotification(n)),
                               ],
                               if (last7.isNotEmpty) ...[
                                 const SizedBox(height: 12),
-                                sectionHeaderWithAction('Les 7 derniers jours',
+                                sectionHeaderWithAction(AppLanguage.last7Days,
                                     showAction: firstSection == 'last7'),
                                 ...last7.map(
                                     (n) => _buildDismissibleNotification(n)),
@@ -200,7 +203,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
       onDismissed: (direction) {
         _bloc.add(NotificationsDeleteEvent(notification.id));
-        TopToast.show(context, 'Notification supprimée');
+        TopToast.show(context, AppLanguage.notificationDeleted);
       },
       child: NotificationListCard(
         notification: notification,
@@ -234,7 +237,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           if (showAction)
             TextButton(
               onPressed: () => _bloc.add(NotificationsMarkAllReadEvent()),
-              child: Text('Marquer tout comme lu',
+              child: Text(AppLanguage.markAllAsRead,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: Theme.of(context).colorScheme.primary,
                       decoration: TextDecoration.underline,
@@ -247,7 +250,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   void onTapNotification(ent.AppNotification n) {
     _bloc.add(NotificationsToggleReadEvent(n));
-    TopToast.show(context, 'Ouvrir la commande liée à la notification');
+    TopToast.show(context, AppLanguage.openOrderLinkedToNotification);
   }
 
   bool isSameDate(DateTime a, DateTime b) =>

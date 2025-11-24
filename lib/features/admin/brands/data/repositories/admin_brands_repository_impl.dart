@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:amerli_app/core/dio/api_service.dart';
 import '../../domain/entities/brand.dart';
 import '../../domain/repositories/admin_brands_repository.dart';
@@ -6,6 +7,18 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
   final ApiService apiService;
 
   AdminBrandsRepositoryImpl({required this.apiService});
+
+  Never _handleError(dynamic e) {
+    if (e is DioException && e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map && data['message'] != null) {
+        final msg = data['message'];
+        if (msg is List) throw Exception(msg.join('\n'));
+        throw Exception(msg.toString());
+      }
+    }
+    throw e;
+  }
 
   @override
   Future<List<Brand>> getAllBrands({int page = 1, int limit = 20}) async {
@@ -24,7 +37,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Get all brands error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -43,7 +56,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Get brand by id error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -67,7 +80,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Create brand error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -87,7 +100,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Update brand error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -103,7 +116,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Delete brand error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 }

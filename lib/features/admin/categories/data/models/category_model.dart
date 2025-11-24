@@ -24,7 +24,7 @@ class CategoryModel {
       id: json['id'] as String,
       name: json['name'] as String,
       description: json['description'] as String,
-      imageUrl: json['imageUrl'] as String?,
+      imageUrl: json['pictureUrl'] as String? ?? json['imageUrl'] as String?,
       productCount: json['productCount'] as int,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),

@@ -34,7 +34,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
     try {
       // 1) Try recent/daily sales (expected shape: { data: [ {date, amount, ordersCount}, ... ] })
-      final dailyResp = await apiService.get('/analytics/test/daily-stats', queryParameters: {'limit': 7});
+      final dailyResp = await apiService.get('/analytics/daily-stats', queryParameters: {'limit': 7});
       final body = dailyResp.data;
       if (body != null) {
         // If the endpoint returns a structured summary (orders/revenue/supermarkets), extract direct fields
@@ -132,7 +132,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
     try {
       // 4) Try top products
-      final topResp = await apiService.get('/analytics/test/top-products');
+      final topResp = await apiService.get('/analytics/top-products');
       final tb = topResp.data;
       if (tb != null) {
         List<dynamic>? list;
@@ -155,7 +155,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
     try {
       // 2) Try turnover/summary endpoint for totals or monthly turnover list
-      final tResp = await apiService.get('/analytics/test/turnover');
+      final tResp = await apiService.get('/analytics/turnover');
       final b = tResp.data;
 
       // If the endpoint returns a monthly turnover list (e.g. [{month: 'Jan', turnover: 3500}, ...])
@@ -255,7 +255,7 @@ class DashboardRepositoryImpl implements DashboardRepository {
 
     try {
       // 3) Try to fetch counts (users/products) from a summary endpoint if available
-      final summaryResp = await apiService.get('/analytics/test/daily-stats');
+      final summaryResp = await apiService.get('/analytics/daily-stats');
       final sb = summaryResp.data;
       if (sb is Map) {
         totalUsers = (sb['totalUsers'] ?? sb['usersCount'] ?? totalUsers) as int? ?? totalUsers;

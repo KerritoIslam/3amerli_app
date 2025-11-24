@@ -1,3 +1,5 @@
+import 'package:amerli_app/utils/constants/app_language.dart';
+
 enum OrderStatus { confirmed, preparing, delivering, delivered, canceled }
 
 extension OrderStatusX on OrderStatus {
@@ -41,15 +43,15 @@ extension OrderStatusX on OrderStatus {
   String get displayLabel {
     switch (this) {
       case OrderStatus.confirmed:
-        return 'En attente';
+        return AppLanguage.pending;
       case OrderStatus.preparing:
-        return 'En préparation';
+        return AppLanguage.statusPreparing;
       case OrderStatus.delivering:
-        return 'En livraison';
+        return AppLanguage.statusDelivering;
       case OrderStatus.delivered:
-        return 'Livrée';
+        return AppLanguage.delivered;
       case OrderStatus.canceled:
-        return 'Annulée';
+        return AppLanguage.cancelled;
     }
   }
 }

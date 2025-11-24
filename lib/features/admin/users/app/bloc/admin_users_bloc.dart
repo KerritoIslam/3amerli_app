@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 import '../../domain/repositories/admin_users_repository.dart';
 import 'admin_users_event.dart';
@@ -91,8 +92,8 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.updateUserRole(event.userId, event.newRole);
-      emit(const AdminUsersOperationSuccess(
-        message: 'Rôle mis à jour avec succès',
+      emit(AdminUsersOperationSuccess(
+        message: AppLanguage.roleUpdated,
       ));
       // Reload detail to show updated user
       add(AdminUsersLoadDetailEvent(userId: event.userId));
@@ -107,8 +108,8 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.updateUserStatus(event.userId, event.newStatus);
-      emit(const AdminUsersOperationSuccess(
-        message: 'Statut mis à jour avec succès',
+      emit(AdminUsersOperationSuccess(
+        message: AppLanguage.statusUpdated,
       ));
       // Reload detail to show updated user
       add(AdminUsersLoadDetailEvent(userId: event.userId));
@@ -123,8 +124,8 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.deleteUser(event.userId);
-      emit(const AdminUsersOperationSuccess(
-        message: 'Utilisateur supprimé avec succès',
+      emit(AdminUsersOperationSuccess(
+        message: AppLanguage.userDeleted,
       ));
     } catch (e) {
       emit(AdminUsersError(message: e.toString()));
@@ -138,8 +139,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
     try {
       await _repository.deleteMultipleUsers(event.userIds);
       emit(AdminUsersOperationSuccess(
-        message:
-            '${event.userIds.length} utilisateur(s) supprimé(s) avec succès',
+        message: AppLanguage.usersDeleted(event.userIds.length),
       ));
     } catch (e) {
       emit(AdminUsersError(message: e.toString()));
@@ -205,8 +205,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.addToBlacklist(event.userId);
-      emit(const AdminUsersOperationSuccess(
-          message: 'Utilisateur suspendu avec succès'));
+      emit(AdminUsersOperationSuccess(message: AppLanguage.userSuspended));
     } catch (e) {
       emit(AdminUsersError(message: e.toString()));
     }
@@ -218,8 +217,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.restoreFromBlacklist(event.userId);
-      emit(const AdminUsersOperationSuccess(
-          message: 'Utilisateur restauré avec succès'));
+      emit(AdminUsersOperationSuccess(message: AppLanguage.userRestored));
     } catch (e) {
       emit(AdminUsersError(message: e.toString()));
     }

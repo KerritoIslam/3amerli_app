@@ -16,6 +16,7 @@ import 'package:amerli_app/features/admin/brands/domain/entities/brand.dart';
 import '../../domain/repositories/admin_products_repository.dart';
 // import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class AddProductPage extends StatefulWidget {
   final String? productId; // null for add, non-null for edit
@@ -103,9 +104,7 @@ class _AddProductPageState extends State<AddProductPage> {
     } catch (e) {
       setState(() => _isLoadingData = false);
       if (mounted) {
-        if (mounted) {
-          TopToast.show(context, 'Erreur de chargement: $e', isError: true);
-        }
+        TopToast.show(context, 'Erreur de chargement: $e', isError: true);
       }
     }
   }
@@ -161,10 +160,8 @@ class _AddProductPageState extends State<AddProductPage> {
     } catch (e) {
       setState(() => _isLoadingProduct = false);
       if (mounted) {
-        if (mounted) {
-          TopToast.show(context, 'Erreur de chargement du produit: $e',
-              isError: true);
-        }
+        TopToast.show(context, 'Erreur de chargement du produit: $e',
+            isError: true);
       }
     }
   }
@@ -241,13 +238,12 @@ class _AddProductPageState extends State<AddProductPage> {
       // For new products, validate that category and brand are selected
       if (!isEditing) {
         if (_selectedCategoryId == null) {
-          TopToast.show(context, 'Veuillez sélectionner une catégorie',
+          TopToast.show(context, AppLanguage.pleaseSelectCategory,
               isError: true);
           return;
         }
         if (_selectedBrandId == null) {
-          TopToast.show(context, 'Veuillez sélectionner une marque',
-              isError: true);
+          TopToast.show(context, AppLanguage.pleaseSelectBrand, isError: true);
           return;
         }
       }
@@ -293,13 +289,15 @@ class _AddProductPageState extends State<AddProductPage> {
         name: _nameController.text,
         category: categoryName, // Use category NAME
         brand: brandName, // Use brand NAME
+        categoryId: _selectedCategoryId,
+        brandId: _selectedBrandId,
         quantityPerLot: int.tryParse(_quantityController.text) ?? 0,
         specifications: _specifications,
         expirationDate: _expirationDate,
         pricePerLot: double.tryParse(_priceController.text) ?? 0.0,
         stockStatus: (int.tryParse(_availableQuantityController.text) ?? 0) > 0
-            ? 'En stock'
-            : 'Rupture',
+            ? AppLanguage.inStock
+            : AppLanguage.outOfStock,
         availableQuantity: int.tryParse(_availableQuantityController.text) ?? 0,
         images: reorderedImages, // Use reordered images with main image first
         mainImageIndex: 0, // Main image is now always at index 0
@@ -349,6 +347,7 @@ class _AddProductPageState extends State<AddProductPage> {
                         'assets/icons/back_arrow.svg',
                         width: 16,
                         height: 16,
+                        matchTextDirection: true,
                         color: Theme.of(context).colorScheme.onPrimary,
                         placeholderBuilder: (context) => Icon(
                           Icons.arrow_back,
@@ -365,7 +364,9 @@ class _AddProductPageState extends State<AddProductPage> {
                   Expanded(
                     child: Center(
                       child: Text(
-                        widget.productId == null ? 'Ajouter' : 'Modifier',
+                        widget.productId == null
+                            ? AppLanguage.add
+                            : AppLanguage.edit,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -463,7 +464,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _currentStep == 0 ? 'Suivant' : 'Enregistrer',
+                        _currentStep == 0 ? AppLanguage.next : AppLanguage.save,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -546,7 +547,7 @@ class _AddProductPageState extends State<AddProductPage> {
           Container(
             key: _step1LabelKey,
             child: Text(
-              'etap 1',
+              '${AppLanguage.step} 1',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w700,
@@ -556,8 +557,8 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 8),
           Text(
             widget.productId != null
-                ? 'Informations générales (optionnel)'
-                : 'Informations générales',
+                ? AppLanguage.generalInfoOptional
+                : AppLanguage.generalInfo,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -567,7 +568,7 @@ class _AddProductPageState extends State<AddProductPage> {
           if (widget.productId != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Modifiez uniquement les champs que vous souhaitez mettre à jour',
+              AppLanguage.editFieldsHint,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,
@@ -579,7 +580,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
           // Product Name
           _buildTextField(
-            label: 'Nom du produit',
+            label: AppLanguage.productName,
             required: true,
             controller: _nameController,
             keyboardType: TextInputType.text,
@@ -589,7 +590,7 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 16),
 
           // Category Dropdown
-          _buildLabel('Catégorie', required: true),
+          _buildLabel(AppLanguage.category, required: true),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -609,15 +610,15 @@ class _AddProductPageState extends State<AddProductPage> {
                   vertical: 12,
                 ),
                 hintText: _isLoadingData
-                    ? 'Chargement...'
-                    : 'Sélectionner une catégorie',
+                    ? AppLanguage.loading
+                    : AppLanguage.selectCategory,
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
               validator: (value) {
                 // Only validate as required for new products
                 final bool isEditing = widget.productId != null;
                 if (!isEditing && value == null) {
-                  return 'Catégorie requise';
+                  return AppLanguage.categoryRequired;
                 }
                 return null;
               },
@@ -639,7 +640,7 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 16),
 
           // Brand (selection)
-          _buildLabel('Marque', required: true),
+          _buildLabel(AppLanguage.brand, required: true),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -659,15 +660,15 @@ class _AddProductPageState extends State<AddProductPage> {
                   vertical: 12,
                 ),
                 hintText: _isLoadingData
-                    ? 'Chargement...'
-                    : 'Sélectionner une marque',
+                    ? AppLanguage.loading
+                    : AppLanguage.selectBrand,
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
               validator: (value) {
                 // Only validate as required for new products
                 final bool isEditing = widget.productId != null;
                 if (!isEditing && value == null) {
-                  return 'Marque requise';
+                  return AppLanguage.brandRequired;
                 }
                 return null;
               },
@@ -690,7 +691,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
           // Quantity per lot
           _buildTextField(
-            label: 'Quantité par lot',
+            label: AppLanguage.quantityPerBatch,
             required: true,
             controller: _quantityController,
             keyboardType: TextInputType.number,
@@ -700,7 +701,7 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 16),
 
           // Specifications
-          _buildLabel('Spécifications'),
+          _buildLabel(AppLanguage.specifications),
           const SizedBox(height: 8),
           Row(
             children: [
@@ -742,7 +743,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     vertical: 12,
                   ),
                 ),
-                child: const Text('+ Ajouter'),
+                child: Text('+ ${AppLanguage.add}'),
               ),
             ],
           ),
@@ -766,7 +767,8 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 16),
 
           // Expiration Date
-          _buildLabel('Date d\'expiration', hint: 'JJ/MM/YYYY'),
+          _buildLabel(AppLanguage.expirationDate,
+              hint: AppLanguage.dateFormatHint),
           const SizedBox(height: 8),
           InkWell(
             onTap: () async {
@@ -797,7 +799,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 children: [
                   Text(
                     _expirationDate == null
-                        ? 'JJ/MM/YYYY'
+                        ? AppLanguage.dateFormatHint
                         : '${_expirationDate!.day}/${_expirationDate!.month}/${_expirationDate!.year}',
                     style: TextStyle(
                       color: _expirationDate == null
@@ -828,7 +830,7 @@ class _AddProductPageState extends State<AddProductPage> {
           Container(
             key: _step2LabelKey,
             child: Text(
-              'etap 2',
+              '${AppLanguage.step} 2',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w700,
@@ -838,8 +840,8 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 8),
           Text(
             widget.productId != null
-                ? 'Détails du prix (optionnel)'
-                : 'Détails du prix',
+                ? AppLanguage.priceDetailsOptional
+                : AppLanguage.priceDetails,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -849,7 +851,7 @@ class _AddProductPageState extends State<AddProductPage> {
           if (widget.productId != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Modifiez uniquement les champs que vous souhaitez mettre à jour',
+              AppLanguage.editFieldsHint,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,
@@ -861,7 +863,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
           // Price per lot
           _buildTextField(
-            label: 'Prix par lot',
+            label: AppLanguage.pricePerBatch,
             required: true,
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -870,8 +872,8 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 24),
 
-          const Text(
-            'Stock et disponibilité',
+          Text(
+            AppLanguage.stockAndAvailability,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -880,11 +882,9 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 20),
 
-          // Stock status removed; derived from available quantity
-
           // Available Quantity
           _buildTextField(
-            label: 'Quantité disponible',
+            label: AppLanguage.availableQuantity,
             required: true,
             controller: _availableQuantityController,
             keyboardType: TextInputType.number,
@@ -894,8 +894,8 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 24),
 
           // Images Section
-          const Text(
-            'Images du produit',
+          Text(
+            AppLanguage.productImages,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -918,26 +918,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     onTap: () => _showImagePreview(index),
                     child: Stack(
                       children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isMain
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.grey.shade300,
-                              width: isMain ? 3 : 1,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              File(_images[index]),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
+                        _buildImagePreview(index),
                         if (isMain)
                           Positioned(
                             top: 4,
@@ -951,8 +932,8 @@ class _AddProductPageState extends State<AddProductPage> {
                                 color: Theme.of(context).colorScheme.primary,
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
-                                'Principale',
+                              child: Text(
+                                AppLanguage.mainImage,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -996,7 +977,7 @@ class _AddProductPageState extends State<AddProductPage> {
             child: OutlinedButton.icon(
               onPressed: _pickImages,
               icon: const Icon(Icons.upload_file),
-              label: const Text('Choisir un fichier'),
+              label: Text(AppLanguage.chooseFile),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 side: BorderSide(
@@ -1015,7 +996,47 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
+  Widget _buildImagePreview(int index) {
+    final imagePath = _images[index];
+    final isMain = index == _mainImageIndex;
+    final isRemote = imagePath.startsWith('http');
+
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: isMain
+            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+            : Border.all(color: Colors.grey.shade300),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: isRemote
+            ? Image.network(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                      child: Icon(Icons.broken_image, size: 30));
+                },
+              )
+            : Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                      child: Icon(Icons.broken_image, size: 30));
+                },
+              ),
+      ),
+    );
+  }
+
   void _showImagePreview(int index) {
+    final imagePath = _images[index];
+    final isRemote = imagePath.startsWith('http');
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -1043,7 +1064,21 @@ class _AddProductPageState extends State<AddProductPage> {
             // Image
             Expanded(
               child: Center(
-                child: Image.file(File(_images[index])),
+                child: isRemote
+                    ? Image.network(
+                        imagePath,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.broken_image,
+                              color: Colors.white, size: 50);
+                        },
+                      )
+                    : Image.file(
+                        File(imagePath),
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.broken_image,
+                              color: Colors.white, size: 50);
+                        },
+                      ),
               ),
             ),
 
@@ -1066,7 +1101,7 @@ class _AddProductPageState extends State<AddProductPage> {
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    child: const Text('Définir comme image principale'),
+                    child: Text(AppLanguage.setAsMainImage),
                   ),
                 ),
               ),
@@ -1134,54 +1169,38 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
             ),
             style: const TextStyle(fontSize: 14),
-            validator: required
-                ? (value) {
-                    // Only validate as required for new products
-                    final bool isEditing = widget.productId != null;
-                    if (!isEditing && (value == null || value.isEmpty)) {
-                      return 'Ce champ est requis';
-                    }
-                    return null;
-                  }
-                : null,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildLabel(String label,
+  Widget _buildLabel(String text,
       {bool required = false, String? hint, bool hintIsError = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            if (required)
-              const Text(
-                ' *',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 14,
-                ),
-              ),
-          ],
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
         ),
+        if (required)
+          const Text(
+            ' *',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
         if (hint != null) ...[
-          const SizedBox(height: 6),
+          const Spacer(),
           Text(
             hint,
-            style: hintIsError
-                ? const TextStyle(color: Colors.red, fontSize: 12)
-                : TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            style: TextStyle(
+              fontSize: 12,
+              color: hintIsError ? Colors.red : Colors.grey.shade500,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ],
@@ -1194,86 +1213,45 @@ class _MeasuredStepper extends StatelessWidget {
   final int totalSteps;
   final double connectorHeight;
 
-  const _MeasuredStepper(
-      {required this.currentStep,
-      required this.totalSteps,
-      required this.connectorHeight});
+  const _MeasuredStepper({
+    required this.currentStep,
+    required this.totalSteps,
+    required this.connectorHeight,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final isCompleted = currentStep >= 1;
-    final lineColor = isCompleted ? primary : Colors.grey.shade300;
-
-    Widget circle(int index) {
-      final isActive = index == currentStep;
-      final isDone = index < currentStep;
-      final color = isActive || isDone ? primary : Colors.grey.shade300;
-      return TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 250),
-        tween: Tween<double>(begin: isActive || isDone ? 0.85 : 1.0, end: 1.0),
-        builder: (context, scale, child) {
-          return Transform.scale(
-            scale: scale,
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isActive || isDone ? color : Colors.white,
-                border: Border.all(color: color, width: 2),
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-    // If the user is on the second step (currentStep == 1) we set the desired
-    // center-to-center distance between the two circles to 50 pixels so the
-    // second circle rises. Convert that to the connector height (center
-    // distance minus circle diameter). Otherwise use the measured connector
-    // height passed in.
-    const double desiredCenterDistanceOnStep2 = 50.0;
-    final double circleDiameter = 12.0; // must match circle() size
-    final double totalConnector = (currentStep == 1)
-        ? (desiredCenterDistanceOnStep2 - circleDiameter)
-            .clamp(0.0, double.infinity)
-        : connectorHeight.clamp(0.0, double.infinity);
-
-    // We'll render the full connector (no artificial spare gaps) so the circles
-    // move to satisfy the totalConnector height. AnimatedContainer will smooth
-    // the transition when the step changes.
-    final double displayedConnector = totalConnector;
-    final double spareAbove = 0.0;
-    final double spareBelow = 0.0;
-
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Center(child: circle(0)),
-        // spacer above the visible connector (animated for smoothness)
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
-          height: spareAbove,
-        ),
-        // visible connector segment — directly adjacent to the circles
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
+        _buildStepCircle(context, 0, currentStep >= 0),
+        Container(
           width: 2,
-          height: displayedConnector,
-          color: lineColor,
+          height: connectorHeight,
+          color: currentStep >= 1
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade300,
         ),
-        // spacer below the visible connector
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
-          height: spareBelow,
-        ),
-        Center(child: circle(1)),
+        _buildStepCircle(context, 1, currentStep >= 1),
       ],
+    );
+  }
+
+  Widget _buildStepCircle(BuildContext context, int stepIndex, bool isActive) {
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isActive
+            ? Theme.of(context).colorScheme.primary
+            : Colors.transparent,
+        border: Border.all(
+          color: isActive
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade300,
+          width: 2,
+        ),
+      ),
     );
   }
 }

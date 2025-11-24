@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:amerli_app/widgets/app_text_feild.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/entities/brand.dart';
 
 class AddBrandPage extends StatefulWidget {
@@ -48,18 +49,32 @@ class _AddBrandPageState extends State<AddBrandPage> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  InkWell(
-                    onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        shape: BoxShape.circle,
+                  Material(
+                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset(
+                          'assets/icons/back_arrow.svg',
+                          width: 16,
+                          height: 16,
+                          matchTextDirection: true,
+                          color:
+                              Theme.of(context).colorScheme.onTertiaryContainer,
+                          placeholderBuilder: (context) => Icon(
+                            Icons.arrow_back,
+                            size: 18,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onTertiaryContainer,
+                          ),
+                        ),
                       ),
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.arrow_back, size: 18),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -67,8 +82,8 @@ class _AddBrandPageState extends State<AddBrandPage> {
                     child: Center(
                       child: Text(
                           widget.edit == null
-                              ? 'Ajouter une marque'
-                              : 'Modifier la marque',
+                              ? AppLanguage.addBrand
+                              : AppLanguage.editBrand,
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold)),
                     ),
@@ -91,8 +106,8 @@ class _AddBrandPageState extends State<AddBrandPage> {
                           colorFilter: ColorFilter.mode(
                               AppColors.brandDeep, BlendMode.srcIn)),
                       const SizedBox(width: 8),
-                      const Text('Nom de la marque *',
-                          style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text('${AppLanguage.brandName} *',
+                          style: const TextStyle(fontWeight: FontWeight.w600)),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -100,11 +115,12 @@ class _AddBrandPageState extends State<AddBrandPage> {
                     key: _formKey,
                     child: AppTextField(
                       controller: _nameController,
-                      hintText: 'Entrez le nom',
+                      hintText: AppLanguage.enterBrandName,
                       // label is shown above manually, keep the field compact
                       labelText: null,
-                      validator: (v) =>
-                          (v ?? '').trim().isEmpty ? 'Le nom est requis' : null,
+                      validator: (v) => (v ?? '').trim().isEmpty
+                          ? AppLanguage.brandNameRequired
+                          : null,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -124,7 +140,7 @@ class _AddBrandPageState extends State<AddBrandPage> {
                               horizontal: 16, vertical: 12),
                           elevation: 0,
                         ),
-                        child: const Text('Enregistrer'),
+                        child: Text(AppLanguage.save),
                       ),
                     ],
                   ),

@@ -199,19 +199,38 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  InkWell(
-                    onTap: () => context.pop(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        shape: BoxShape.circle,
+                  Material(
+                    color: Theme.of(context).colorScheme.tertiaryContainer,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: () {
+                        if (Navigator.of(context).canPop()) {
+                          Navigator.of(context).pop();
+                        } else {
+                          context.go('/admin');
+                        }
+                      },
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset(
+                          'assets/icons/back_arrow.svg',
+                          width: 16,
+                          height: 16,
+                          matchTextDirection: true,
+                          color:
+                              Theme.of(context).colorScheme.onTertiaryContainer,
+                          placeholderBuilder: (context) => Icon(
+                            Icons.arrow_back,
+                            size: 18,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onTertiaryContainer,
+                          ),
+                        ),
                       ),
-                      alignment: Alignment.center,
-                      child: const Icon(Icons.arrow_back,
-                          size: 18, color: AppColors.brandDeep),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -242,18 +261,15 @@ class _AdminBrandsPageState extends State<AdminBrandsPage> {
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: () => _openAddPage(),
-                    icon: SvgPicture.asset('assets/icons/plus.svg',
-                        width: 14,
-                        height: 14,
-                        colorFilter: const ColorFilter.mode(
-                            Colors.white, BlendMode.srcIn)),
-                    label: Text(AppLanguage.addWithPlus),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: Text(AppLanguage.add),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
+                          borderRadius: BorderRadius.circular(20)),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                          horizontal: 12, vertical: 10),
                       elevation: 0,
                     ),
                   ),

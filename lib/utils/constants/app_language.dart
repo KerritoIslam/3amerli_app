@@ -254,6 +254,11 @@ class AppLanguage {
       AppLocale.fr: 'Étape suivante',
       AppLocale.ar: 'الخطوة التالية',
     },
+    'step': {
+      AppLocale.en: 'Step',
+      AppLocale.fr: 'Étape',
+      AppLocale.ar: 'خطوة',
+    },
     'orderNotFound': {
       AppLocale.en: 'Order not found',
       AppLocale.fr: 'Commande non trouvée',
@@ -299,6 +304,46 @@ class AppLanguage {
       AppLocale.fr: 'Exporter CSV',
       AppLocale.ar: 'تصدير CSV',
     },
+    'noUsersToExport': {
+      AppLocale.en: 'No users to export',
+      AppLocale.fr: 'Aucun utilisateur à exporter',
+      AppLocale.ar: 'لا يوجد مستخدمين للتصدير',
+    },
+    'csvExportError': {
+      AppLocale.en: 'Error exporting CSV',
+      AppLocale.fr: 'Erreur lors de l\'exportation CSV',
+      AppLocale.ar: 'خطأ في تصدير CSV',
+    },
+    'id': {
+      AppLocale.en: 'ID',
+      AppLocale.fr: 'ID',
+      AppLocale.ar: 'المعرف',
+    },
+    'roleUpdated': {
+      AppLocale.en: 'Role updated successfully',
+      AppLocale.fr: 'Rôle mis à jour avec succès',
+      AppLocale.ar: 'تم تحديث الدور بنجاح',
+    },
+    'userDeleted': {
+      AppLocale.en: 'User deleted successfully',
+      AppLocale.fr: 'Utilisateur supprimé avec succès',
+      AppLocale.ar: 'تم حذف المستخدم بنجاح',
+    },
+    'usersDeleted': {
+      AppLocale.en: '{count} user(s) deleted successfully',
+      AppLocale.fr: '{count} utilisateur(s) supprimé(s) avec succès',
+      AppLocale.ar: 'تم حذف {count} مستخدم(ين) بنجاح',
+    },
+    'userSuspended': {
+      AppLocale.en: 'User suspended successfully',
+      AppLocale.fr: 'Utilisateur suspendu avec succès',
+      AppLocale.ar: 'تم تعليق المستخدم بنجاح',
+    },
+    'userRestored': {
+      AppLocale.en: 'User restored successfully',
+      AppLocale.fr: 'Utilisateur restauré avec succès',
+      AppLocale.ar: 'تمت استعادة المستخدم بنجاح',
+    },
     'suspended': {
       AppLocale.en: 'Suspended',
       AppLocale.fr: 'Suspendu',
@@ -309,6 +354,17 @@ class AppLanguage {
       AppLocale.fr: 'Rôle',
       AppLocale.ar: 'الدور',
     },
+    'supermarket': {
+      AppLocale.en: 'Supermarket',
+      AppLocale.fr: 'Supérette',
+      AppLocale.ar: 'سوبر ماركت',
+    },
+    'wholesaler': {
+      AppLocale.en: 'Wholesaler',
+      AppLocale.fr: 'Grossiste',
+      AppLocale.ar: 'تاجر جملة',
+    },
+    // admin key removed to avoid duplicate
     'confirmDelete': {
       AppLocale.en: 'Confirm Delete',
       AppLocale.fr: 'Confirmer la suppression',
@@ -385,7 +441,180 @@ class AppLanguage {
       AppLocale.ar: 'فرز',
     },
 
-    // Common Labels
+    // Notifications
+    'notificationsTitle': {
+      AppLocale.en: 'Notifications',
+      AppLocale.fr: 'Notifications',
+      AppLocale.ar: 'إشعارات',
+    },
+    'today': {
+      AppLocale.en: 'Today',
+      AppLocale.fr: 'Aujourd\'hui',
+      AppLocale.ar: 'اليوم',
+    },
+    'yesterday': {
+      AppLocale.en: 'Yesterday',
+      AppLocale.fr: 'Hier',
+      AppLocale.ar: 'أمس',
+    },
+    'last7Days': {
+      AppLocale.en: 'Last 7 days',
+      AppLocale.fr: 'Les 7 derniers jours',
+      AppLocale.ar: 'آخر 7 أيام',
+    },
+    'markAllAsRead': {
+      AppLocale.en: 'Mark all as read',
+      AppLocale.fr: 'Marquer tout comme lu',
+      AppLocale.ar: 'تحديد الكل كمقروء',
+    },
+    'notificationDeleted': {
+      AppLocale.en: 'Notification deleted',
+      AppLocale.fr: 'Notification supprimée',
+      AppLocale.ar: 'تم حذف الإشعار',
+    },
+
+    // Order Tracking
+    'trackMyOrder': {
+      AppLocale.en: 'Track\nMy Order',
+      AppLocale.fr: 'Suivre \nMa Commande',
+      AppLocale.ar: 'تتبع \nطلبي',
+    },
+    'orderNumberPrefix': {
+      AppLocale.en: 'Order #',
+      AppLocale.fr: 'Commande #',
+      AppLocale.ar: 'طلب #',
+    },
+    'am': {
+      AppLocale.en: 'AM',
+      AppLocale.fr: 'AM',
+      AppLocale.ar: 'ص',
+    },
+    'pm': {
+      AppLocale.en: 'PM',
+      AppLocale.fr: 'PM',
+      AppLocale.ar: 'م',
+    },
+
+    // Invoices
+    'myInvoices': {
+      AppLocale.en: 'My Invoices',
+      AppLocale.fr: 'Mes Factures',
+      AppLocale.ar: 'فواتيري',
+    },
+    'orderId': {
+      AppLocale.en: 'Order ID',
+      AppLocale.fr: 'ID Commande',
+      AppLocale.ar: 'رقم الطلب',
+    },
+    'invoiceDate': {
+      AppLocale.en: 'Invoice Date',
+      AppLocale.fr: 'Date de Facture',
+      AppLocale.ar: 'تاريخ الفاتورة',
+    },
+    'pdfDownloadError': {
+      AppLocale.en: 'Failed to download PDF',
+      AppLocale.fr: 'Impossible de télécharger le PDF',
+      AppLocale.ar: 'فشل تنزيل ملف PDF',
+    },
+
+    // Add Product
+    'generalInfo': {
+      AppLocale.en: 'General Information',
+      AppLocale.fr: 'Informations générales',
+      AppLocale.ar: 'معلومات عامة',
+    },
+    'generalInfoOptional': {
+      AppLocale.en: 'General Information (Optional)',
+      AppLocale.fr: 'Informations générales (optionnel)',
+      AppLocale.ar: 'معلومات عامة (اختياري)',
+    },
+    'editFieldsHint': {
+      AppLocale.en: 'Edit only the fields you want to update',
+      AppLocale.fr:
+          'Modifiez uniquement les champs que vous souhaitez mettre à jour',
+      AppLocale.ar: 'قم بتعديل الحقول التي تريد تحديثها فقط',
+    },
+    'productName': {
+      AppLocale.en: 'Product Name',
+      AppLocale.fr: 'Nom du produit',
+      AppLocale.ar: 'اسم المنتج',
+    },
+    'quantityPerBatch': {
+      AppLocale.en: 'Quantity per batch',
+      AppLocale.fr: 'Quantité par lot',
+      AppLocale.ar: 'الكمية لكل دفعة',
+    },
+
+    'expirationDate': {
+      AppLocale.en: 'Expiration Date',
+      AppLocale.fr: 'Date d\'expiration',
+      AppLocale.ar: 'تاريخ انتهاء الصلاحية',
+    },
+    'pricePerBatch': {
+      AppLocale.en: 'Price per batch',
+      AppLocale.fr: 'Prix par lot',
+      AppLocale.ar: 'السعر لكل دفعة',
+    },
+    'priceDetails': {
+      AppLocale.en: 'Price Details',
+      AppLocale.fr: 'Détails du prix',
+      AppLocale.ar: 'تفاصيل السعر',
+    },
+    'priceDetailsOptional': {
+      AppLocale.en: 'Price Details (Optional)',
+      AppLocale.fr: 'Détails du prix (optionnel)',
+      AppLocale.ar: 'تفاصيل السعر (اختياري)',
+    },
+    'stockAndAvailability': {
+      AppLocale.en: 'Stock and Availability',
+      AppLocale.fr: 'Stock et disponibilité',
+      AppLocale.ar: 'المخزون والتوافر',
+    },
+    'mainImage': {
+      AppLocale.en: 'Main',
+      AppLocale.fr: 'Principale',
+      AppLocale.ar: 'رئيسية',
+    },
+    'availableQuantity': {
+      AppLocale.en: 'Available Quantity',
+      AppLocale.fr: 'Quantité disponible',
+      AppLocale.ar: 'الكمية المتوفرة',
+    },
+    'productImages': {
+      AppLocale.en: 'Product Images',
+      AppLocale.fr: 'Images du produit',
+      AppLocale.ar: 'صور المنتج',
+    },
+    'categoryRequired': {
+      AppLocale.en: 'Category required',
+      AppLocale.fr: 'Catégorie requise',
+      AppLocale.ar: 'الفئة مطلوبة',
+    },
+    'brandRequired': {
+      AppLocale.en: 'Brand required',
+      AppLocale.fr: 'Marque requise',
+      AppLocale.ar: 'العلامة التجارية مطلوبة',
+    },
+    'selectCategory': {
+      AppLocale.en: 'Select a category',
+      AppLocale.fr: 'Sélectionner une catégorie',
+      AppLocale.ar: 'اختر فئة',
+    },
+    'selectBrand': {
+      AppLocale.en: 'Select a brand',
+      AppLocale.fr: 'Sélectionner une marque',
+      AppLocale.ar: 'اختر علامة تجارية',
+    },
+    'dateFormatHint': {
+      AppLocale.en: 'DD/MM/YYYY',
+      AppLocale.fr: 'JJ/MM/YYYY',
+      AppLocale.ar: 'يوم/شهر/سنة',
+    },
+    'deleteImage': {
+      AppLocale.en: 'Delete image',
+      AppLocale.fr: 'Supprimer l\'image',
+      AppLocale.ar: 'حذف الصورة',
+    },
     'all': {
       AppLocale.en: 'All',
       AppLocale.fr: 'Tout',
@@ -498,6 +727,11 @@ class AppLanguage {
       AppLocale.fr: 'Adresse',
       AppLocale.ar: 'العنوان',
     },
+    'addressSelected': {
+      AppLocale.en: 'Address Selected',
+      AppLocale.fr: 'Adresse sélectionnée',
+      AppLocale.ar: 'تم تحديد العنوان',
+    },
     'phone': {
       AppLocale.en: 'Phone',
       AppLocale.fr: 'Téléphone',
@@ -569,6 +803,16 @@ class AppLanguage {
       AppLocale.en: 'Out of Stock',
       AppLocale.fr: 'Rupture',
       AppLocale.ar: 'غير متوفر',
+    },
+    'statusPreparing': {
+      AppLocale.en: 'Preparing',
+      AppLocale.fr: 'En préparation',
+      AppLocale.ar: 'قيد التحضير',
+    },
+    'statusDelivering': {
+      AppLocale.en: 'Delivering',
+      AppLocale.fr: 'En livraison',
+      AppLocale.ar: 'قيد التوصيل',
     },
 
     // Empty States
@@ -936,20 +1180,30 @@ class AppLanguage {
       AppLocale.fr: 'Voulez-vous supprimer "{name}" ?',
       AppLocale.ar: 'هل تريد حذف "{name}"؟',
     },
-    'brandUpdated': {
-      AppLocale.en: 'Brand updated',
-      AppLocale.fr: 'Marque mise à jour',
-      AppLocale.ar: 'تم تحديث العلامة التجارية',
+    'addBrand': {
+      AppLocale.en: 'Add Brand',
+      AppLocale.fr: 'Ajouter une marque',
+      AppLocale.ar: 'إضافة علامة تجارية',
     },
-    'brandAdded': {
-      AppLocale.en: 'Brand added',
-      AppLocale.fr: 'Marque ajoutée',
-      AppLocale.ar: 'تمت إضافة العلامة التجارية',
+    'editBrand': {
+      AppLocale.en: 'Edit Brand',
+      AppLocale.fr: 'Modifier la marque',
+      AppLocale.ar: 'تعديل العلامة التجارية',
     },
-    'brandDeleted': {
-      AppLocale.en: 'Brand deleted',
-      AppLocale.fr: 'Marque supprimée',
-      AppLocale.ar: 'تم حذف العلامة التجارية',
+    'brandName': {
+      AppLocale.en: 'Brand Name',
+      AppLocale.fr: 'Nom de la marque',
+      AppLocale.ar: 'اسم العلامة التجارية',
+    },
+    'enterBrandName': {
+      AppLocale.en: 'Enter brand name',
+      AppLocale.fr: 'Entrez le nom',
+      AppLocale.ar: 'أدخل اسم العلامة التجارية',
+    },
+    'brandNameRequired': {
+      AppLocale.en: 'Brand name is required',
+      AppLocale.fr: 'Le nom est requis',
+      AppLocale.ar: 'اسم العلامة التجارية مطلوب',
     },
     'deleteError': {
       AppLocale.en: 'Delete error',
@@ -1541,6 +1795,36 @@ class AppLanguage {
       AppLocale.fr: 'Déc',
       AppLocale.ar: 'ديسمبر',
     },
+    'parentCategoryOptional': {
+      AppLocale.en: 'Parent Category (Optional)',
+      AppLocale.fr: 'Catégorie parente (optionnel)',
+      AppLocale.ar: 'فئة رئيسية (اختياري)',
+    },
+    'selectParentCategory': {
+      AppLocale.en: 'Select a parent category',
+      AppLocale.fr: 'Sélectionner une catégorie parente',
+      AppLocale.ar: 'اختر فئة رئيسية',
+    },
+    'noneMainCategory': {
+      AppLocale.en: 'None (Main Category)',
+      AppLocale.fr: 'Aucune (Catégorie principale)',
+      AppLocale.ar: 'لا شيء (فئة رئيسية)',
+    },
+    'replace': {
+      AppLocale.en: 'Replace',
+      AppLocale.fr: 'Remplacer',
+      AppLocale.ar: 'استبدال',
+    },
+    'categoryNameLabel': {
+      AppLocale.en: 'Category Name *',
+      AppLocale.fr: 'Nom de la catégorie *',
+      AppLocale.ar: 'اسم الفئة *',
+    },
+    'categoryNameHint': {
+      AppLocale.en: 'Ex: General Food',
+      AppLocale.fr: 'Ex: Alimentation générale',
+      AppLocale.ar: 'مثال: مواد غذائية عامة',
+    },
   };
 
   static String _t(String key) => _translations[key]?[current] ?? key;
@@ -1603,6 +1887,7 @@ class AppLanguage {
   static String get dateTime => _t('dateTime');
   static String get currentStatus => _t('currentStatus');
   static String get nextStep => _t('nextStep');
+  static String get step => _t('step');
   static String get orderNotFound => _t('orderNotFound');
   static String get statusUpdated => _t('statusUpdated');
   static String get quantityAbbr => _t('quantityAbbr');
@@ -1612,8 +1897,20 @@ class AppLanguage {
   static String get deleteOrders => _t('deleteOrders');
   static String get deleteOrdersConfirm => _t('deleteOrdersConfirm');
   static String get exportCSV => _t('exportCSV');
+  static String get noUsersToExport => _t('noUsersToExport');
+  static String get csvExportError => _t('csvExportError');
+  static String get roleUpdated => _t('roleUpdated');
+  static String get userDeleted => _t('userDeleted');
+  static String usersDeleted(int count) =>
+      _t('usersDeleted').replaceAll('{count}', count.toString());
+  static String get userSuspended => _t('userSuspended');
+  static String get userRestored => _t('userRestored');
   static String get suspended => _t('suspended');
+  static String get id => _t('id');
   static String get role => _t('role');
+  static String get supermarket => _t('supermarket');
+  static String get wholesaler => _t('wholesaler');
+  // admin is already defined elsewhere
   static String get confirmDelete => _t('confirmDelete');
   static String get confirmDeleteUser => _t('confirmDeleteUser');
   static String get confirmDeleteUsers => _t('confirmDeleteUsers');
@@ -1660,6 +1957,8 @@ class AppLanguage {
   static String get pending => _t('pending');
   static String get inStock => _t('inStock');
   static String get outOfStock => _t('outOfStock');
+  static String get statusPreparing => _t('statusPreparing');
+  static String get statusDelivering => _t('statusDelivering');
 
   // Empty States
   static String get noProductsFound => _t('noProductsFound');
@@ -1706,6 +2005,15 @@ class AppLanguage {
   static String get salesEvolutionDesc => _t('salesEvolutionDesc');
   static String get topProducts => _t('topProducts');
   static String get admin => _t('admin');
+  static String get priceDetails => _t('priceDetails');
+  static String get priceDetailsOptional => _t('priceDetailsOptional');
+  static String get stockAndAvailability => _t('stockAndAvailability');
+  static String get mainImage => _t('mainImage');
+  static String get addBrand => _t('addBrand');
+  static String get editBrand => _t('editBrand');
+  static String get brandName => _t('brandName');
+  static String get enterBrandName => _t('enterBrandName');
+  static String get brandNameRequired => _t('brandNameRequired');
 
   // Month abbreviations
   static String get jan => _t('jan');
@@ -1795,6 +2103,7 @@ class AppLanguage {
   static String get validateAddress => _t('validateAddress');
   static String get deliveryFees => _t('deliveryFees');
   static String get subtotal => _t('subtotal');
+  static String get addressSelected => _t('addressSelected');
 
   // Success/Failure Pages
   static String get paymentSuccess => _t('paymentSuccess');
@@ -1875,4 +2184,46 @@ class AppLanguage {
   static String get productAddedToCart => _t('productAddedToCart');
   static String get removedFromFavorites => _t('removedFromFavorites');
   static String get addedToFavorites => _t('addedToFavorites');
+  // Notifications
+  static String get notificationsTitle => _t('notificationsTitle');
+  static String get today => _t('today');
+  static String get yesterday => _t('yesterday');
+  static String get last7Days => _t('last7Days');
+  static String get markAllAsRead => _t('markAllAsRead');
+  static String get notificationDeleted => _t('notificationDeleted');
+
+  // Order Tracking
+  static String get trackMyOrder => _t('trackMyOrder');
+  static String get orderNumberPrefix => _t('orderNumberPrefix');
+  static String get am => _t('am');
+  static String get pm => _t('pm');
+
+  // Invoices
+  static String get myInvoices => _t('myInvoices');
+  static String get orderId => _t('orderId');
+  static String get invoiceDate => _t('invoiceDate');
+  static String get pdfDownloadError => _t('pdfDownloadError');
+
+  // Add Product
+  static String get generalInfo => _t('generalInfo');
+  static String get generalInfoOptional => _t('generalInfoOptional');
+  static String get editFieldsHint => _t('editFieldsHint');
+  static String get productName => _t('productName');
+  static String get quantityPerBatch => _t('quantityPerBatch');
+  static String get expirationDate => _t('expirationDate');
+  static String get pricePerBatch => _t('pricePerBatch');
+  static String get availableQuantity => _t('availableQuantity');
+  static String get productImages => _t('productImages');
+  static String get categoryRequired => _t('categoryRequired');
+  static String get brandRequired => _t('brandRequired');
+  static String get selectCategory => _t('selectCategory');
+  static String get selectBrand => _t('selectBrand');
+  static String get dateFormatHint => _t('dateFormatHint');
+  static String get deleteImage => _t('deleteImage');
+  static String get parentCategoryOptional => _t('parentCategoryOptional');
+  static String get selectParentCategory => _t('selectParentCategory');
+  static String get noneMainCategory => _t('noneMainCategory');
+  static String get replace => _t('replace');
+  static String get categoryNameLabel => _t('categoryNameLabel');
+  static String get categoryNameHint => _t('categoryNameHint');
 }

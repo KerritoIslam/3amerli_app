@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 class TopToast {
   static void show(BuildContext context, String message,
-      {bool isError = false}) {
-    final overlay = Overlay.of(context);
+      {bool isError = false, OverlayState? overlayState}) {
+    final overlay = overlayState ?? Overlay.of(context);
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
