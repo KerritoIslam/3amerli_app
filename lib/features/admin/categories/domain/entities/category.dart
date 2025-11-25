@@ -24,6 +24,7 @@ class Category {
 class SubCategory {
   final String id;
   final String name;
+  final String? imageUrl;
   final String categoryId;
   final String categoryName;
   final int productCount;
@@ -33,10 +34,14 @@ class SubCategory {
   SubCategory({
     required this.id,
     required this.name,
+    this.imageUrl,
     required this.categoryId,
     required this.categoryName,
     required this.productCount,
     required this.createdAt,
     required this.updatedAt,
+    this.parentImageUrl,
   });
+
+  final String? parentImageUrl;
 }

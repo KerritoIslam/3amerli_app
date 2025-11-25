@@ -1,14 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
-
 import 'package:amerli_app/core/network/api_exception.dart';
 
 /// Error handler utility to display errors as toasts or dialogs
 class ErrorHandler {
   static void showError(BuildContext context, dynamic error,
       {bool showDialog = false}) {
-    String errorMessage = _getErrorMessage(error);
+    String errorMessage = getErrorMessage(error);
 
     if (showDialog) {
       _showErrorDialog(context, errorMessage);
@@ -21,18 +21,82 @@ class ErrorHandler {
     }
   }
 
-  static String _getErrorMessage(dynamic error) {
+  static String getErrorMessage(dynamic error) {
     // Check for ApiException first to show backend message
     if (error is ApiException) {
-      if (error.serverResponse is Map) {
-        final msg =
-            error.serverResponse['message'] ?? error.serverResponse['error'];
-        if (msg != null) return msg.toString();
+      var data = error.serverResponse;
+
+      // Debug log - detailed information
+      print('ErrorHandler DEBUG:');
+      print('  statusCode: ${error.statusCode}');
+      print('  data: $data');
+      print('  data type: ${data.runtimeType}');
+      print('  data is Map: ${data is Map}');
+      print('  data is String: ${data is String}');
+
+      // If data is string, try to parse it
+      if (data is String) {
+        print('  Attempting to parse JSON from String...');
+        try {
+          var parsed = jsonDecode(data);
+          if (parsed is Map || parsed is List) {
+            data = parsed;
+            print('  Successfully parsed JSON: $data');
+          }
+        } catch (e) {
+          print('  JSON parse failed: $e');
+        }
       }
-      // If no server message, use the exception message if it's not generic
-      if (error.message.isNotEmpty && !error.message.contains('ApiException')) {
-        return error.message;
+
+      if (data is Map) {
+        print('  Data is Map, checking for message keys...');
+        print('  Map keys: ${data.keys.toList()}');
+
+        // Try various common keys for error messages
+        final msg = data['message'] ??
+            data['Message'] ??
+            data['error'] ??
+            data['msg'] ??
+            data['detail'] ??
+            data['description'];
+
+        print('  Extracted msg: $msg (type: ${msg.runtimeType})');
+
+        if (msg != null && msg.toString().trim().isNotEmpty) {
+          final result = msg.toString();
+          print('  Returning message: $result');
+          return result;
+        }
+
+        // Handle nested error objects e.g. { "error": { "message": "..." } }
+        if (data['error'] is Map) {
+          final nestedMsg = data['error']['message'];
+          if (nestedMsg != null) {
+            print('  Returning nested message: $nestedMsg');
+            return nestedMsg.toString();
+          }
+        }
       }
+
+      // If data is a String (and wasn't valid JSON or was a JSON string), use it if status >= 400
+      if (data is String && data.isNotEmpty && (error.statusCode ?? 0) >= 400) {
+        print('  Returning plain string data: $data');
+        return data;
+      }
+
+      print('  No message found in data, using fallback...');
+
+      // Fallback based on status code if no specific message found
+      if (error.statusCode == 401) {
+        return 'Erreur d\'authentification: Reconnectez-vous';
+      }
+      if (error.statusCode == 403) return 'Erreur: Accès refusé';
+      if (error.statusCode == 404) return 'Erreur: Ressource non trouvée';
+      if (error.statusCode != null && error.statusCode! >= 500) {
+        return 'Erreur serveur: Réessayez plus tard';
+      }
+
+      return "network error";
     }
 
     // Network errors

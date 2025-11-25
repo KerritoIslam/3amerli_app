@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 import '../../domain/repositories/admin_users_repository.dart';
 import 'admin_users_event.dart';
@@ -69,7 +70,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
         currentPage: event.page,
       ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -82,7 +83,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       final user = await _repository.getUserById(event.userId);
       emit(AdminUserDetailLoaded(user: user));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -98,7 +99,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       // Reload detail to show updated user
       add(AdminUsersLoadDetailEvent(userId: event.userId));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -114,7 +115,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       // Reload detail to show updated user
       add(AdminUsersLoadDetailEvent(userId: event.userId));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -128,7 +129,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
         message: AppLanguage.userDeleted,
       ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -142,7 +143,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
         message: AppLanguage.usersDeleted(event.userIds.length),
       ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -155,7 +156,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       final roles = await _repository.getRoles();
       emit(AdminUsersRolesLoaded(roles: roles));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -195,7 +196,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
         currentPage: event.page,
       ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -207,7 +208,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       await _repository.addToBlacklist(event.userId);
       emit(AdminUsersOperationSuccess(message: AppLanguage.userSuspended));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -219,7 +220,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       await _repository.restoreFromBlacklist(event.userId);
       emit(AdminUsersOperationSuccess(message: AppLanguage.userRestored));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 }

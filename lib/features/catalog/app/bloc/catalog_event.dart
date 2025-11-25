@@ -14,6 +14,7 @@ class CatalogLoadEvent extends CatalogEvent {
   final List<int>? categoryIds;
   final List<int>? brandIds;
   final DateTime? timestamp;
+  final bool preserveFilters;
 
   const CatalogLoadEvent({
     this.loadMore = false,
@@ -22,9 +23,17 @@ class CatalogLoadEvent extends CatalogEvent {
     this.categoryIds,
     this.brandIds,
     this.timestamp,
+    this.preserveFilters = false,
   });
 
   @override
-  List<Object?> get props =>
-      [loadMore, pageSize, query, categoryIds, brandIds, timestamp];
+  List<Object?> get props => [
+        loadMore,
+        pageSize,
+        query,
+        categoryIds,
+        brandIds,
+        timestamp,
+        preserveFilters
+      ];
 }

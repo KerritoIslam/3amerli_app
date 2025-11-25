@@ -22,7 +22,7 @@ class NotificationListCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 offset: const Offset(0, 2),
                 blurRadius: 4)
           ],
@@ -40,7 +40,8 @@ class NotificationListCard extends StatelessWidget {
                 child: SvgPicture.asset('assets/icons/notifications.svg',
                     width: 36,
                     height: 36,
-                    color: Colors.grey.shade600,
+                    colorFilter:
+                        ColorFilter.mode(Colors.grey.shade600, BlendMode.srcIn),
                     placeholderBuilder: (context) => Icon(Icons.notifications,
                         color: Colors.grey.shade600, size: 36)),
               ),

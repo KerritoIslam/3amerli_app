@@ -1,6 +1,7 @@
 import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
 import 'dart:async';
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
+import 'package:amerli_app/features/catalog/domain/entities/category.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
@@ -325,10 +326,18 @@ class _CatalogPageState extends State<CatalogPage> {
                     // The 4th row will show "..." if there are more categories
                     const maxCategoriesToShow = 9;
                     final allCategories = state.items;
-                    final hasMore = allCategories.length > maxCategoriesToShow;
+                    // Flatten categories to show subcategories along with main categories
+                    final flattenedCategories = <Category>[];
+                    for (var cat in allCategories) {
+                      flattenedCategories.add(cat);
+                      flattenedCategories.addAll(cat.subcategories);
+                    }
+
+                    final hasMore =
+                        flattenedCategories.length > maxCategoriesToShow;
                     final displayCategories = hasMore
-                        ? allCategories.take(maxCategoriesToShow).toList()
-                        : allCategories;
+                        ? flattenedCategories.take(maxCategoriesToShow).toList()
+                        : flattenedCategories;
 
                     return CategoryGrid(
                       categories: displayCategories,

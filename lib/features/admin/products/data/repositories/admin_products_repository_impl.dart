@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 import 'package:amerli_app/core/dio/api_service.dart';
+import 'package:amerli_app/core/network/api_exception.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/admin_products_repository.dart';
 import '../models/product_model.dart';
@@ -153,13 +154,19 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
   }
 
   Never _handleError(dynamic e) {
-    if (e is DioException && e.response?.data != null) {
-      final data = e.response!.data;
-      if (data is Map && data['message'] != null) {
-        final msg = data['message'];
-        if (msg is List) throw Exception(msg.join('\n'));
-        throw Exception(msg.toString());
-      }
+    if (e is DioException) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+
+      // Log the error for debugging
+      print('[ADMIN PRODUCTS] Dio error: status=$status, data=$data');
+
+      throw ApiException(
+        "network error",
+        statusCode: status,
+        serverResponse: data,
+        isNetworkError: true,
+      );
     }
     throw e;
   }
@@ -167,7 +174,13 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
   @override
   Future<void> updateProduct(Product product) async {
     try {
-      final formData = await _createProductFormData(product);
+      // First, get the current product to find which pictures to delete
+
+      // Use explicit picturesToDelete list if available
+      final picturesToDelete = product.picturesToDelete;
+
+      final formData = await _createProductFormData(product,
+          picturesToDelete: picturesToDelete);
       final resp =
           await apiService.put('/products/${product.id}', data: formData);
       if (resp.statusCode == null ||
@@ -181,20 +194,29 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
     }
   }
 
-  Future<FormData> _createProductFormData(Product product) async {
+  Future<FormData> _createProductFormData(
+    Product product, {
+    List<int>? picturesToDelete,
+  }) async {
     final map = <String, dynamic>{
       'name': product.name,
+      'description': product.description ?? '',
       'categoryId': int.tryParse(product.categoryId ?? '') ?? 0,
       'brandId': int.tryParse(product.brandId ?? '') ?? 0,
       'quantityPerBatch': product.quantityPerLot,
       'price': product.pricePerLot,
       'quantity': product.availableQuantity,
-      'specification': product.specifications.join(', '),
+      'specification': product.specifications,
     };
 
     if (product.expirationDate != null) {
       map['expirationDate'] =
           product.expirationDate!.toIso8601String().split('T')[0];
+    }
+
+    // Add picture IDs to delete if any
+    if (picturesToDelete != null && picturesToDelete.isNotEmpty) {
+      map['picturesToDelete'] = picturesToDelete;
     }
 
     final formData = FormData.fromMap(map);

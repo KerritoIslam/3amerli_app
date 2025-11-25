@@ -85,7 +85,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                             'assets/icons/back_arrow.svg',
                             width: 14,
                             height: 14,
-                            color: Theme.of(context).colorScheme.onPrimary,
+                            colorFilter: ColorFilter.mode(
+                                Theme.of(context).colorScheme.onPrimary,
+                                BlendMode.srcIn),
                             placeholderBuilder: (context) => Icon(
                               Icons.arrow_back,
                               size: 14,
@@ -130,8 +132,9 @@ class _CategoriesPageState extends State<CategoriesPage> {
                   Expanded(
                     child: BlocBuilder<CategoriesBloc, CategoriesState>(
                         builder: (context, state) {
-                      if (state is CategoriesLoading)
+                      if (state is CategoriesLoading) {
                         return const Center(child: CircularProgressIndicator());
+                      }
                       if (state is CategoriesLoaded) {
                         return Column(
                           children: [
@@ -188,13 +191,20 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                                       .shrinkWrap,
                                             ),
                                           ),
-                                    onTap: () {
+                                    onTap: () async {
                                       if (c.subcategories.isNotEmpty) {
-                                        Navigator.of(context).push(
-                                            MaterialPageRoute(
-                                                builder: (_) =>
-                                                    SubcategoriesPage(
-                                                        parent: c)));
+                                        final result =
+                                            await Navigator.of(context)
+                                                .push<Set<int>>(
+                                                    MaterialPageRoute(
+                                                        builder: (_) =>
+                                                            SubcategoriesPage(
+                                                                parent: c)));
+                                        if (result != null) {
+                                          setState(() {
+                                            _selected.addAll(result);
+                                          });
+                                        }
                                       } else {
                                         _toggle(c);
                                       }
@@ -234,9 +244,10 @@ class _CategoriesPageState extends State<CategoriesPage> {
                           ],
                         );
                       }
-                      if (state is CategoriesError)
+                      if (state is CategoriesError) {
                         return const Center(
                             child: Text('Aucune catégorie trouvée'));
+                      }
                       return const SizedBox.shrink();
                     }),
                   ),

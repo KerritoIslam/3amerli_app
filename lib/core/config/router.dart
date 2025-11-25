@@ -413,6 +413,17 @@ GoRouter createRouter(
         },
       ),
       GoRoute(
+        path: '/admin/subcategories/edit/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          final category = state.extra as Category?;
+          return BlocProvider(
+            create: (_) => sl<AdminCategoriesBloc>(),
+            child: AddCategoryPage(categoryId: id, category: category),
+          );
+        },
+      ),
+      GoRoute(
         path: '/admin/orders/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;

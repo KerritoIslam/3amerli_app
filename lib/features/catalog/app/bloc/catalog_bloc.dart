@@ -9,6 +9,9 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
   final CatalogRepository repository;
   int _currentPage = 0;
   final List<Product> _items = [];
+  List<int>? _currentCategoryIds;
+  List<int>? _currentBrandIds;
+  String? _currentQuery;
 
   CatalogBloc({required this.repository}) : super(CatalogInitial()) {
     on<CatalogLoadEvent>(_onLoad);
@@ -32,9 +35,9 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
         final List<Product> newItems = await repository.getProducts(
             page: nextPage,
             pageSize: event.pageSize,
-            query: event.query,
-            categoryIds: event.categoryIds,
-            brandIds: event.brandIds);
+            query: _currentQuery,
+            categoryIds: _currentCategoryIds,
+            brandIds: _currentBrandIds);
         if (newItems.isNotEmpty) {
           _currentPage = nextPage;
           _items.addAll(newItems);
@@ -53,12 +56,20 @@ class CatalogBloc extends Bloc<CatalogEvent, CatalogState> {
           emit(CatalogLoading());
         }
         _currentPage = 1;
+
+        // Update current filters unless preserveFilters is true
+        if (!event.preserveFilters) {
+          _currentQuery = event.query;
+          _currentCategoryIds = event.categoryIds;
+          _currentBrandIds = event.brandIds;
+        }
+
         final List<Product> products = await repository.getProducts(
             page: _currentPage,
             pageSize: event.pageSize,
-            query: event.query,
-            categoryIds: event.categoryIds,
-            brandIds: event.brandIds,
+            query: _currentQuery,
+            categoryIds: _currentCategoryIds,
+            brandIds: _currentBrandIds,
             forceRefresh: event.timestamp != null);
         _items.clear();
         _items.addAll(products);

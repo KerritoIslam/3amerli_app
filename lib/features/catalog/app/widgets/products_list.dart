@@ -244,7 +244,8 @@ class _ProductsListState extends State<ProductsList> {
               // Refresh catalog to reflect changes after a short delay
               Future.delayed(const Duration(milliseconds: 500), () {
                 final catalogBloc = sl<CatalogBloc>();
-                catalogBloc.add(CatalogLoadEvent(loadMore: false));
+                catalogBloc.add(CatalogLoadEvent(
+                    loadMore: false, timestamp: DateTime.now()));
               });
 
               // Show toast

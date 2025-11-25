@@ -38,15 +38,19 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
   }
 
   List<Order> _filterForIndex(List<Order> items, int tabIndex) {
-    if (tabIndex == 0) return items;
-    if (tabIndex == 1)
+    if (tabIndex == 0) {
+      return items;
+    }
+    if (tabIndex == 1) {
       return items
           .where((o) =>
               o.status == OrderStatus.preparing ||
               o.status == OrderStatus.delivering)
           .toList();
-    if (tabIndex == 2)
+    }
+    if (tabIndex == 2) {
       return items.where((o) => o.status == OrderStatus.delivered).toList();
+    }
     return items.where((o) => o.status == OrderStatus.canceled).toList();
   }
 
@@ -144,6 +148,14 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                       }
                       if (state is OrdersError) {
                         return Center(child: Text(state.message));
+                      }
+                      // If OrderCreationError, trigger a load to fetch orders
+                      if (state is OrderCreationError) {
+                        // Trigger load on next frame to avoid build-during-build
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          context.read<OrdersBloc>().add(OrdersLoadEvent());
+                        });
+                        return const Center(child: CircularProgressIndicator());
                       }
                       if (state is OrdersLoaded) {
                         final filtered = _filterForIndex(state.items, selected);

@@ -7,6 +7,7 @@ import 'package:amerli_app/core/config/injection.dart' show sl;
 import 'package:amerli_app/features/auth/domain/entities/supermarket.dart';
 import 'package:amerli_app/core/network/api_exception.dart' show ApiException;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 class SignUpCubit extends Cubit<SignUpState> {
   final AuthRepositoryImpl repository;
@@ -55,15 +56,10 @@ class SignUpCubit extends Cubit<SignUpState> {
       _safeEmit(
           state.copyWith(status: VerificationStatus.enteringOtp, otp: otp));
     } catch (e) {
-      String message = e.toString();
+      String message = ErrorHandler.getErrorMessage(e);
       bool isForbidden = false;
-      if (e is ApiException) {
-        message = e.message;
-        if (e.statusCode == 403) {
-          isForbidden = true;
-        }
-      } else if (message.contains('Exception:')) {
-        message = message.replaceAll('Exception:', '').trim();
+      if (e is ApiException && e.statusCode == 403) {
+        isForbidden = true;
       }
       _safeEmit(state.copyWith(
           status: VerificationStatus.pending,
@@ -102,15 +98,10 @@ class SignUpCubit extends Cubit<SignUpState> {
             status: VerificationStatus.verified, result: AuthResult.newUser));
       }
     } catch (e) {
-      String message = e.toString();
+      String message = ErrorHandler.getErrorMessage(e);
       bool isForbidden = false;
-      if (e is ApiException) {
-        message = e.message;
-        if (e.statusCode == 403) {
-          isForbidden = true;
-        }
-      } else if (message.contains('Exception:')) {
-        message = message.replaceAll('Exception:', '').trim();
+      if (e is ApiException && e.statusCode == 403) {
+        isForbidden = true;
       }
       _safeEmit(state.copyWith(
           status: VerificationStatus.enteringOtp,
@@ -146,8 +137,7 @@ class SignUpCubit extends Cubit<SignUpState> {
       }
     } catch (e) {
       // Prefer ApiException message when available
-      String err = 'Échec de l\'enregistrement';
-      if (e is ApiException) err = e.message;
+      String err = ErrorHandler.getErrorMessage(e);
       _safeEmit(state.copyWith(
           status: VerificationStatus.pending, errorMessage: err));
       rethrow; // rethrow so UI callers (that used .then/.catchError) receive the error

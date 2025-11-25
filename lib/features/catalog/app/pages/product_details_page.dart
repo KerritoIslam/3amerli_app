@@ -54,6 +54,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
       setState(() {
         _loadedProduct = productModel.toEntity();
+        // Update favorite state and love count from API response
+        _localFavorite = _loadedProduct?.isFavorit ?? false;
         _loveCount = _loadedProduct?.loveCount ?? 0;
         _isLoading = false;
       });
@@ -64,6 +66,20 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         _loadedProduct = widget.product;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    // Refresh catalog when leaving product details to ensure updated favorite states
+    try {
+      final catalogBloc = sl<CatalogBloc>();
+      // Use timestamp to force a fresh load from API
+      catalogBloc.add(
+          CatalogLoadEvent(timestamp: DateTime.now(), preserveFilters: true));
+    } catch (e) {
+      // CatalogBloc might not be available, fail silently
+    }
+    super.dispose();
   }
 
   @override
@@ -181,8 +197,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                     Future.delayed(
                                         const Duration(milliseconds: 500), () {
                                       try {
-                                        sl<CatalogBloc>()
-                                            .add(CatalogLoadEvent());
+                                        sl<CatalogBloc>().add(CatalogLoadEvent(
+                                            timestamp: DateTime.now(),
+                                            preserveFilters: true));
                                       } catch (e) {
                                         // Catalog bloc might not be available
                                       }
@@ -257,7 +274,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                                 color: Theme.of(context)
                                                     .colorScheme
                                                     .onPrimary
-                                                    .withOpacity(0.6),
+                                                    .withValues(alpha: 0.6),
                                               ),
                                             )
                                           : PageView.builder(
@@ -291,7 +308,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                                         color: Theme.of(context)
                                                             .colorScheme
                                                             .onPrimary
-                                                            .withOpacity(0.6),
+                                                            .withValues(
+                                                                alpha: 0.6),
                                                       ),
                                                     );
                                                   },
@@ -318,7 +336,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                               ? Theme.of(context)
                                                   .colorScheme
                                                   .primary
-                                              : Colors.grey.withOpacity(0.5),
+                                              : Colors.grey
+                                                  .withValues(alpha: 0.5),
                                         ),
                                       ),
                                     ),
@@ -466,7 +485,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             Container(
                                 height: 1.h,
                                 width: double.infinity,
-                                color: Colors.grey.withOpacity(0.3)),
+                                color: Colors.grey.withValues(alpha: 0.3)),
 
                             SizedBox(height: 12.h),
 

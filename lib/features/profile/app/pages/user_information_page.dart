@@ -227,25 +227,29 @@ class _UserInformationPageState extends State<UserInformationPage> {
                                   Stack(
                                     alignment: Alignment.center,
                                     children: [
-                                      hasValidImage
-                                          ? CircleAvatar(
-                                              radius: 56,
-                                              backgroundColor:
-                                                  Colors.grey.shade200,
-                                              backgroundImage:
-                                                  NetworkImage(_imageUrl!),
-                                              onBackgroundImageError:
-                                                  (exception, stackTrace) {
-                                                // Silently handle image loading errors
-                                              },
-                                            )
-                                          : CircleAvatar(
-                                              radius: 56,
-                                              backgroundColor:
-                                                  Colors.grey.shade200,
-                                              child: const Icon(Icons.person,
-                                                  size: 48, color: Colors.grey),
-                                            ),
+                                      CircleAvatar(
+                                        radius: 56,
+                                        backgroundColor: Colors.grey.shade200,
+                                        backgroundImage: hasValidImage
+                                            ? NetworkImage(_imageUrl!)
+                                            : null,
+                                        onBackgroundImageError: hasValidImage
+                                            ? (exception, stackTrace) {
+                                                // Show default icon on error
+                                                if (mounted) {
+                                                  setState(() {
+                                                    _imageUrl = null;
+                                                  });
+                                                }
+                                              }
+                                            : null,
+                                        child:
+                                            !hasValidImage || _imageUrl == null
+                                                ? const Icon(Icons.person,
+                                                    size: 48,
+                                                    color: Colors.grey)
+                                                : null,
+                                      ),
                                       if (_uploadingImage)
                                         Container(
                                           width: 112,

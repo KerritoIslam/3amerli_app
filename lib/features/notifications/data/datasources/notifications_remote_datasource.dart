@@ -1,5 +1,6 @@
 import 'package:amerli_app/core/dio/api_service.dart';
 import 'package:amerli_app/core/network/api_exception.dart';
+import 'package:amerli_app/core/network/error_message_extractor.dart';
 import '../models/notification_model.dart';
 import 'package:dio/dio.dart';
 import 'dart:developer' as developer;
@@ -24,23 +25,25 @@ class NotificationsRemoteDataSource {
             .map((e) => NotificationModel.fromJson(e as Map<String, dynamic>))
             .toList();
       }
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to fetch notifications';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while fetching notifications';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error fetchNotifications - status: $status, serverResponse: $serverResp',
           name: 'NotificationsRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 
@@ -50,24 +53,25 @@ class NotificationsRemoteDataSource {
       final resp = await apiService.client
           .patch('/notifications/$id', data: {'read': true});
       if (_isSuccess(resp.statusCode)) return;
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to mark notification read';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg =
-          e.message ?? 'Network error while marking notification read';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error markRead - status: $status, serverResponse: $serverResp',
           name: 'NotificationsRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 
@@ -75,23 +79,25 @@ class NotificationsRemoteDataSource {
     try {
       final resp = await apiService.post('/notifications', data: payload);
       if (_isSuccess(resp.statusCode)) return;
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to create notification';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while creating notification';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error createNotification - status: $status, serverResponse: $serverResp',
           name: 'NotificationsRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 
@@ -99,23 +105,25 @@ class NotificationsRemoteDataSource {
     try {
       final resp = await apiService.delete('/notifications/$id');
       if (_isSuccess(resp.statusCode)) return;
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to delete notification';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while deleting notification';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error deleteNotification - status: $status, serverResponse: $serverResp',
           name: 'NotificationsRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 
@@ -125,24 +133,25 @@ class NotificationsRemoteDataSource {
       final resp =
           await apiService.patch('/notifications/read', data: {'ids': ids});
       if (_isSuccess(resp.statusCode)) return;
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to mark notifications read';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg =
-          e.message ?? 'Network error while marking notifications read';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error markMultipleRead - status: $status, serverResponse: $serverResp',
           name: 'NotificationsRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 
@@ -156,23 +165,25 @@ class NotificationsRemoteDataSource {
         'lang': lang,
       });
       if (_isSuccess(resp.statusCode)) return;
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to register FCM token';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while registering FCM token';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error registerFcmToken - status: $status, serverResponse: $serverResp',
           name: 'NotificationsRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 
@@ -184,24 +195,25 @@ class NotificationsRemoteDataSource {
         'language': language,
       });
       if (_isSuccess(resp.statusCode)) return;
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to update notification language';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg =
-          e.message ?? 'Network error while updating notification language';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error updateLanguage - status: $status, serverResponse: $serverResp',
           name: 'NotificationsRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 }

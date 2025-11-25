@@ -35,6 +35,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   late final AdminCategoriesRepository _categoriesRepository;
   bool _isLoadingCategory = false;
   Category? _existingCategory;
+  bool _hasChildren = false;
 
   @override
   void initState() {
@@ -79,14 +80,33 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
       final mainCategories = await _categoriesRepository.getCategories();
 
+      // Check if this category has children
+      bool hasChildren = false;
+      try {
+        final children = await _categoriesRepository.getSubCategories(
+            categoryId: widget.categoryId);
+        hasChildren = children.isNotEmpty;
+      } catch (_) {}
+
       setState(() {
-        _mainCategories = mainCategories;
+        // Filter out self from main categories to prevent selecting self as parent
+        _mainCategories =
+            mainCategories.where((c) => c.id != widget.categoryId).toList();
+        _hasChildren = hasChildren;
+
         if (category != null) {
           _existingCategory = category;
           _nameController.text = category.name;
           _imagePath = category.imageUrl;
-          // If we could get parentId from category, we would set it here
-          // _selectedParentId = category.parentId;
+          // Validate parentId to prevent DropdownButton crash
+          String? pId = category.parentId;
+          if (pId != null && pId.trim().isEmpty) pId = null;
+
+          if (pId != null && _mainCategories.any((c) => c.id == pId)) {
+            _selectedParentId = pId;
+          } else {
+            _selectedParentId = null;
+          }
         }
 
         _isLoadingCategory = false;
@@ -319,34 +339,49 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                         ),
                       ),
                       SizedBox(height: 12.h),
-                      Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(8.r),
+                      if (_hasChildren)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: Text(
+                            AppLanguage.categoryHasChildrenError,
+                            style:
+                                TextStyle(color: Colors.red, fontSize: 14.sp),
+                          ),
                         ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _selectedParentId,
-                            isExpanded: true,
-                            hint: Text(AppLanguage.selectParentCategory),
-                            items: [
-                              DropdownMenuItem<String>(
-                                value: null,
-                                child: Text(AppLanguage.noneMainCategory),
+                      IgnorePointer(
+                        ignoring: _hasChildren,
+                        child: Opacity(
+                          opacity: _hasChildren ? 0.5 : 1.0,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedParentId,
+                                isExpanded: true,
+                                hint: Text(AppLanguage.selectParentCategory),
+                                items: [
+                                  DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text(AppLanguage.noneMainCategory),
+                                  ),
+                                  ..._mainCategories.map((category) {
+                                    return DropdownMenuItem<String>(
+                                      value: category.id,
+                                      child: Text(category.name),
+                                    );
+                                  }),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedParentId = value;
+                                  });
+                                },
                               ),
-                              ..._mainCategories.map((category) {
-                                return DropdownMenuItem<String>(
-                                  value: category.id,
-                                  child: Text(category.name),
-                                );
-                              }),
-                            ],
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedParentId = value;
-                              });
-                            },
+                            ),
                           ),
                         ),
                       ),

@@ -50,6 +50,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
   // Step 1 fields
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   String? _selectedBrandId; // Store brand ID
   final TextEditingController _quantityController = TextEditingController();
   String? _selectedCategoryId; // Store category ID
@@ -71,6 +72,10 @@ class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController _availableQuantityController =
       TextEditingController();
   final List<String> _images = [];
+  // Map to store image URL -> ID for existing images
+  final Map<String, int> _imageIds = {};
+  // List to store deleted images for restoration UI: (url, id)
+  final List<Map<String, dynamic>> _deletedImages = [];
   int _mainImageIndex = 0;
 
   @override
@@ -95,9 +100,23 @@ class _AddProductPageState extends State<AddProductPage> {
     setState(() => _isLoadingData = true);
     try {
       final categories = await _categoriesRepository.getCategories();
+      final subCategories = await _categoriesRepository.getSubCategories();
       final brands = await _brandsRepository.getAllBrands();
+
+      // Convert subcategories to Category objects
+      final subCategoriesAsCategories = subCategories.map((sub) => Category(
+            id: sub.id,
+            name: sub.name,
+            description: '',
+            imageUrl: sub.imageUrl,
+            productCount: sub.productCount,
+            createdAt: sub.createdAt,
+            updatedAt: sub.updatedAt,
+            parentId: sub.categoryId,
+          ));
+
       setState(() {
-        _categories = categories;
+        _categories = [...categories, ...subCategoriesAsCategories];
         _brands = brands;
         _isLoadingData = false;
       });
@@ -120,6 +139,7 @@ class _AddProductPageState extends State<AddProductPage> {
         _existingProduct = product;
         // Pre-fill form fields
         _nameController.text = product.name;
+        _descriptionController.text = product.description ?? '';
         // Find brand ID by name
         final brand = _brands.firstWhere(
           (b) => b.name == product.brand,
@@ -155,6 +175,15 @@ class _AddProductPageState extends State<AddProductPage> {
         _images.addAll(product.images);
         _mainImageIndex = product.mainImageIndex;
 
+        // Map URLs to IDs if available
+        _imageIds.clear();
+        if (product.pictureIds != null &&
+            product.pictureIds!.length == product.images.length) {
+          for (int i = 0; i < product.images.length; i++) {
+            _imageIds[product.images[i]] = product.pictureIds![i];
+          }
+        }
+
         _isLoadingProduct = false;
       });
     } catch (e) {
@@ -169,6 +198,7 @@ class _AddProductPageState extends State<AddProductPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
     _quantityController.dispose();
     _specController.dispose();
     _priceController.dispose();
@@ -201,12 +231,32 @@ class _AddProductPageState extends State<AddProductPage> {
 
   void _removeImage(int index) {
     setState(() {
+      final image = _images[index];
+      // If it's an existing image (has an ID), move to deleted list
+      if (_imageIds.containsKey(image)) {
+        _deletedImages.add({
+          'url': image,
+          'id': _imageIds[image],
+        });
+      }
+
       if (_mainImageIndex == index) {
         _mainImageIndex = 0;
       } else if (_mainImageIndex > index) {
         _mainImageIndex--;
       }
       _images.removeAt(index);
+    });
+  }
+
+  void _restoreImage(int index) {
+    setState(() {
+      final deleted = _deletedImages[index];
+      final url = deleted['url'] as String;
+      // Add back to images
+      _images.add(url);
+      // Remove from deleted list
+      _deletedImages.removeAt(index);
     });
   }
 
@@ -287,6 +337,7 @@ class _AddProductPageState extends State<AddProductPage> {
       final product = Product(
         id: productId,
         name: _nameController.text,
+        description: _descriptionController.text,
         category: categoryName, // Use category NAME
         brand: brandName, // Use brand NAME
         categoryId: _selectedCategoryId,
@@ -301,6 +352,8 @@ class _AddProductPageState extends State<AddProductPage> {
         availableQuantity: int.tryParse(_availableQuantityController.text) ?? 0,
         images: reorderedImages, // Use reordered images with main image first
         mainImageIndex: 0, // Main image is now always at index 0
+        picturesToDelete:
+            _deletedImages.map((e) => e['id'] as int).toList(), // Explicit list
       );
 
       if (widget.productId == null) {
@@ -589,6 +642,17 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 16),
 
+          // Description
+          _buildTextField(
+            label: AppLanguage.description,
+            required: false,
+            controller: _descriptionController,
+            keyboardType: TextInputType.multiline,
+            maxLines: 3,
+            inputFormatters: null,
+          ),
+          const SizedBox(height: 16),
+
           // Category Dropdown
           _buildLabel(AppLanguage.category, required: true),
           const SizedBox(height: 8),
@@ -869,6 +933,19 @@ class _AddProductPageState extends State<AddProductPage> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             suffix: ' DZD',
             fieldKey: _priceFieldKey,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return AppLanguage.fieldRequired;
+              }
+              final price = double.tryParse(value);
+              if (price == null) {
+                return AppLanguage.invalidNumber;
+              }
+              if (price < 50) {
+                return AppLanguage.minPriceRestriction;
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 24),
 
@@ -892,6 +969,9 @@ class _AddProductPageState extends State<AddProductPage> {
             fieldKey: _availableQuantityFieldKey,
           ),
           const SizedBox(height: 24),
+
+          // Deleted Images Section
+          _buildDeletedImagesSection(),
 
           // Images Section
           Text(
@@ -1120,6 +1200,8 @@ class _AddProductPageState extends State<AddProductPage> {
     List<TextInputFormatter>? inputFormatters,
     String? suffix,
     GlobalKey<FormFieldState<String>>? fieldKey,
+    int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     // If a FormField key was provided, prefer showing its error text in the
     // hint area above the input (so the input box doesn't change size).
@@ -1134,13 +1216,15 @@ class _AddProductPageState extends State<AddProductPage> {
             hintIsError: fieldError != null),
         const SizedBox(height: 6),
         SizedBox(
-          height: 40,
+          height: maxLines > 1 ? null : 40,
           child: TextFormField(
             key: fieldKey,
             controller: controller,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,
+            maxLines: maxLines,
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            validator: validator,
             onChanged: (_) {
               // rebuild parent so the label/hint can update when validation changes
               if (fieldKey != null) setState(() {});
@@ -1171,6 +1255,64 @@ class _AddProductPageState extends State<AddProductPage> {
             style: const TextStyle(fontSize: 14),
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildDeletedImagesSection() {
+    if (_deletedImages.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          AppLanguage.deletedImagesRestoreNote,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.red.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 80,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _deletedImages.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final url = _deletedImages[index]['url'] as String;
+              return Stack(
+                children: [
+                  InkWell(
+                    onTap: () => _restoreImage(index),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                        image: DecorationImage(
+                          image: NetworkImage(url),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.white.withOpacity(0.6),
+                            BlendMode.lighten,
+                          ),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.restore, color: Colors.red),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
       ],
     );
   }

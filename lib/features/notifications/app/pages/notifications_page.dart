@@ -56,7 +56,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     children: [
                       // Left-aligned back button
                       Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: AlignmentDirectional.centerStart,
                         child: InkWell(
                           onTap: () => Navigator.of(context).pop(),
                           borderRadius: BorderRadius.circular(24),
@@ -74,6 +74,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                                 'assets/icons/back_arrow.svg',
                                 width: 16,
                                 height: 16,
+                                matchTextDirection: true,
                                 colorFilter: ColorFilter.mode(
                                     Theme.of(context).colorScheme.onPrimary,
                                     BlendMode.srcIn),
@@ -140,9 +141,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         String? firstSection;
                         if (today.isNotEmpty) {
                           firstSection = 'today';
-                        } else if (yesterday.isNotEmpty)
+                        } else if (yesterday.isNotEmpty) {
                           firstSection = 'yesterday';
-                        else if (last7.isNotEmpty) firstSection = 'last7';
+                        } else if (last7.isNotEmpty) {
+                          firstSection = 'last7';
+                        }
 
                         return SingleChildScrollView(
                           child: Column(

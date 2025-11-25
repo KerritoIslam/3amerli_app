@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 import '../../domain/repositories/admin_products_repository.dart';
 import 'admin_products_event.dart';
 import 'admin_products_state.dart';
@@ -65,7 +66,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
         currentPage: event.page,
       ));
     } catch (e) {
-      emit(AdminProductsError(e.toString()));
+      emit(AdminProductsError(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -79,7 +80,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {
-      emit(AdminProductsError(e.toString()));
+      emit(AdminProductsError(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -93,7 +94,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {
-      emit(AdminProductsError(e.toString()));
+      emit(AdminProductsError(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -107,7 +108,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {
-      emit(AdminProductsError(e.toString()));
+      emit(AdminProductsError(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -122,7 +123,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {
-      emit(AdminProductsError(e.toString()));
+      emit(AdminProductsError(ErrorHandler.getErrorMessage(e)));
     }
   }
 }

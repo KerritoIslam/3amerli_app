@@ -116,7 +116,7 @@ class _CategoriesRowState extends State<CategoriesRow> {
           colors: [
             Colors.white, // Fully opaque from 0.0 to startFade
             Colors.white,
-            Colors.white.withOpacity(0.0), // Fades to transparent
+            Colors.white.withValues(alpha: 0.0), // Fades to transparent
           ],
         ).createShader(bounds);
       },

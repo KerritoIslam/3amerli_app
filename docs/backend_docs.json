@@ -1236,6 +1236,18 @@
                     "format": "date",
                     "description": "The product expiration date (YYYY-MM-DD).",
                     "example": "2027-12-31"
+                  },
+                  "picturesToDelete": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "description": "Optional: List of picture IDs to be deleted from the product.",
+                    "example": [
+                      1,
+                      2
+                    ]
                   }
                 }
               }
@@ -1934,7 +1946,7 @@
                     "format": "binary",
                     "description": "Category picture file"
                   },
-                  "parentId": {
+                  "parentCategoryId": {
                     "type": "number",
                     "description": "Parent category ID (optional)",
                     "example": 1
@@ -1999,11 +2011,17 @@
                   "picture": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Category picture file"
+                    "description": "category picture file"
+                  },
+                  "newParentCategoryId": {
+                    "type": "string",
+                    "description": "new parent category ID (optional) as number sting or null string to remove parent and empty string to keep current parent",
+                    "example": 1
                   }
                 },
                 "required": [
-                  "label"
+                  "label",
+                  "newParentCategoryId"
                 ]
               }
             }
@@ -2054,6 +2072,36 @@
           }
         ],
         "summary": "Delete a category",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/api/v1/categories/subcategories/all": {
+      "get": {
+        "operationId": "CategoryController_getAllSubcategories_api/v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns all subcategories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubCategoryResDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all subcategories",
         "tags": [
           "categories"
         ]
@@ -3133,63 +3181,6 @@
         ]
       }
     },
-    "/api/v1/analytics/test/daily-stats": {
-      "get": {
-        "operationId": "AnalyticsController_getTestAnalytics_api/v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Analytics"
-        ]
-      }
-    },
-    "/api/v1/analytics/test/turnover": {
-      "get": {
-        "operationId": "AnalyticsController_getTestTurnover_api/v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Analytics"
-        ]
-      }
-    },
-    "/api/v1/analytics/test/top-products": {
-      "get": {
-        "operationId": "AnalyticsController_getTestTopProducts_api/v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Analytics"
-        ]
-      }
-    },
     "/api/v1/invoices/generate/{orderId}": {
       "post": {
         "operationId": "InvoiceController_generate_api/v1",
@@ -3217,10 +3208,60 @@
     "/api/v1/invoices": {
       "get": {
         "operationId": "InvoiceController_findAll_api/v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "List of user invoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get all invoices (admin)",
@@ -3232,10 +3273,60 @@
     "/api/v1/invoices/user": {
       "get": {
         "operationId": "InvoiceController_findUserInvoices_api/v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "List of user invoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get all invoices for a specific user",
@@ -3899,10 +3990,16 @@
             "type": "string",
             "example": "OTP sent to +1234567890",
             "description": "A success message."
+          },
+          "otp": {
+            "type": "string",
+            "example": "123456",
+            "description": "The OTP code sent to the user (for testing purposes)."
           }
         },
         "required": [
-          "message"
+          "message",
+          "otp"
         ]
       },
       "OtpValidationDto": {
@@ -4164,6 +4261,9 @@
             "items": {
               "type": "string"
             }
+          },
+          "isLoved": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -4177,7 +4277,8 @@
           "pictures",
           "loveCount",
           "quantityPerBatch",
-          "specifications"
+          "specifications",
+          "isLoved"
         ]
       },
       "CreateProductDto": {
@@ -4494,12 +4595,59 @@
             "type": "string",
             "example": "https://example.com/image.png",
             "description": "URL of the picture of the category"
+          },
+          "hasChildren": {
+            "type": "boolean",
+            "example": true,
+            "description": "does the category has subcategories"
           }
         },
         "required": [
           "id",
           "label",
           "pictureUrl"
+        ]
+      },
+      "ParentCategoryDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "pictureUrl": {
+            "type": "string"
+          },
+          "id": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "pictureUrl",
+          "id"
+        ]
+      },
+      "SubCategoryResDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "id": {
+            "type": "number"
+          },
+          "pictureUrl": {
+            "type": "string"
+          },
+          "parentCategory": {
+            "$ref": "#/components/schemas/ParentCategoryDto"
+          }
+        },
+        "required": [
+          "label",
+          "id",
+          "pictureUrl",
+          "parentCategory"
         ]
       },
       "BrandResDto": {
@@ -5289,6 +5437,17 @@
       "DeleteResult": {
         "type": "object",
         "properties": {}
+      },
+      "PaginationResponseDto": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMetaDto"
+          }
+        },
+        "required": [
+          "meta"
+        ]
       }
     }
   }

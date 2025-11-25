@@ -5,6 +5,7 @@ class ProductModel extends Product {
   const ProductModel({
     required super.id,
     required super.name,
+    super.description,
     required super.category,
     required super.brand,
     super.categoryId,
@@ -17,6 +18,8 @@ class ProductModel extends Product {
     required super.availableQuantity,
     required super.images,
     super.mainImageIndex,
+    super.pictureIds,
+    super.picturesToDelete,
   });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
@@ -26,6 +29,8 @@ class ProductModel extends Product {
     if (rawId != null) id = rawId.toString();
 
     String name = (json['name'] ?? json['label'] ?? '') as String;
+    String? description =
+        (json['description'] ?? json['desc'] ?? json['details']) as String?;
 
     // category may be a name or an object/id
     String category = '';
@@ -152,9 +157,22 @@ class ProductModel extends Product {
     }
 
     List<String> images = [];
+    List<int>? pictureIds;
     final imgs = json['images'] ?? json['pictures'] ?? json['photos'];
     if (imgs is List) {
-      images = imgs.map((e) => resolveImageUrl(e?.toString() ?? '')).toList();
+      final ids = <int>[];
+      images = imgs.map((e) {
+        // Handle new format: {url: "...", id: 123}
+        if (e is Map) {
+          if (e['id'] != null) {
+            ids.add((e['id'] as num).toInt());
+          }
+          return resolveImageUrl(e['url']?.toString() ?? '');
+        }
+        // Handle old format: just strings
+        return resolveImageUrl(e?.toString() ?? '');
+      }).toList();
+      pictureIds = ids.isNotEmpty ? ids : null;
     } else if (imgs is String && imgs.isNotEmpty) {
       images = [resolveImageUrl(imgs)];
     }
@@ -181,6 +199,7 @@ class ProductModel extends Product {
     return ProductModel(
       id: id,
       name: name,
+      description: description,
       category: category,
       brand: brand,
       categoryId: categoryId,
@@ -193,6 +212,7 @@ class ProductModel extends Product {
       availableQuantity: availableQuantity,
       images: images,
       mainImageIndex: mainImageIndex,
+      pictureIds: pictureIds,
     );
   }
 
@@ -200,6 +220,7 @@ class ProductModel extends Product {
     return {
       'id': id,
       'name': name,
+      'description': description,
       'category': category,
       'brand': brand,
       'categoryId': categoryId,
@@ -219,6 +240,7 @@ class ProductModel extends Product {
     return ProductModel(
       id: product.id,
       name: product.name,
+      description: product.description,
       category: product.category,
       brand: product.brand,
       categoryId: product.categoryId,
@@ -231,6 +253,7 @@ class ProductModel extends Product {
       availableQuantity: product.availableQuantity,
       images: product.images,
       mainImageIndex: product.mainImageIndex,
+      pictureIds: product is ProductModel ? product.pictureIds : null,
     );
   }
 }

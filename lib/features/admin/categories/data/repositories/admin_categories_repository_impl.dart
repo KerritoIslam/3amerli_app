@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:amerli_app/core/dio/api_service.dart';
 import '../../domain/entities/category.dart';
 import '../../domain/repositories/admin_categories_repository.dart';
+import '../models/category_model.dart';
 
 class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
   final ApiService apiService;
@@ -44,7 +45,7 @@ class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
         id: m['id']?.toString() ?? '',
         name: m['label'] ?? m['name'] ?? '',
         description: m['description'] ?? '',
-        imageUrl: m['picture'] ?? m['imageUrl'] ?? '',
+        imageUrl: m['pictureUrl'] ?? m['picture'] ?? m['imageUrl'] ?? '',
         productCount: (m['productCount'] as num?)?.toInt() ?? 0,
         createdAt: m['createdAt'] != null
             ? DateTime.parse(m['createdAt'])
@@ -58,27 +59,15 @@ class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
 
   @override
   Future<List<SubCategory>> getSubCategories({String? categoryId}) async {
-    if (categoryId == null || categoryId.isEmpty) {
-      // Fallback to main categories call
-      return [];
-    }
-    final resp = await apiService.get('/categories/$categoryId/children');
+    final String endpoint = (categoryId == null || categoryId.isEmpty)
+        ? '/categories/subcategories/all'
+        : '/categories/$categoryId/children';
+
+    final resp = await apiService.get(endpoint);
     final list = _extractList(resp.data);
     return list.map<SubCategory>((e) {
       final m = Map<String, dynamic>.from(e as Map);
-      return SubCategory(
-        id: m['id']?.toString() ?? '',
-        name: m['label'] ?? m['name'] ?? '',
-        categoryId: categoryId,
-        categoryName: m['parentLabel'] ?? '',
-        productCount: (m['productCount'] as num?)?.toInt() ?? 0,
-        createdAt: m['createdAt'] != null
-            ? DateTime.parse(m['createdAt'])
-            : DateTime.now(),
-        updatedAt: m['updatedAt'] != null
-            ? DateTime.parse(m['updatedAt'])
-            : DateTime.now(),
-      );
+      return SubCategoryModel.fromJson(m).toEntity();
     }).toList();
   }
 
@@ -91,7 +80,7 @@ class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
         id: m['id']?.toString() ?? '',
         name: m['label'] ?? m['name'] ?? '',
         description: m['description'] ?? '',
-        imageUrl: m['picture'] ?? m['imageUrl'] ?? '',
+        imageUrl: m['pictureUrl'] ?? m['picture'] ?? m['imageUrl'] ?? '',
         productCount: (m['productCount'] as num?)?.toInt() ?? 0,
         createdAt: m['createdAt'] != null
             ? DateTime.parse(m['createdAt'])
@@ -110,7 +99,7 @@ class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
     try {
       final map = <String, dynamic>{'label': category.name};
       if (category.parentId != null) {
-        map['parentId'] = category.parentId;
+        map['parentCategoryId'] = category.parentId;
       }
       final formData = FormData.fromMap(map);
 
@@ -134,6 +123,11 @@ class AdminCategoriesRepositoryImpl implements AdminCategoriesRepository {
   Future<void> updateCategory(Category category) async {
     try {
       final map = <String, dynamic>{'label': category.name};
+      // Send newParentCategoryId as string. 'null' string removes parent, empty string keeps it.
+      // If category.parentId is null, we assume we want to remove the parent (make it root).
+      // If category.parentId is set, we set it as the new parent.
+      map['newParentCategoryId'] = category.parentId ?? 'null';
+
       final formData = FormData.fromMap(map);
 
       if (category.imageUrl != null &&

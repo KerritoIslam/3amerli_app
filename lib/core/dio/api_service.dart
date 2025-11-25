@@ -53,7 +53,15 @@ class ApiService {
             final qp = options.queryParameters.isNotEmpty
                 ? options.queryParameters
                 : null;
-            final data = options.data;
+            dynamic data = options.data;
+            if (data is FormData) {
+              final fields =
+                  data.fields.map((e) => '${e.key}:${e.value}').toList();
+              final files = data.files
+                  .map((e) => '${e.key}:File(${e.value.filename})')
+                  .toList();
+              data = 'FormData(fields: $fields, files: $files)';
+            }
             final authHeader = options.headers['Authorization'];
             // ignore: avoid_print
             print(
@@ -109,7 +117,15 @@ class ApiService {
             final qp = error.requestOptions.queryParameters.isNotEmpty
                 ? error.requestOptions.queryParameters
                 : null;
-            final reqData = error.requestOptions.data;
+            dynamic reqData = error.requestOptions.data;
+            if (reqData is FormData) {
+              final fields =
+                  reqData.fields.map((e) => '${e.key}:${e.value}').toList();
+              final files = reqData.files
+                  .map((e) => '${e.key}:File(${e.value.filename})')
+                  .toList();
+              reqData = 'FormData(fields: $fields, files: $files)';
+            }
             final authHeader = error.requestOptions.headers['Authorization'];
             // ignore: avoid_print
             print(

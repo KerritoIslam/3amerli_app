@@ -1,5 +1,6 @@
 import 'package:amerli_app/core/dio/api_service.dart';
 import 'package:amerli_app/core/network/api_exception.dart';
+import 'package:amerli_app/core/network/error_message_extractor.dart';
 import 'package:amerli_app/features/catalog/data/models/product_model.dart';
 import 'package:dio/dio.dart';
 import 'dart:developer' as developer;
@@ -40,23 +41,25 @@ class CatalogRemoteDataSource {
             .toList();
       }
 
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to fetch products';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while fetching products';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error fetchProducts - status: $status, serverResponse: $serverResp',
           name: 'CatalogRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     } catch (e, st) {
       developer.log('Unexpected error while fetching products: $e',
           name: 'CatalogRemoteDataSource',
@@ -73,23 +76,25 @@ class CatalogRemoteDataSource {
         return ProductModel.fromJson(
             Map<String, dynamic>.from(resp.data as Map));
       }
-      final msg = resp.data is Map && resp.data['message'] != null
-          ? resp.data['message'].toString()
-          : 'Failed to fetch product';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      throw ApiException(
+          extractErrorMessage(resp.data, defaultMessage: "network error"),
+          statusCode: resp.statusCode,
+          serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while fetching product';
-      final detailed =
-          'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
+
       developer.log(
           'Dio error fetchProductById - status: $status, serverResponse: $serverResp',
           name: 'CatalogRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,
           level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+      throw ApiException(
+          extractErrorMessage(serverResp, defaultMessage: "network error"),
+          statusCode: status,
+          isNetworkError: true,
+          serverResponse: serverResp);
     }
   }
 }

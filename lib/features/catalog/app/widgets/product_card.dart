@@ -62,6 +62,14 @@ class _ProductCardState extends State<ProductCard> {
   }
 
   @override
+  void didUpdateWidget(ProductCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isFavorite != oldWidget.isFavorite) {
+      _localFavorite = widget.isFavorite;
+    }
+  }
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Try to find CartBloc; if present, subscribe to state changes to print cart items (debug)
@@ -144,8 +152,16 @@ class _ProductCardState extends State<ProductCard> {
                             widget.imageUrl ??
                                 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1170&q=80',
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                Container(color: Colors.grey.shade200),
+                            errorBuilder: (_, __, ___) => Container(
+                              color: Colors.grey.shade200,
+                              child: Center(
+                                child: Icon(
+                                  Icons.image_outlined,
+                                  size: 32.sp,
+                                  color: Colors.grey.shade400,
+                                ),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -182,7 +198,9 @@ class _ProductCardState extends State<ProductCard> {
                                     : 'assets/icons/favoris_reversed.svg',
                                 width: 14.w,
                                 height: 14.h,
-                                color: Theme.of(context).colorScheme.primary,
+                                colorFilter: ColorFilter.mode(
+                                    Theme.of(context).colorScheme.primary,
+                                    BlendMode.srcIn),
                               ),
                             ),
                           ),

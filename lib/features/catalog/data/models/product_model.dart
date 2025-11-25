@@ -11,28 +11,31 @@ class ProductModel {
   final String? sellerName;
   final bool isFavorit;
   final List<String> pics;
+  final List<int>? pictureIds; // Store picture IDs for deletion operations
   final String? brand;
   final int? loveCount;
   final int? quantityPerBatch;
   final List<String>? specifications;
   final String? category;
 
-  ProductModel(
-      {required this.id,
-      required this.name,
-      required this.description,
-      required this.price,
-      required this.stock,
-      this.sellerId,
-      this.soldBy,
-      this.sellerName,
-      this.isFavorit = false,
-      this.pics = const [],
-      this.brand,
-      this.loveCount,
-      this.quantityPerBatch,
-      this.specifications,
-      this.category});
+  ProductModel({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.stock,
+    this.sellerId,
+    this.soldBy,
+    this.sellerName,
+    this.isFavorit = false,
+    this.pics = const [],
+    this.pictureIds,
+    this.brand,
+    this.loveCount,
+    this.quantityPerBatch,
+    this.specifications,
+    this.category,
+  });
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     // Be defensive: ids may be strings in some APIs
@@ -86,18 +89,27 @@ class ProductModel {
           json['is_loved'] == true,
       // `pics` may be provided as a list or the legacy `pic` string may exist.
       // Also check for 'pictures' which is used by the current API
+      // New API format: pictures is an array of objects with 'url' and 'id'
       pics: (() {
         // Try 'pictures' first (current API), then 'pics'
         final p = json['pictures'] ?? json['pics'];
         if (p is List) {
           return p
-              .map((e) => e?.toString() ?? '')
+              .map((e) {
+                // Handle new format: {url: "...", id: 123}
+                if (e is Map) {
+                  return e['url']?.toString() ?? '';
+                }
+                // Handle old format: just strings
+                return e?.toString() ?? '';
+              })
               .where((s) => s.isNotEmpty)
               .toList();
         }
 
-        // Single-picture keys used by different backends: 'picture', 'pic', 'image', 'thumbnail'
-        final single = json['picture'] ??
+        // Single-picture keys used by different backends: 'mainPicture', 'picture', 'pic', 'image', 'thumbnail'
+        final single = json['mainPicture'] ??
+            json['picture'] ??
             json['pic'] ??
             json['image'] ??
             json['thumbnail'];
@@ -107,6 +119,20 @@ class ProductModel {
         }
 
         return <String>[];
+      })(),
+      // Extract picture IDs when available (new API format)
+      pictureIds: (() {
+        final p = json['pictures'] ?? json['pics'];
+        if (p is List) {
+          final ids = <int>[];
+          for (final e in p) {
+            if (e is Map && e['id'] != null) {
+              ids.add((e['id'] as num).toInt());
+            }
+          }
+          return ids.isNotEmpty ? ids : null;
+        }
+        return null;
       })(),
       // brand could be under several keys depending on the API
       brand: json['brand']?.toString() ?? json['brandName']?.toString(),
@@ -156,6 +182,7 @@ class ProductModel {
         'sellerName': sellerName,
         'is_favorit': isFavorit,
         'pics': pics,
+        'pictureIds': pictureIds,
         'brand': brand,
         'loveCount': loveCount,
         'quantityPerBatch': quantityPerBatch,

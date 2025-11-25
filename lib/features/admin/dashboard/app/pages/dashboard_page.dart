@@ -684,7 +684,7 @@ class _SalesChartPainter extends CustomPainter {
         sales.map((s) => s.amount).reduce((a, b) => a > b ? a : b).toDouble();
     // avoid divide-by-zero when all amounts are zero
     if (maxAmount == 0) maxAmount = 1;
-    final chartHeight = size.height - 30; // Leave space for labels
+    final chartHeight = size.height - 50; // Leave space for labels
     final chartWidth = size.width;
     // spacing: if there is only one point, avoid division by zero
     final spacing =

@@ -462,7 +462,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   child: ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.only(bottom: 100),
                     itemCount: filteredUsers.length,
                     separatorBuilder: (context, index) => Divider(
                       height: 1,

@@ -488,12 +488,45 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                         activeColor: AppColors.brandDeep)),
                 const SizedBox(width: 8),
 
-                // Subcategory name
+                // Subcategory info with image
                 Expanded(
-                    flex: 3,
-                    child: Text(subCategory.name,
-                        style: const TextStyle(
-                            fontSize: 11, color: Colors.black))),
+                  flex: 3,
+                  child: Row(children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6)),
+                      child: subCategory.imageUrl != null &&
+                              subCategory.imageUrl!.isNotEmpty
+                          ? ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(subCategory.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (c, e, s) => Icon(
+                                      Icons.image_not_supported,
+                                      color: Colors.grey.shade400,
+                                      size: 16)))
+                          : Icon(Icons.category,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 16),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(subCategory.name,
+                          style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis),
+                    ),
+                  ]),
+                ),
 
                 // Parent category with image
                 Expanded(
@@ -505,19 +538,30 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                         decoration: BoxDecoration(
                             color: Colors.grey.shade100,
                             borderRadius: BorderRadius.circular(6)),
-                        child: parent != null &&
-                                parent.imageUrl != null &&
-                                parent.imageUrl!.isNotEmpty
+                        child: (subCategory.parentImageUrl != null &&
+                                subCategory.parentImageUrl!.isNotEmpty)
                             ? ClipRRect(
                                 borderRadius: BorderRadius.circular(6),
-                                child: Image.network(parent.imageUrl!,
+                                child: Image.network(
+                                    subCategory.parentImageUrl!,
                                     fit: BoxFit.cover,
                                     errorBuilder: (c, e, s) => Icon(
                                         Icons.image_not_supported,
                                         size: 16,
                                         color: Colors.grey.shade400)))
-                            : Icon(Icons.category,
-                                size: 16, color: Colors.grey.shade600)),
+                            : (parent != null &&
+                                    parent.imageUrl != null &&
+                                    parent.imageUrl!.isNotEmpty)
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(6),
+                                    child: Image.network(parent.imageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (c, e, s) => Icon(
+                                            Icons.image_not_supported,
+                                            size: 16,
+                                            color: Colors.grey.shade400)))
+                                : Icon(Icons.category,
+                                    size: 16, color: Colors.grey.shade600)),
                     const SizedBox(width: 8),
                     Expanded(
                         child: Text(subCategory.categoryName,
@@ -536,7 +580,17 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                     children: [
                       InkWell(
                         onTap: () => context.push(
-                            '/admin/subcategories/edit/${subCategory.id}'),
+                            '/admin/subcategories/edit/${subCategory.id}',
+                            extra: Category(
+                              id: subCategory.id,
+                              name: subCategory.name,
+                              description: '',
+                              imageUrl: subCategory.imageUrl,
+                              productCount: subCategory.productCount,
+                              createdAt: subCategory.createdAt,
+                              updatedAt: subCategory.updatedAt,
+                              parentId: subCategory.categoryId,
+                            )),
                         child: SvgPicture.asset(
                           'assets/icons/small_edit.svg',
                           width: 16,

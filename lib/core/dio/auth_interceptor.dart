@@ -45,6 +45,19 @@ class AuthInterceptor extends Interceptor {
         }
       }
       options.headers['Accept'] = 'application/json';
+
+      if (options.data is FormData) {
+        final formData = options.data as FormData;
+        log('FormData fields:', name: 'AuthInterceptor');
+        for (final field in formData.fields) {
+          log('Key: ${field.key}, Value: ${field.value}',
+              name: 'AuthInterceptor');
+        }
+        for (final file in formData.files) {
+          log('File Key: ${file.key}, Filename: ${file.value.filename}',
+              name: 'AuthInterceptor');
+        }
+      }
     } catch (_) {}
     return handler.next(options);
   }

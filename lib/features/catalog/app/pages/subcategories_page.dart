@@ -17,7 +17,7 @@ class SubcategoriesPage extends StatefulWidget {
 class _SubcategoriesPageState extends State<SubcategoriesPage> {
   final Set<int> _selected = <int>{};
 
-  void _toggle(child) {
+  void _toggle(Category child) {
     setState(() {
       if (_selected.contains(child.id)) {
         _selected.remove(child.id);
@@ -36,10 +36,13 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       body: Container(
-        decoration: BoxDecoration(gradient: AppColors.gradientFromScheme(Theme.of(context).colorScheme)),
+        decoration: BoxDecoration(
+            gradient:
+                AppColors.gradientFromScheme(Theme.of(context).colorScheme)),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
             child: Column(
               children: [
                 Row(
@@ -51,7 +54,8 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.tertiaryContainer,
+                          color:
+                              Theme.of(context).colorScheme.tertiaryContainer,
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
@@ -59,7 +63,9 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                           'assets/icons/back_arrow.svg',
                           width: 14,
                           height: 14,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          colorFilter: ColorFilter.mode(
+                              Theme.of(context).colorScheme.onPrimary,
+                              BlendMode.srcIn),
                           placeholderBuilder: (context) => Icon(
                             Icons.arrow_back,
                             size: 14,
@@ -69,20 +75,31 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Text(widget.parent.name, style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold)),
+                    Text(widget.parent.name,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold)),
                     const Spacer(),
                     TextButton(
                       onPressed: () {
                         setState(() {
-                          if (_selected.length == widget.parent.subcategories.length) {
+                          if (_selected.length ==
+                              widget.parent.subcategories.length) {
                             _selected.clear();
                           } else {
-                            _selected.addAll(widget.parent.subcategories.map((e) => e.id));
+                            _selected.addAll(
+                                widget.parent.subcategories.map((e) => e.id));
                           }
                         });
-                        final selectedNames = widget.parent.subcategories.where((e) => _selected.contains(e.id)).map((e) => e.name).join(',');
+                        final selectedNames = widget.parent.subcategories
+                            .where((e) => _selected.contains(e.id))
+                            .map((e) => e.name)
+                            .join(',');
                         try {
-                          context.read<CatalogBloc>().add(CatalogLoadEvent(query: selectedNames));
+                          context
+                              .read<CatalogBloc>()
+                              .add(CatalogLoadEvent(query: selectedNames));
                         } catch (_) {}
                       },
                       child: const Text('Tout'),
@@ -95,16 +112,24 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                       Expanded(
                         child: ListView.separated(
                           itemCount: widget.parent.subcategories.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.neutralLight300),
+                          separatorBuilder: (_, __) => const Divider(
+                              height: 1, color: AppColors.neutralLight300),
                           itemBuilder: (context, index) {
                             final child = widget.parent.subcategories[index];
                             final selected = _selected.contains(child.id);
                             return ListTile(
                               dense: true,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 0.0, vertical: 6.0),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 0.0, vertical: 6.0),
                               title: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 28.0),
-                                child: Text(child.name, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 28.0),
+                                child: Text(child.name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(
+                                            fontWeight: FontWeight.w600)),
                               ),
                               trailing: Transform.scale(
                                 scale: 0.9,
@@ -112,7 +137,8 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                                   value: selected,
                                   onChanged: (_) => _toggle(child),
                                   shape: const CircleBorder(),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                               ),
                               onTap: () => _toggle(child),
@@ -123,18 +149,26 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
 
                       // Apply button
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 12.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28.0, vertical: 12.0),
                         child: SizedBox(
                           width: double.infinity,
                           child: OutlinedButton(
                             onPressed: () {
-                              final selectedNames = widget.parent.subcategories.where((e) => _selected.contains(e.id)).map((e) => e.name).join(',');
+                              final selectedNames = widget.parent.subcategories
+                                  .where((e) => _selected.contains(e.id))
+                                  .map((e) => e.name)
+                                  .join(',');
                               try {
-                                context.read<CatalogBloc>().add(CatalogLoadEvent(query: selectedNames));
+                                context.read<CatalogBloc>().add(
+                                    CatalogLoadEvent(query: selectedNames));
                               } catch (_) {}
-                              Navigator.of(context).pop();
+                              Navigator.of(context).pop(_selected);
                             },
-                            style: OutlinedButton.styleFrom(shape: const StadiumBorder(), padding: const EdgeInsets.symmetric(vertical: 14)),
+                            style: OutlinedButton.styleFrom(
+                                shape: const StadiumBorder(),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 14)),
                             child: const Text('Appliquer les filtres'),
                           ),
                         ),

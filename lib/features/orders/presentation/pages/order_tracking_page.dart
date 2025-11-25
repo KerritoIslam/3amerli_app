@@ -154,6 +154,7 @@ class OrderTrackingPage extends StatelessWidget {
                         'assets/icons/back_arrow.svg',
                         width: 16,
                         height: 16,
+                        matchTextDirection: true,
                         colorFilter: ColorFilter.mode(
                             Theme.of(context).colorScheme.onPrimary,
                             BlendMode.srcIn),

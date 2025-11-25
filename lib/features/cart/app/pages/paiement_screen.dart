@@ -71,9 +71,13 @@ class _PaiementScreenState extends State<PaiementScreen> {
           print('⏳ Waiting for animation to complete...');
         }
         // Otherwise, animation will trigger navigation when complete
-      } else if (state is OrdersError) {
+      } else if (state is OrderCreationError) {
         // ignore: avoid_print
         print('❌ Error creating order: ${state.message}');
+
+        // Show error toast to user
+        TopToast.show(context, state.message, isError: true);
+
         setState(() {
           _paying = false;
           _animationComplete = false;

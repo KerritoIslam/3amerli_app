@@ -26,27 +26,67 @@ class _InvoicesPageState extends State<InvoicesPage> {
   final List<Map<String, String?>> _items = [];
   bool _isLoading = false;
 
+  // Pagination state
+  int _currentPage = 1;
+  bool _hasNextPage = true;
+  bool _isLoadingMore = false;
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     _fetchInvoices();
+    _scrollController.addListener(_onScroll);
   }
 
-  Future<void> _fetchInvoices() async {
-    setState(() => _isLoading = true);
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      if (!_isLoadingMore && _hasNextPage) {
+        _loadMoreInvoices();
+      }
+    }
+  }
+
+  Future<void> _fetchInvoices({bool loadMore = false}) async {
+    if (loadMore) {
+      setState(() => _isLoadingMore = true);
+    } else {
+      setState(() => _isLoading = true);
+    }
+
     try {
       // Fetch current user id from ProfileRepository
       final profileRepo = di.sl<ProfileRepository>();
       await profileRepo.fetchProfile();
 
-      // Call backend to get invoices for current user
+      // Call backend to get invoices for current user with pagination
       final api = di.sl<ApiService>();
-      final resp = await api.get('/invoices/user/');
+      final page = loadMore ? _currentPage + 1 : 1;
+      final resp = await api
+          .get('/invoices/user/', queryParameters: {'page': page, 'limit': 10});
+
       if (resp.statusCode != null &&
           resp.statusCode! >= 200 &&
           resp.statusCode! < 300 &&
           resp.data != null) {
-        final list = resp.data as List<dynamic>;
+        final responseData = resp.data as Map<String, dynamic>;
+
+        // Extract meta data for pagination
+        final meta = responseData['meta'] as Map<String, dynamic>?;
+        if (meta != null) {
+          _hasNextPage = meta['hasNextPage'] as bool? ?? false;
+          _currentPage = meta['page'] as int? ?? page;
+        }
+
+        // Extract data array
+        final list = responseData['data'] as List<dynamic>? ?? [];
         final host = AppConstants.apiBaseUrl.replaceFirst('/api/v1', '');
         final parsed = list.map((e) {
           final m = Map<String, dynamic>.from(e as Map);
@@ -72,9 +112,14 @@ class _InvoicesPageState extends State<InvoicesPage> {
               '$host/api/v1/invoices/${m['id']}/download';
           return {'id': id, 'date': created, 'pdf': pdf};
         }).toList();
+
         setState(() {
-          _items.clear();
-          _items.addAll(parsed.cast<Map<String, String?>>());
+          if (loadMore) {
+            _items.addAll(parsed.cast<Map<String, String?>>());
+          } else {
+            _items.clear();
+            _items.addAll(parsed.cast<Map<String, String?>>());
+          }
         });
       } else {
         // leave empty or show message
@@ -87,8 +132,17 @@ class _InvoicesPageState extends State<InvoicesPage> {
         isError: true,
       );
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isLoadingMore = false;
+        });
+      }
     }
+  }
+
+  Future<void> _loadMoreInvoices() async {
+    await _fetchInvoices(loadMore: true);
   }
 
   final Set<String> _selected = {};
@@ -184,6 +238,7 @@ class _InvoicesPageState extends State<InvoicesPage> {
                           'assets/icons/back_arrow.svg',
                           width: 16,
                           height: 16,
+                          matchTextDirection: true,
                           colorFilter: ColorFilter.mode(
                               Theme.of(context).colorScheme.onPrimary,
                               BlendMode.srcIn),
@@ -315,129 +370,150 @@ class _InvoicesPageState extends State<InvoicesPage> {
                             child: _isLoading
                                 ? const Center(
                                     child: CircularProgressIndicator())
-                                : ListView.separated(
-                                    shrinkWrap: true,
-                                    itemCount: _items.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(height: 6),
-                                    itemBuilder: (context, index) {
-                                      final item = _items[index];
-                                      final id = item['id']!;
-                                      return SizedBox(
-                                        height: 56,
-                                        child: Row(
-                                          children: [
-                                            // checkbox column (narrow)
-                                            SizedBox(
-                                                width: 44,
-                                                child: Center(
-                                                    child: _buildCheckbox(
-                                                  value: _selected.contains(id),
-                                                  onChanged: (v) => setState(
-                                                      () => v!
-                                                          ? _selected.add(id)
-                                                          : _selected
-                                                              .remove(id)),
-                                                ))),
-
-                                            // ID column (expandable)
-                                            Expanded(
-                                              child: Text(id,
-                                                  style: tableBodyIdStyle,
-                                                  maxLines: 1,
-                                                  overflow:
-                                                      TextOverflow.ellipsis),
-                                            ),
-
-                                            // Date column (fixed)
-                                            SizedBox(
-                                                width: 120,
-                                                child: Text(item['date'] ?? '-',
-                                                    style: tableBodyDateStyle)),
-
-                                            // Actions (narrow with reduced spacing)
-                                            SizedBox(
-                                              width: 72,
+                                : Column(
+                                    children: [
+                                      Expanded(
+                                        child: ListView.separated(
+                                          controller: _scrollController,
+                                          shrinkWrap: true,
+                                          itemCount: _items.length,
+                                          separatorBuilder: (_, __) =>
+                                              const SizedBox(height: 6),
+                                          itemBuilder: (context, index) {
+                                            final item = _items[index];
+                                            final id = item['id']!;
+                                            return SizedBox(
+                                              height: 56,
                                               child: Row(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.end,
                                                 children: [
-                                                  InkWell(
-                                                    onTap: () =>
-                                                        _openPdf(item['pdf']),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                    child: Container(
-                                                      width: 32,
-                                                      height: 32,
-                                                      alignment:
-                                                          Alignment.center,
-                                                      child: SvgPicture.asset(
-                                                        'assets/icons/download.svg',
-                                                        width: 18,
-                                                        height: 18,
-                                                        colorFilter:
-                                                            const ColorFilter
-                                                                .mode(
-                                                                _darkGreen,
-                                                                BlendMode
-                                                                    .srcIn),
-                                                        placeholderBuilder:
-                                                            (_) => const Icon(
-                                                                Icons.download,
-                                                                color:
-                                                                    _darkGreen,
-                                                                size: 18),
-                                                      ),
-                                                    ),
+                                                  // checkbox column (narrow)
+                                                  SizedBox(
+                                                      width: 44,
+                                                      child: Center(
+                                                          child: _buildCheckbox(
+                                                        value: _selected
+                                                            .contains(id),
+                                                        onChanged: (v) =>
+                                                            setState(() => v!
+                                                                ? _selected
+                                                                    .add(id)
+                                                                : _selected
+                                                                    .remove(
+                                                                        id)),
+                                                      ))),
+
+                                                  // ID column (expandable)
+                                                  Expanded(
+                                                    child: Text(id,
+                                                        style: tableBodyIdStyle,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis),
                                                   ),
-                                                  const SizedBox(width: 2),
-                                                  InkWell(
-                                                    onTap: () => Navigator.of(
-                                                            context)
-                                                        .push(MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                InvoiceDetailPage(
-                                                                    invoiceId:
-                                                                        id,
-                                                                    pdfUrl: item[
-                                                                        'pdf']))),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            20),
-                                                    child: Container(
-                                                      width: 32,
-                                                      height: 32,
-                                                      alignment:
-                                                          Alignment.center,
-                                                      child: SvgPicture.asset(
-                                                        'assets/icons/visible.svg',
-                                                        width: 18,
-                                                        height: 18,
-                                                        colorFilter:
-                                                            const ColorFilter
-                                                                .mode(
-                                                                _darkGreen,
-                                                                BlendMode
-                                                                    .srcIn),
-                                                        placeholderBuilder:
-                                                            (_) => const Icon(
-                                                                Icons
-                                                                    .remove_red_eye,
-                                                                color:
-                                                                    _darkGreen,
-                                                                size: 18),
-                                                      ),
+
+                                                  // Date column (fixed)
+                                                  SizedBox(
+                                                      width: 120,
+                                                      child: Text(
+                                                          item['date'] ?? '-',
+                                                          style:
+                                                              tableBodyDateStyle)),
+
+                                                  // Actions (narrow with reduced spacing)
+                                                  SizedBox(
+                                                    width: 72,
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment.end,
+                                                      children: [
+                                                        InkWell(
+                                                          onTap: () => _openPdf(
+                                                              item['pdf']),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                          child: Container(
+                                                            width: 32,
+                                                            height: 32,
+                                                            alignment: Alignment
+                                                                .center,
+                                                            child: SvgPicture
+                                                                .asset(
+                                                              'assets/icons/download.svg',
+                                                              width: 18,
+                                                              height: 18,
+                                                              colorFilter:
+                                                                  const ColorFilter
+                                                                      .mode(
+                                                                      _darkGreen,
+                                                                      BlendMode
+                                                                          .srcIn),
+                                                              placeholderBuilder:
+                                                                  (_) => const Icon(
+                                                                      Icons
+                                                                          .download,
+                                                                      color:
+                                                                          _darkGreen,
+                                                                      size: 18),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                            width: 2),
+                                                        InkWell(
+                                                          onTap: () => Navigator
+                                                                  .of(context)
+                                                              .push(MaterialPageRoute(
+                                                                  builder: (_) =>
+                                                                      InvoiceDetailPage(
+                                                                          invoiceId:
+                                                                              id,
+                                                                          pdfUrl:
+                                                                              item['pdf']))),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(20),
+                                                          child: Container(
+                                                            width: 32,
+                                                            height: 32,
+                                                            alignment: Alignment
+                                                                .center,
+                                                            child: SvgPicture
+                                                                .asset(
+                                                              'assets/icons/visible.svg',
+                                                              width: 18,
+                                                              height: 18,
+                                                              colorFilter:
+                                                                  const ColorFilter
+                                                                      .mode(
+                                                                      _darkGreen,
+                                                                      BlendMode
+                                                                          .srcIn),
+                                                              placeholderBuilder:
+                                                                  (_) => const Icon(
+                                                                      Icons
+                                                                          .remove_red_eye,
+                                                                      color:
+                                                                          _darkGreen,
+                                                                      size: 18),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
+                                                  )
                                                 ],
                                               ),
-                                            )
-                                          ],
+                                            );
+                                          },
                                         ),
-                                      );
-                                    },
+                                      ),
+                                      if (_isLoadingMore)
+                                        const Padding(
+                                          padding: EdgeInsets.all(8.0),
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                    ],
                                   ),
                           ),
                         );

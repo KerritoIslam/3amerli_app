@@ -605,6 +605,26 @@ class AppLanguage {
       AppLocale.fr: 'Sélectionner une marque',
       AppLocale.ar: 'اختر علامة تجارية',
     },
+    'fieldRequired': {
+      AppLocale.en: 'This field is required',
+      AppLocale.fr: 'Ce champ est requis',
+      AppLocale.ar: 'هذا الحقل مطلوب',
+    },
+    'invalidNumber': {
+      AppLocale.en: 'Please enter a valid number',
+      AppLocale.fr: 'Veuillez entrer un nombre valide',
+      AppLocale.ar: 'الرجاء إدخال رقم صحيح',
+    },
+    'minPriceRestriction': {
+      AppLocale.en: 'Price must be at least 50 DZD',
+      AppLocale.fr: 'Le prix doit être au moins 50 DZD',
+      AppLocale.ar: 'يجب أن يكون السعر 50 دج على الأقل',
+    },
+    'deletedImagesRestoreNote': {
+      AppLocale.en: 'Deleted images (click to restore)',
+      AppLocale.fr: 'Images supprimées (cliquez pour restaurer)',
+      AppLocale.ar: 'الصور المحذوفة (انقر للاستعادة)',
+    },
     'dateFormatHint': {
       AppLocale.en: 'DD/MM/YYYY',
       AppLocale.fr: 'JJ/MM/YYYY',
@@ -674,6 +694,14 @@ class AppLanguage {
       AppLocale.en: 'Subcategories',
       AppLocale.fr: 'Sous-catégories',
       AppLocale.ar: 'فئات فرعية',
+    },
+    'categoryHasChildrenError': {
+      AppLocale.en:
+          'This category has subcategories and cannot be a child category.',
+      AppLocale.fr:
+          'Cette catégorie a des sous-catégories et ne peut pas être une catégorie enfant.',
+      AppLocale.ar:
+          'تحتوي هذه الفئة على فئات فرعية ولا يمكن أن تكون فئة فرعية.',
     },
     'brand': {
       AppLocale.en: 'Brand',
@@ -2226,4 +2254,8 @@ class AppLanguage {
   static String get replace => _t('replace');
   static String get categoryNameLabel => _t('categoryNameLabel');
   static String get categoryNameHint => _t('categoryNameHint');
+  static String get categoryHasChildrenError => _t('categoryHasChildrenError');
+  static String get invalidNumber => _t('invalidNumber');
+  static String get minPriceRestriction => _t('minPriceRestriction');
+  static String get deletedImagesRestoreNote => _t('deletedImagesRestoreNote');
 }

@@ -1,6 +1,7 @@
 class Product {
   final String id;
   final String name;
+  final String? description;
   final String category;
   final String brand;
   final String? categoryId;
@@ -13,10 +14,13 @@ class Product {
   final int availableQuantity;
   final List<String> images;
   final int mainImageIndex;
+  final List<int>? pictureIds;
+  final List<int>? picturesToDelete;
 
   const Product({
     required this.id,
     required this.name,
+    this.description,
     required this.category,
     required this.brand,
     this.categoryId,
@@ -29,11 +33,14 @@ class Product {
     required this.availableQuantity,
     required this.images,
     this.mainImageIndex = 0,
+    this.pictureIds,
+    this.picturesToDelete,
   });
 
   Product copyWith({
     String? id,
     String? name,
+    String? description,
     String? category,
     String? brand,
     String? categoryId,
@@ -46,10 +53,13 @@ class Product {
     int? availableQuantity,
     List<String>? images,
     int? mainImageIndex,
+    List<int>? pictureIds,
+    List<int>? picturesToDelete,
   }) {
     return Product(
       id: id ?? this.id,
       name: name ?? this.name,
+      description: description ?? this.description,
       category: category ?? this.category,
       brand: brand ?? this.brand,
       categoryId: categoryId ?? this.categoryId,
@@ -62,6 +72,8 @@ class Product {
       availableQuantity: availableQuantity ?? this.availableQuantity,
       images: images ?? this.images,
       mainImageIndex: mainImageIndex ?? this.mainImageIndex,
+      pictureIds: pictureIds ?? this.pictureIds,
+      picturesToDelete: picturesToDelete ?? this.picturesToDelete,
     );
   }
 }
