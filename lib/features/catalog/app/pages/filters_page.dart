@@ -181,6 +181,10 @@ class _FiltersPageState extends State<FiltersPage> {
                         _selectedCategoryIds.clear();
                         _selectedCategoryIds.addAll(result);
                       });
+                      // Auto-apply and pop if result returned (meaning Apply was clicked in sub-page)
+                      if (mounted) {
+                        _applyFilters();
+                      }
                     }
                   },
                 ),

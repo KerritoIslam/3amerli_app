@@ -400,6 +400,15 @@
               "default": 10,
               "type": "number"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term for filtering users",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1244,10 +1253,7 @@
                       "format": "int32"
                     },
                     "description": "Optional: List of picture IDs to be deleted from the product.",
-                    "example": [
-                      1,
-                      2
-                    ]
+                    "example": "1"
                   }
                 }
               }
@@ -1440,43 +1446,35 @@
         ]
       }
     },
-    "/api/v1/products/{productId}/pictures": {
+    "/api/v1/products/admin/bulk": {
       "delete": {
-        "operationId": "ProductController_deleteProductImages_api/v1",
-        "parameters": [
-          {
-            "name": "productId",
-            "required": true,
-            "in": "path",
-            "description": "Product ID",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
+        "operationId": "ProductController_bulkRemove_api/v1",
+        "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Picture IDs to delete",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeleteProductPicturesDto"
+                "$ref": "#/components/schemas/BulkDeleteProductsDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Product pictures soft deleted and queued for file deletion"
+            "description": "Products successfully deleted"
           },
           "400": {
-            "description": "Bad request"
+            "description": "Invalid input data or other error"
           },
           "401": {
             "description": "Unauthorized"
           },
+          "403": {
+            "description": "User does not own one or more products"
+          },
           "404": {
-            "description": "No product pictures found with the given IDs for this product"
+            "description": "One or more products not found"
           },
           "429": {
             "description": "Too many requests (Rate limiting)"
@@ -1490,7 +1488,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete specific images from a product",
+        "summary": "Delete products in bulk",
         "tags": [
           "products"
         ]
@@ -2403,6 +2401,15 @@
               "default": 10,
               "type": "number"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term to filter orders",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3126,11 +3133,31 @@
     },
     "/api/v1/analytics/daily-stats": {
       "get": {
+        "description": "Retrieves daily statistics including orders, revenue, and other key metrics for admin dashboard",
         "operationId": "AnalyticsController_getAnalytics_api/v1",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Daily analytics statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "totalOrders": 150,
+                    "totalRevenue": 25000,
+                    "newUsers": 12,
+                    "completedOrders": 140,
+                    "cancelledOrders": 10
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
           }
         },
         "security": [
@@ -3138,6 +3165,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get daily analytics statistics",
         "tags": [
           "Analytics"
         ]
@@ -3145,11 +3173,38 @@
     },
     "/api/v1/analytics/turnover": {
       "get": {
+        "description": "Retrieves monthly turnover data showing revenue trends over time",
         "operationId": "AnalyticsController_getTurnover_api/v1",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Monthly turnover data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": [
+                    {
+                      "month": "January",
+                      "turnover": 50000
+                    },
+                    {
+                      "month": "February",
+                      "turnover": 55000
+                    },
+                    {
+                      "month": "March",
+                      "turnover": 60000
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
           }
         },
         "security": [
@@ -3157,6 +3212,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get monthly turnover",
         "tags": [
           "Analytics"
         ]
@@ -3164,11 +3220,36 @@
     },
     "/api/v1/analytics/top-products": {
       "get": {
+        "description": "Retrieves a list of the top-selling products based on order quantity",
         "operationId": "AnalyticsController_getTopProducts_api/v1",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Top selling products retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": [
+                    {
+                      "productId": 1,
+                      "totalQuantity": 250,
+                      "productImage": "http://example.com/product1.jpg"
+                    },
+                    {
+                      "productId": 2,
+                      "totalQuantity": 180,
+                      "productImage": "http://example.com/product2.jpg"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
           }
         },
         "security": [
@@ -3176,6 +3257,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get top selling products",
         "tags": [
           "Analytics"
         ]
@@ -4349,11 +4431,11 @@
           "expirationDate"
         ]
       },
-      "DeleteProductPicturesDto": {
+      "BulkDeleteProductsDto": {
         "type": "object",
         "properties": {
-          "pictureIds": {
-            "description": "Array of product picture IDs to delete",
+          "productIds": {
+            "description": "An array of product IDs to delete.",
             "example": [
               1,
               2,
@@ -4366,7 +4448,7 @@
           }
         },
         "required": [
-          "pictureIds"
+          "productIds"
         ]
       },
       "WholesellerProductDto": {

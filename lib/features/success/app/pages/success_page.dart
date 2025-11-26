@@ -94,7 +94,7 @@ class _SuccessPageState extends State<SuccessPage>
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => context.go('/home?tab=1'), // Go back to cart tab
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(AppLanguage.success,
             style: Theme.of(context)
@@ -166,8 +166,10 @@ class _SuccessPageState extends State<SuccessPage>
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () {
-                            // Navigate to home page (catalog is at index 0)
-                            context.go('/home');
+                            Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/home',
+                              (route) => false,
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:

@@ -123,7 +123,8 @@ class _AddProductPageState extends State<AddProductPage> {
     } catch (e) {
       setState(() => _isLoadingData = false);
       if (mounted) {
-        TopToast.show(context, 'Erreur de chargement: $e', isError: true);
+        TopToast.show(context, '${AppLanguage.loadingError}: $e',
+            isError: true);
       }
     }
   }
@@ -189,7 +190,7 @@ class _AddProductPageState extends State<AddProductPage> {
     } catch (e) {
       setState(() => _isLoadingProduct = false);
       if (mounted) {
-        TopToast.show(context, 'Erreur de chargement du produit: $e',
+        TopToast.show(context, '${AppLanguage.loadingError}: $e',
             isError: true);
       }
     }

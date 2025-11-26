@@ -203,6 +203,11 @@ class AppLanguage {
       AppLocale.fr: 'Appliquer les filtres',
       AppLocale.ar: 'تطبيق المرشحات',
     },
+    'filtersApplied': {
+      AppLocale.en: 'Filters applied',
+      AppLocale.fr: 'Filtres appliqués',
+      AppLocale.ar: 'تم تطبيق المرشحات',
+    },
     // Admin Orders & Users
     'orderDetails': {
       AppLocale.en: 'Order Details',
@@ -842,6 +847,24 @@ class AppLanguage {
       AppLocale.fr: 'En livraison',
       AppLocale.ar: 'قيد التوصيل',
     },
+    'amount': {
+      AppLocale.en: 'Amount',
+      AppLocale.fr: 'Montant',
+      AppLocale.ar: 'المبلغ',
+    },
+    'reason': {
+      AppLocale.en: 'Reason',
+      AppLocale.fr: 'Raison',
+      AppLocale.ar: 'السبب',
+    },
+    'paymentFailedMessage': {
+      AppLocale.en:
+          'Sorry, your payment could not be processed.\nPlease check your payment information and try again.',
+      AppLocale.fr:
+          'Désolé, votre paiement n\'a pas pu être traité.\nVeuillez vérifier vos informations de paiement et réessayer.',
+      AppLocale.ar:
+          'عذرًا، لم نتمكن من معالجة الدفع الخاص بك.\nيرجى التحقق من معلومات الدفع والمحاولة مرة أخرى.',
+    },
 
     // Empty States
     'noProductsFound': {
@@ -1046,16 +1069,7 @@ class AppLanguage {
       AppLocale.fr: 'Quartier / Commune',
       AppLocale.ar: 'الحي / البلدية',
     },
-    'cityLabel': {
-      AppLocale.en: 'City',
-      AppLocale.fr: 'Ville',
-      AppLocale.ar: 'المدينة',
-    },
-    'fieldRequired': {
-      AppLocale.en: 'This field is required',
-      AppLocale.fr: 'Ce champ est requis',
-      AppLocale.ar: 'هذا الحقل مطلوب',
-    },
+
     'print': {
       AppLocale.en: 'Print',
       AppLocale.fr: 'Imprimer',
@@ -1318,6 +1332,11 @@ class AppLanguage {
       AppLocale.en: 'Pay',
       AppLocale.fr: 'Payer',
       AppLocale.ar: 'دفع',
+    },
+    'totalToPay': {
+      AppLocale.en: 'Total to pay',
+      AppLocale.fr: 'Total à payer',
+      AppLocale.ar: 'المجموع للدفع',
     },
     'payMyOrder': {
       AppLocale.en: 'Pay My Order',
@@ -1995,6 +2014,7 @@ class AppLanguage {
   static String get noBrandsFound => _t('noBrandsFound');
   static String get noFavoritesFound => _t('noFavoritesFound');
   static String get emptyCart => _t('emptyCart');
+  static String get filtersApplied => _t('filtersApplied');
 
   // Errors
   static String get error => _t('error');
@@ -2122,6 +2142,7 @@ class AppLanguage {
   static String get cashPayment => _t('cashPayment');
   static String get onlinePayment => _t('onlinePayment');
   static String get cardPaymentDetails => _t('cardPaymentDetails');
+  static String get totalToPay => _t('totalToPay');
   static String get paymentMethod => _t('paymentMethod');
   static String get cash => _t('cash');
   static String get card => _t('card');
@@ -2255,6 +2276,10 @@ class AppLanguage {
   static String get categoryNameLabel => _t('categoryNameLabel');
   static String get categoryNameHint => _t('categoryNameHint');
   static String get categoryHasChildrenError => _t('categoryHasChildrenError');
+  static String get amount => _t('amount');
+  static String get reason => _t('reason');
+  static String get paymentFailedMessage => _t('paymentFailedMessage');
+
   static String get invalidNumber => _t('invalidNumber');
   static String get minPriceRestriction => _t('minPriceRestriction');
   static String get deletedImagesRestoreNote => _t('deletedImagesRestoreNote');

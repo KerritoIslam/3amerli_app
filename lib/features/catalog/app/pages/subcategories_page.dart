@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../bloc/catalog_bloc.dart';
 import '../bloc/catalog_event.dart';
 import '../../domain/entities/category.dart';
@@ -102,7 +103,7 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                               .add(CatalogLoadEvent(query: selectedNames));
                         } catch (_) {}
                       },
-                      child: const Text('Tout'),
+                      child: Text(AppLanguage.all),
                     ),
                   ],
                 ),
@@ -169,7 +170,7 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                                 shape: const StadiumBorder(),
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 14)),
-                            child: const Text('Appliquer les filtres'),
+                            child: Text(AppLanguage.applyFilters),
                           ),
                         ),
                       ),

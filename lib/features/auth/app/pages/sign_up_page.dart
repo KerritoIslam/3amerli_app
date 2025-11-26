@@ -379,7 +379,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                             if (state.status ==
                                 VerificationStatus.enteringOtp) {
                               return SingleChildScrollView(
-                                physics: const ClampingScrollPhysics(),
+                                physics: const NeverScrollableScrollPhysics(),
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
                                       minHeight: constraints.maxHeight),
@@ -650,7 +650,7 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                             }
 
                             return SingleChildScrollView(
-                              physics: const ClampingScrollPhysics(),
+                              physics: const NeverScrollableScrollPhysics(),
                               child: ConstrainedBox(
                                 constraints: BoxConstraints(
                                     minHeight: constraints.maxHeight),
@@ -721,10 +721,10 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                                 cubit.setPhoneNumber(v),
                                           ),
                                         ),
-                                        const Spacer(),
-                                        if (_phoneFocusNode.hasFocus) ...[
-                                          Align(
-                                            alignment: Alignment.center,
+                                        const SizedBox(height: 12),
+                                        SizedBox(
+                                          height: 60,
+                                          child: Center(
                                             child: RichText(
                                               textAlign: TextAlign.center,
                                               text: TextSpan(
@@ -760,7 +760,9 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                               ),
                                             ),
                                           ),
-                                          const SizedBox(height: 12),
+                                        ),
+                                        const Spacer(),
+                                        if (_phoneFocusNode.hasFocus) ...[
                                           SizedBox(
                                             width: double.infinity,
                                             child: AppButton(
@@ -786,43 +788,6 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                         ] else ...[
                                           const SizedBox(
                                               height: AppDimensions.spacingXL),
-                                          Align(
-                                            alignment: Alignment.center,
-                                            child: RichText(
-                                              textAlign: TextAlign.center,
-                                              text: TextSpan(
-                                                style: AppTextStyles.caption
-                                                    .copyWith(
-                                                        color: Theme.of(context)
-                                                            .colorScheme
-                                                            .onSurface),
-                                                children: [
-                                                  TextSpan(
-                                                      text:
-                                                          '${AppLanguage.consentPrefix} '),
-                                                  TextSpan(
-                                                    text:
-                                                        AppLanguage.termsOfUse,
-                                                    style: const TextStyle(
-                                                        decoration:
-                                                            TextDecoration
-                                                                .underline),
-                                                  ),
-                                                  TextSpan(
-                                                      text:
-                                                          ' ${AppLanguage.and} '),
-                                                  TextSpan(
-                                                    text: AppLanguage
-                                                        .privacyPolicy,
-                                                    style: const TextStyle(
-                                                        decoration:
-                                                            TextDecoration
-                                                                .underline),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
                                         ],
                                       ],
                                     ),

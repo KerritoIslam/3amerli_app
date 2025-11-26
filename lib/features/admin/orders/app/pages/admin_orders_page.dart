@@ -104,8 +104,7 @@ class _AdminOrdersPageState extends State<AdminOrdersPage> {
       );
     } catch (e) {
       if (mounted) {
-        TopToast.show(context, 'Erreur lors de l\'exportation CSV',
-            isError: true);
+        TopToast.show(context, AppLanguage.csvExportError, isError: true);
       }
     }
   }

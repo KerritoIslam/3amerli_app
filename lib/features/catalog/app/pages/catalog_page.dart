@@ -1,7 +1,7 @@
 import 'package:amerli_app/features/catalog/app/widgets/products_list.dart';
 import 'dart:async';
 import 'package:amerli_app/features/catalog/domain/entities/product.dart';
-import 'package:amerli_app/features/catalog/domain/entities/category.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
@@ -85,6 +85,9 @@ class _CatalogPageState extends State<CatalogPage> {
     _fetchProductsWithCategories();
   }
 
+  double _categoriesHeight = 180; // Initial estimate
+  final GlobalKey _categoriesKey = GlobalKey();
+
   @override
   void dispose() {
     _offersPageController.dispose();
@@ -122,8 +125,23 @@ class _CatalogPageState extends State<CatalogPage> {
     return completer.future;
   }
 
+  void _measureCategories() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final context = _categoriesKey.currentContext;
+      if (context != null) {
+        final box = context.findRenderObject() as RenderBox?;
+        if (box != null && box.size.height != _categoriesHeight) {
+          setState(() {
+            _categoriesHeight = box.size.height;
+          });
+        }
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    _measureCategories();
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: _offersBloc),
@@ -146,6 +164,8 @@ class _CatalogPageState extends State<CatalogPage> {
               if (state is CategoriesError) {
                 ErrorHandler.showError(context, state.message);
               }
+              // Trigger measurement after state change
+              _measureCategories();
             },
           ),
           BlocListener<OffersBloc, OffersState>(
@@ -156,275 +176,231 @@ class _CatalogPageState extends State<CatalogPage> {
             },
           ),
         ],
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 20, left: 28, right: 28),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ValueListenableBuilder<AppLocale>(
-                  valueListenable: AppLanguage.localeNotifier,
-                  builder: (context, locale, _) {
-                    return Row(
-                      children: [
-                        Text(AppLanguage.welcomeTo,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineLarge
-                                ?.copyWith(fontSize: 24)),
-                        const SizedBox(width: 8),
-                        // Use the correct asset path (logo is under assets/logo/ in the project)
-                        SizedBox(
-                            height: 32,
-                            width: 116,
-                            child: Image.asset('assets/logo/full_logo.png',
-                                width: 116, height: 116)),
-                      ],
-                    );
-                  },
-                ),
-                const SizedBox(height: 15),
-
-                // Search + notifications
-                SizedBox(
-                  height: 40,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: AppSearchbar(
-                          onChanged: (value) => context
-                              .read<CatalogBloc>()
-                              .add(CatalogLoadEvent(query: value)),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      InkWell(
-                        onTap: () => context.push('/notifications'),
-                        borderRadius: BorderRadius.circular(20),
-                        child: IconCircle(
-                          asset: 'assets/icons/notifications.svg',
-                          isSelected: false,
-                          size: 40,
-                          keepIconColor: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 25),
-
-                // Offers (single page view with skeleton while loading)
-                /* Visibility(
-              visible: false,
-              child: SizedBox(
-                height: 160,
-                child: BlocBuilder<OffersBloc, OffersState>(builder: (context, state) {
-                  if (state is OffersLoading) {
-                    // show 3 skeleton pages
-                    return PageView.builder(
-                      controller: _offersPageController,
-                      itemCount: 3,
-                      itemBuilder: (context, index) => Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06)),
+        child: Scaffold(
+          body: SafeArea(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                // Trigger refresh for both categories and catalog
+                _categoriesBloc.add(CategoriesLoadEvent());
+                _catalogBloc.add(CatalogLoadEvent(
+                  categoryIds: _selectedCategoryIds.isEmpty
+                      ? null
+                      : _selectedCategoryIds,
+                  timestamp: DateTime.now(),
+                ));
+                // Wait a bit to ensure the loading state is processed
+                await Future.delayed(const Duration(seconds: 1));
+              },
+              child: NestedScrollView(
+                floatHeaderSlivers: true,
+                headerSliverBuilder: (context, innerBoxIsScrolled) {
+                  return [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            top: 20, left: 28, right: 28, bottom: 20),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: 8),
-                            SkeletonBox(height: 18),
-                            const SizedBox(height: 8),
-                            SkeletonBox(height: 12),
-                            const SizedBox(height: 6),
-                            SkeletonBox(height: 12),
+                            ValueListenableBuilder<AppLocale>(
+                              valueListenable: AppLanguage.localeNotifier,
+                              builder: (context, locale, _) {
+                                return Row(
+                                  children: [
+                                    Text(AppLanguage.welcomeTo,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineLarge
+                                            ?.copyWith(fontSize: 24)),
+                                    const SizedBox(width: 8),
+                                    SizedBox(
+                                        height: 32,
+                                        width: 116,
+                                        child: Image.asset(
+                                            'assets/logo/full_logo.png',
+                                            width: 116,
+                                            height: 116)),
+                                  ],
+                                );
+                              },
+                            ),
+                            const SizedBox(height: 15),
+                            // Search + notifications
+                            SizedBox(
+                              height: 40,
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: AppSearchbar(
+                                      onChanged: (value) => context
+                                          .read<CatalogBloc>()
+                                          .add(CatalogLoadEvent(query: value)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  InkWell(
+                                    onTap: () => context.push('/notifications'),
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: IconCircle(
+                                      asset: 'assets/icons/notifications.svg',
+                                      isSelected: false,
+                                      size: 40,
+                                      keepIconColor: true,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                    );
-                  }
-              
-                  if (state is OffersError) {
-                    ToastService.instance.showToast(context, 'Network error', type: ToastType.error);
-                    return Center(child: IconButton(onPressed: () => sl<OffersBloc>().add(OffersLoadEvent()), icon: const Icon(Icons.refresh)));
-                  }
-              
-                  if (state is OffersLoaded) {
-                    final items = state.items;
-                    return PageView.builder(
-                      controller: _offersPageController,
-                      itemCount: items.length,
-                      itemBuilder: (context, i) {
-                        final offer = items[i];
-                        return Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 4.0),
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(offer.title, style: Theme.of(context).textTheme.titleMedium),
-                              const SizedBox(height: 8),
-                              Text(offer.description, maxLines: 3, overflow: TextOverflow.ellipsis),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  }
-              
-                  return const SizedBox.shrink();
-                }),
-            ),
-          ),
- */
-                const SizedBox(height: 20),
-
-                // Categories header
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(AppLanguage.categories,
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold)),
-                    InkWell(
-                      onTap: () => context.push('/filters/categories'),
-                      child: Text(AppLanguage.viewAll,
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                  color: AppColors.hint,
-                                  decoration: TextDecoration.underline,
-                                  decorationColor: AppColors.hint)),
                     ),
-                  ],
-                ),
+                    SliverAppBar(
+                      backgroundColor:
+                          Theme.of(context).scaffoldBackgroundColor,
+                      surfaceTintColor: Colors.transparent,
+                      floating: true,
+                      snap: true,
+                      pinned: false,
+                      toolbarHeight: 0,
+                      collapsedHeight: 0,
+                      expandedHeight: _categoriesHeight,
+                      flexibleSpace: FlexibleSpaceBar(
+                        background: SingleChildScrollView(
+                          physics: const NeverScrollableScrollPhysics(),
+                          child: Container(
+                            key: _categoriesKey,
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
+                            child: Column(
+                              children: [
+                                // Categories header
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(AppLanguage.categories,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .headlineSmall
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.bold)),
+                                    InkWell(
+                                      onTap: () =>
+                                          context.push('/filters/categories'),
+                                      child: Text(AppLanguage.viewAll,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(
+                                                  color: AppColors.hint,
+                                                  decoration:
+                                                      TextDecoration.underline,
+                                                  decorationColor:
+                                                      AppColors.hint)),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                // Categories grid
+                                BlocBuilder<CategoriesBloc, CategoriesState>(
+                                    builder: (context, state) {
+                                  if (state is CategoriesLoading) {
+                                    return categoriesSkeletonGrid(
+                                        count: 6,
+                                        crossAxisCount: 3,
+                                        itemHeight: 90);
+                                  }
+                                  if (state is CategoriesError) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  if (state is CategoriesLoaded) {
+                                    const maxCategoriesToShow = 9;
+                                    final hasMore = state.items.length >
+                                        maxCategoriesToShow;
+                                    final displayCategories = hasMore
+                                        ? state.items
+                                            .take(maxCategoriesToShow)
+                                            .toList()
+                                        : state.items;
 
-                const SizedBox(height: 12),
+                                    return CategoryGrid(
+                                      categories: displayCategories,
+                                      crossAxisCount: 3,
+                                      itemHeight: 90,
+                                      showMoreIndicator: hasMore,
+                                      onSelectionChanged: (selectedIds) {
+                                        _updateSelectedCategories(selectedIds);
+                                      },
+                                    );
+                                  }
+                                  return const SizedBox.shrink();
+                                }),
+                                const SizedBox(height: 12), // Bottom padding
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ];
+                },
+                body: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  child: BlocBuilder<CatalogBloc, CatalogState>(
+                      bloc: _catalogBloc,
+                      builder: (context, state) {
+                        // Debug logging
+                        // ignore: avoid_print
+                        print(
+                            '🖼️ [CatalogPage] BlocBuilder rebuild - state: ${state.runtimeType}');
 
-                // Categories grid (limited to prevent overflow)
-                BlocBuilder<CategoriesBloc, CategoriesState>(
-                    builder: (context, state) {
-                  if (state is CategoriesLoading) {
-                    // show skeleton grid while loading
-                    return categoriesSkeletonGrid(
-                        count: 6, crossAxisCount: 3, itemHeight: 90);
-                  }
+                        final isLoading = state is CatalogLoading;
+                        final isLoadingMore = state is CatalogLoadingMore;
 
-                  if (state is CategoriesError) {
-                    // Error handled by BlocListener
-                    return const SizedBox.shrink();
-                  }
-                  if (state is CategoriesLoaded) {
-                    // Limit to 9 categories (3 rows of 3) to prevent overflow
-                    // The 4th row will show "..." if there are more categories
-                    const maxCategoriesToShow = 9;
-                    final allCategories = state.items;
-                    // Flatten categories to show subcategories along with main categories
-                    final flattenedCategories = <Category>[];
-                    for (var cat in allCategories) {
-                      flattenedCategories.add(cat);
-                      flattenedCategories.addAll(cat.subcategories);
-                    }
-
-                    final hasMore =
-                        flattenedCategories.length > maxCategoriesToShow;
-                    final displayCategories = hasMore
-                        ? flattenedCategories.take(maxCategoriesToShow).toList()
-                        : flattenedCategories;
-
-                    return CategoryGrid(
-                      categories: displayCategories,
-                      crossAxisCount: 3,
-                      itemHeight: 90,
-                      showMoreIndicator: hasMore,
-                      onSelectionChanged: (selectedIds) {
-                        // Update selected categories with the full array
-                        _updateSelectedCategories(selectedIds);
-                      },
-                    );
-                  }
-                  return const SizedBox.shrink();
-                }),
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      // Trigger refresh for both categories and catalog
-                      _categoriesBloc.add(CategoriesLoadEvent());
-                      _catalogBloc.add(CatalogLoadEvent(
-                        categoryIds: _selectedCategoryIds.isEmpty
-                            ? null
-                            : _selectedCategoryIds,
-                        timestamp: DateTime.now(),
-                      ));
-                      // Wait a bit to ensure the loading state is processed or at least the spinner shows for a moment
-                      await Future.delayed(const Duration(seconds: 1));
-                    },
-                    child: BlocBuilder<CatalogBloc, CatalogState>(
-                        bloc: _catalogBloc,
-                        builder: (context, state) {
-                          // Debug logging
-                          // ignore: avoid_print
-                          print(
-                              '🖼️ [CatalogPage] BlocBuilder rebuild - state: ${state.runtimeType}');
-
-                          final isLoading = state is CatalogLoading;
-                          final isLoadingMore = state is CatalogLoadingMore;
-
-                          if (state is CatalogError) {
-                            // Error handled by BlocListener, but show empty state or error message in list
-                            return Center(
-                              child: Text(
-                                AppLanguage.noProductsFound,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(color: AppColors.hint),
-                              ),
-                            );
-                          }
-
-                          List<Product> products = [];
-                          bool hasMore = false;
-
-                          if (state is CatalogLoadingMore) {
-                            products = state.products;
-                            hasMore = state.hasMore;
-                          } else if (state is CatalogLoaded) {
-                            products = state.products;
-                            hasMore = state.hasMore;
-                          } else if (isLoading) {
-                            // Initial loading
-                            return ProductsList(products: [], isLoading: true);
-                          }
-
-                          if (products.isEmpty && !isLoading) {
-                            // If loaded but empty, show message
-                            return Center(
-                                child: Text(AppLanguage.noProductsFound,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.copyWith(color: AppColors.hint)));
-                          }
-
-                          return ProductsList(
-                            key: const PageStorageKey('products_list'),
-                            products: products,
-                            isLoading: isLoadingMore,
-                            hasMore: hasMore,
-                            onLoadMore: () => _loadMoreAsync(),
+                        if (state is CatalogError) {
+                          return Center(
+                            child: Text(
+                              AppLanguage.noProductsFound,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: AppColors.hint),
+                            ),
                           );
-                        }),
-                  ),
+                        }
+
+                        List<Product> products = [];
+                        bool hasMore = false;
+
+                        if (state is CatalogLoadingMore) {
+                          products = state.products;
+                          hasMore = state.hasMore;
+                        } else if (state is CatalogLoaded) {
+                          products = state.products;
+                          hasMore = state.hasMore;
+                        } else if (isLoading) {
+                          return ProductsList(products: [], isLoading: true);
+                        }
+
+                        if (products.isEmpty && !isLoading) {
+                          return Center(
+                              child: Text(AppLanguage.noProductsFound,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodyMedium
+                                      ?.copyWith(color: AppColors.hint)));
+                        }
+
+                        return ProductsList(
+                          key: const PageStorageKey('products_list'),
+                          products: products,
+                          isLoading: isLoadingMore,
+                          hasMore: hasMore,
+                          onLoadMore: () => _loadMoreAsync(),
+                        );
+                      }),
                 ),
-              ],
+              ),
             ),
           ),
         ),

@@ -1,0 +1,21 @@
+// EXACT FIX FOR BACK TO HOME BUTTON
+// File: lib/features/success/app/pages/success_page.dart
+// Line 167
+
+// FIND THIS (line 167):
+                          onPressed: () => context.go('/home?tab=0'),
+
+// REPLACE WITH THIS:
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Future.delayed(const Duration(milliseconds: 50), () {
+                              if (!context.mounted) return;
+                              context.go('/home?tab=0');
+                            });
+                          },
+
+// This will:
+// 1. Pop the SuccessPage first (this gets us out of the nested navigator)
+// 2. Wait 50ms
+// 3. Check if context is still mounted
+// 4. Navigate to catalog tab (tab 0)

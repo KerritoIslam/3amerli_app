@@ -413,7 +413,7 @@ class _ProductCardState extends State<ProductCard> {
 
                             if (currentCartQty + _quantity > maxStock) {
                               TopToast.show(context,
-                                  'Quantité insuffisante. Stock disponible: $maxStock',
+                                  '${AppLanguage.quantity} insuffisante. ${AppLanguage.stock}: $maxStock',
                                   isError: true);
                               return;
                             }
@@ -430,19 +430,19 @@ class _ProductCardState extends State<ProductCard> {
                               )));
                               // Show toast notification
                               TopToast.show(context,
-                                  '$_quantity x ${widget.title} ajouté au panier');
+                                  '$_quantity x ${widget.title} ${AppLanguage.addedToCart}');
                             } else {
                               cartBloc.add(CartUpdateQuantityEvent(
                                   productId: productIdStr,
                                   quantity: existingItem.quantity + _quantity));
                               // Show toast notification
                               TopToast.show(context,
-                                  'Quantité mise à jour: ${existingItem.quantity + _quantity} x ${widget.title}');
+                                  '${AppLanguage.quantity}: ${existingItem.quantity + _quantity} x ${widget.title}');
                             }
                           } else {
                             if (_quantity > maxStock) {
                               TopToast.show(context,
-                                  'Quantité insuffisante. Stock disponible: $maxStock',
+                                  '${AppLanguage.quantity} insuffisante. ${AppLanguage.stock}: $maxStock',
                                   isError: true);
                               return;
                             }
@@ -458,7 +458,7 @@ class _ProductCardState extends State<ProductCard> {
                             )));
                             // Show toast notification
                             TopToast.show(context,
-                                '$_quantity x ${widget.title} ajouté au panier');
+                                '$_quantity x ${widget.title} ${AppLanguage.addedToCart}');
                           }
                         },
                         child: IconCircle(

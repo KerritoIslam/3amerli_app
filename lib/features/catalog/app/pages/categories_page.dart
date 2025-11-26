@@ -230,7 +230,7 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                           : _selected.toList(),
                                     ));
 
-                                    // Pop with selected IDs
+                                    // Pop and return the selected IDs
                                     Navigator.of(context).pop(_selected);
                                   },
                                   style: OutlinedButton.styleFrom(
@@ -245,8 +245,8 @@ class _CategoriesPageState extends State<CategoriesPage> {
                         );
                       }
                       if (state is CategoriesError) {
-                        return const Center(
-                            child: Text('Aucune catégorie trouvée'));
+                        return Center(
+                            child: Text(AppLanguage.noCategoriesFound));
                       }
                       return const SizedBox.shrink();
                     }),

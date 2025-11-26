@@ -580,8 +580,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
         data: data,
       );
     } catch (e) {
-      TopToast.show(context, 'Erreur lors de l\'exportation CSV',
-          isError: true);
+      TopToast.show(context, AppLanguage.csvExportError, isError: true);
     }
   }
 

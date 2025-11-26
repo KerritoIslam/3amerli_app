@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 /// Failure page with animated X mark, similar to SuccessPage
 class FailurePage extends StatefulWidget {
@@ -128,18 +129,18 @@ class _FailurePageState extends State<FailurePage>
                       ),
 
                       // Summary rows
-                      _summaryRow('Date', widget.date ?? '-'),
+                      _summaryRow(AppLanguage.date, widget.date ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow(
-                          'Méthode de paiement', widget.paymentMethod ?? '-'),
+                      _summaryRow(AppLanguage.paymentMethod,
+                          widget.paymentMethod ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Commande', widget.orderId ?? '-'),
+                      _summaryRow(AppLanguage.order, widget.orderId ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Montant', widget.amount ?? '-',
+                      _summaryRow(AppLanguage.amount, widget.amount ?? '-',
                           emphasize: true),
                       const SizedBox(height: 8),
-                      _summaryRow(
-                          'Raison', widget.failureReason ?? 'Erreur inconnue',
+                      _summaryRow(AppLanguage.reason,
+                          widget.failureReason ?? AppLanguage.unknownError,
                           emphasize: true, isError: true),
 
                       const SizedBox(height: 12),
@@ -157,8 +158,8 @@ class _FailurePageState extends State<FailurePage>
                             backgroundColor: errorColor,
                             shape: const StadiumBorder(),
                           ),
-                          child: const Text('Réessayer le paiement',
-                              style: TextStyle(
+                          child: Text(AppLanguage.retryPayment,
+                              style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w700)),
                         ),
@@ -177,8 +178,8 @@ class _FailurePageState extends State<FailurePage>
                             shape: const StadiumBorder(),
                             backgroundColor: Colors.transparent,
                           ),
-                          child: const Text('Retour à l\'accueil',
-                              style: TextStyle(
+                          child: Text(AppLanguage.backToHome,
+                              style: const TextStyle(
                                   color: Colors.black,
                                   fontWeight: FontWeight.w600)),
                         ),
@@ -234,7 +235,7 @@ class _FailurePageState extends State<FailurePage>
                 child: Column(
                   children: [
                     Text(
-                      'Désolé, votre paiement n\'a pas pu être traité.\nVeuillez vérifier vos informations de paiement et réessayer.',
+                      AppLanguage.paymentFailedMessage,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
