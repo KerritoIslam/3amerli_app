@@ -15,8 +15,9 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
   Future<void> _onLoad(OrdersLoadEvent event, Emitter<OrdersState> emit) async {
     emit(OrdersLoading());
     try {
-      final items = await repository.fetchOrders();
-      emit(OrdersLoaded(items));
+      final result = await repository.fetchOrders(page: event.page);
+      emit(OrdersLoaded(result.orders,
+          hasNextPage: result.hasNextPage, total: result.total));
     } catch (e) {
       emit(OrdersError(e.toString()));
     }

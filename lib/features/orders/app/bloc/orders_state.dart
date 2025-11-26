@@ -8,7 +8,10 @@ class OrdersLoading extends OrdersState {}
 
 class OrdersLoaded extends OrdersState {
   final List<Order> items;
-  OrdersLoaded(this.items);
+  final bool hasNextPage;
+  final int total;
+
+  OrdersLoaded(this.items, {this.hasNextPage = false, this.total = 0});
 }
 
 class OrdersError extends OrdersState {

@@ -502,8 +502,6 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                                                 .number,
                                                         textAlign:
                                                             TextAlign.center,
-                                                        // Remove maxLength to allow pasting multiple chars temporarily
-                                                        // maxLength: 1,
                                                         style: AppTextStyles
                                                             .headline2,
                                                         decoration:
@@ -545,9 +543,36 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                                           ),
                                                         ),
                                                         onChanged: (value) {
+                                                          if (value.isEmpty)
+                                                            return;
+
+                                                          // Handle Paste or Multi-character input
                                                           if (value.length >
                                                               1) {
-                                                            // Paste logic
+                                                            // If it's a full code paste (4 digits), fill all fields regardless of current index
+                                                            if (value.length ==
+                                                                4) {
+                                                              for (int i = 0;
+                                                                  i < 4;
+                                                                  i++) {
+                                                                _otpControllers[
+                                                                            i]
+                                                                        .text =
+                                                                    value[i];
+                                                              }
+                                                              _otpFocusNodes[3]
+                                                                  .requestFocus();
+                                                              final otp =
+                                                                  _otpControllers
+                                                                      .map((c) =>
+                                                                          c.text)
+                                                                      .join();
+                                                              cubit.verifyOtp(
+                                                                  otp);
+                                                              return;
+                                                            }
+
+                                                            // Existing logic for pasting/typing multiple chars in the first field
                                                             if (index == 0) {
                                                               for (int i = 0;
                                                                   i < 4;
@@ -575,14 +600,53 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                                                 cubit.verifyOtp(
                                                                     otp);
                                                               } else {
-                                                                _otpFocusNodes[
-                                                                        value.length -
-                                                                            1]
-                                                                    .requestFocus();
+                                                                // Move focus to the next empty field
+                                                                int nextIndex =
+                                                                    value
+                                                                        .length;
+                                                                if (nextIndex <
+                                                                    4) {
+                                                                  _otpFocusNodes[
+                                                                          nextIndex]
+                                                                      .requestFocus();
+                                                                } else {
+                                                                  _otpFocusNodes[
+                                                                          3]
+                                                                      .requestFocus();
+                                                                }
                                                               }
+                                                              return;
+                                                            }
+
+                                                            // If typing multiple chars in other fields (e.g. "12"), take the last char
+                                                            String lastChar =
+                                                                value.substring(
+                                                                    value.length -
+                                                                        1);
+                                                            _otpControllers[
+                                                                        index]
+                                                                    .text =
+                                                                lastChar;
+                                                            if (index < 3) {
+                                                              _otpFocusNodes[
+                                                                      index + 1]
+                                                                  .requestFocus();
+                                                            } else {
+                                                              _otpFocusNodes[
+                                                                      index]
+                                                                  .unfocus();
+                                                              final otp =
+                                                                  _otpControllers
+                                                                      .map((c) =>
+                                                                          c.text)
+                                                                      .join();
+                                                              cubit.verifyOtp(
+                                                                  otp);
                                                             }
                                                             return;
                                                           }
+
+                                                          // Single character input
                                                           if (value
                                                               .isNotEmpty) {
                                                             if (index < 3) {

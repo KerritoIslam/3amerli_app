@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/repositories/admin_orders_repository.dart';
 import 'admin_orders_event.dart';
 import 'admin_orders_state.dart';
@@ -25,17 +26,13 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
       emit(currentState.copyWith(isLoadingMore: true));
 
       try {
-        final newOrders = await repository.getAllOrders(
+        final result = await repository.getAllOrders(
             query: event.query, page: event.page, limit: event.limit);
 
-        // If newOrders is empty, hasMore should be false.
-        // If newOrders length < limit, hasMore should be false.
-        final hasMore = newOrders.length >= event.limit;
-
         emit(currentState.copyWith(
-          orders: currentState.orders + newOrders,
+          orders: currentState.orders + result.orders,
           currentPage: event.page,
-          hasMore: hasMore,
+          hasMore: result.hasNextPage,
           isLoadingMore: false,
         ));
       } catch (e) {
@@ -46,12 +43,12 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
 
     emit(AdminOrdersLoading());
     try {
-      final orders = await repository.getAllOrders(
+      final result = await repository.getAllOrders(
           query: event.query, page: event.page, limit: event.limit);
       emit(AdminOrdersLoaded(
-        orders,
+        result.orders,
         query: event.query,
-        hasMore: orders.length >= event.limit,
+        hasMore: result.hasNextPage,
         currentPage: event.page,
       ));
     } catch (e) {
@@ -74,7 +71,7 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
       Emitter<AdminOrdersState> emit) async {
     try {
       await repository.updateOrderStatus(event.orderId, event.newStatus);
-      emit(AdminOrdersOperationSuccess('Statut mis à jour avec succès'));
+      emit(AdminOrdersOperationSuccess(AppLanguage.updateSuccess));
       // Reload order detail after update
       add(AdminOrdersLoadDetailEvent(event.orderId));
     } catch (e) {
@@ -108,13 +105,13 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
 
         emit(currentState.copyWith(
             orders: updatedList,
-            message: 'Statut mis à jour avec succès',
+            message: AppLanguage.updateSuccess,
             isIncrementing: false));
       } else if (state is AdminOrderDetailLoaded) {
         emit(AdminOrderDetailLoaded(updatedOrder,
-            message: 'Statut mis à jour avec succès', isIncrementing: false));
+            message: AppLanguage.updateSuccess, isIncrementing: false));
       } else {
-        emit(AdminOrdersOperationSuccess('Statut mis à jour avec succès'));
+        emit(AdminOrdersOperationSuccess(AppLanguage.updateSuccess));
       }
     } catch (e) {
       String message = e.toString();

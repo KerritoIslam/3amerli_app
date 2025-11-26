@@ -18,18 +18,54 @@ class AdminOrdersRepositoryImpl implements AdminOrdersRepository {
   }
 
   @override
-  Future<List<AdminOrder>> getAllOrders(
+  Future<AdminOrdersResult> getAllOrders(
       {String? query, int page = 1, int limit = 20}) async {
     final qp = <String, dynamic>{};
     if (query != null && query.isNotEmpty) qp['search'] = query;
     qp['page'] = page;
     qp['limit'] = limit;
     final resp = await apiService.get('/order/admin/all', queryParameters: qp);
+
     final list = _extractList(resp.data);
-    return list.map<AdminOrder>((e) {
+    final orders = list.map<AdminOrder>((e) {
       final map = Map<String, dynamic>.from(e as Map);
       return AdminOrderModel.fromJson(map).toEntity();
     }).toList();
+
+    // Try to extract metadata if available
+    bool hasNextPage = false;
+    int total = 0;
+
+    if (resp.data is Map) {
+      final map = resp.data as Map;
+      if (map.containsKey('meta')) {
+        final meta = map['meta'];
+        if (meta is Map) {
+          hasNextPage = meta['hasNextPage'] ?? false;
+          total = (meta['total'] as num?)?.toInt() ?? 0;
+        }
+      } else if (map.containsKey('pagination')) {
+        final pagination = map['pagination'];
+        if (pagination is Map) {
+          hasNextPage = pagination['hasNextPage'] ?? false;
+          total = (pagination['total'] as num?)?.toInt() ?? 0;
+        }
+      }
+    }
+
+    // Fallback if no metadata: assume more if full page
+    if (total == 0 && orders.isNotEmpty) {
+      // If we got a full page, assume there might be more
+      if (orders.length >= limit) {
+        hasNextPage = true;
+      }
+    }
+
+    return AdminOrdersResult(
+      orders: orders,
+      hasNextPage: hasNextPage,
+      total: total,
+    );
   }
 
   @override

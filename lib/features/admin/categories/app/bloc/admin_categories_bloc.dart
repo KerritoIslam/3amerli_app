@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/repositories/admin_categories_repository.dart';
 import 'admin_categories_event.dart';
 import 'admin_categories_state.dart';
@@ -75,8 +76,7 @@ class AdminCategoriesBloc
   ) async {
     try {
       await repository.addCategory(event.category);
-      emit(const AdminCategoriesOperationSuccess(
-          'Catégorie ajoutée avec succès'));
+      emit(AdminCategoriesOperationSuccess(AppLanguage.saveSuccess));
       add(const AdminCategoriesLoadEvent());
     } catch (e) {
       emit(AdminCategoriesError(e.toString()));
@@ -89,8 +89,7 @@ class AdminCategoriesBloc
   ) async {
     try {
       await repository.updateCategory(event.category);
-      emit(const AdminCategoriesOperationSuccess(
-          'Catégorie mise à jour avec succès'));
+      emit(AdminCategoriesOperationSuccess(AppLanguage.updateSuccess));
       add(const AdminCategoriesLoadEvent());
     } catch (e) {
       emit(AdminCategoriesError(e.toString()));
@@ -103,8 +102,7 @@ class AdminCategoriesBloc
   ) async {
     try {
       await repository.deleteCategory(event.id);
-      emit(const AdminCategoriesOperationSuccess(
-          'Catégorie supprimée avec succès'));
+      emit(AdminCategoriesOperationSuccess(AppLanguage.deleteSuccess));
       add(const AdminCategoriesLoadEvent());
     } catch (e) {
       emit(AdminCategoriesError(e.toString()));
@@ -117,8 +115,7 @@ class AdminCategoriesBloc
   ) async {
     try {
       await repository.deleteMultipleCategories(event.ids);
-      emit(AdminCategoriesOperationSuccess(
-          '${event.ids.length} catégories supprimées'));
+      emit(AdminCategoriesOperationSuccess(AppLanguage.deleteSuccess));
       add(const AdminCategoriesLoadEvent());
     } catch (e) {
       emit(AdminCategoriesError(e.toString()));
@@ -131,8 +128,7 @@ class AdminCategoriesBloc
   ) async {
     try {
       await repository.addSubCategory(event.subCategory);
-      emit(const AdminCategoriesOperationSuccess(
-          'Sous-catégorie ajoutée avec succès'));
+      emit(AdminCategoriesOperationSuccess(AppLanguage.saveSuccess));
       add(const AdminCategoriesLoadEvent());
     } catch (e) {
       emit(AdminCategoriesError(e.toString()));
@@ -145,8 +141,7 @@ class AdminCategoriesBloc
   ) async {
     try {
       await repository.updateSubCategory(event.subCategory);
-      emit(const AdminCategoriesOperationSuccess(
-          'Sous-catégorie mise à jour avec succès'));
+      emit(AdminCategoriesOperationSuccess(AppLanguage.updateSuccess));
       add(const AdminCategoriesLoadEvent());
     } catch (e) {
       emit(AdminCategoriesError(e.toString()));
@@ -158,9 +153,9 @@ class AdminCategoriesBloc
     Emitter<AdminCategoriesState> emit,
   ) async {
     try {
-      await repository.deleteSubCategory(event.id);
-      emit(const AdminCategoriesOperationSuccess(
-          'Sous-catégorie supprimée avec succès'));
+      // Subcategories are just categories with a parent, use the same delete endpoint
+      await repository.deleteCategory(event.id);
+      emit(AdminCategoriesOperationSuccess(AppLanguage.deleteSuccess));
       add(const AdminCategoriesLoadEvent());
     } catch (e) {
       emit(AdminCategoriesError(e.toString()));

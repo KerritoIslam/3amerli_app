@@ -287,13 +287,28 @@ class _OrderCard extends StatelessWidget {
           Row(
             children: [
               // image placeholder
+              // image placeholder
               Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.image, color: Colors.grey)),
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(8),
+                  image: (order.products.isNotEmpty &&
+                          order.products.first.imageUrl != null &&
+                          order.products.first.imageUrl!.isNotEmpty)
+                      ? DecorationImage(
+                          image: NetworkImage(order.products.first.imageUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: (order.products.isEmpty ||
+                        order.products.first.imageUrl == null ||
+                        order.products.first.imageUrl!.isEmpty)
+                    ? const Icon(Icons.image, color: Colors.grey)
+                    : null,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

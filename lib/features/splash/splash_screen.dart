@@ -168,21 +168,24 @@ class _SplashScreenState extends State<SplashScreen>
                     // Truck
                     Transform.translate(
                       offset: Offset(95.w + truckX + centerShift, truckY),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Only show smoke after truck entrance phase has started AND truck is visible
-                          // Truck entrance starts at main animation progress 0.15
-                          // Truck position goes from 1.sw to 0.0
-                          // Show smoke only when: main animation > 0.2 AND truck position < 0.5.sw
-                          if (_mainController.value > 0.2 &&
-                              _truckEnterAnimation.value < 0.5.sw)
-                            _buildSmokeEffect(),
-                          Image.asset(
-                            'assets/logo/logo_mix.png',
-                            height: 200.h,
-                          ),
-                        ],
+                      child: Directionality(
+                        textDirection: TextDirection.rtl,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Only show smoke after truck entrance phase has started AND truck is visible
+                            // Truck entrance starts at main animation progress 0.15
+                            // Truck position goes from 1.sw to 0.0
+                            // Show smoke only when: main animation > 0.2 AND truck position < 0.5.sw
+                            if (_mainController.value > 0.2 &&
+                                _truckEnterAnimation.value < 0.5.sw)
+                              _buildSmokeEffect(),
+                            Image.asset(
+                              'assets/logo/logo_mix.png',
+                              height: 200.h,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],

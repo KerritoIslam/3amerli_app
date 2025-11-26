@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/repositories/admin_products_repository.dart';
 import 'admin_products_event.dart';
 import 'admin_products_state.dart';
@@ -76,7 +77,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
   ) async {
     try {
       await repository.addProduct(event.product);
-      emit(AdminProductsOperationSuccess('Produit ajouté avec succès'));
+      emit(AdminProductsOperationSuccess(AppLanguage.saveSuccess));
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {
@@ -90,7 +91,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
   ) async {
     try {
       await repository.updateProduct(event.product);
-      emit(AdminProductsOperationSuccess('Produit modifié avec succès'));
+      emit(AdminProductsOperationSuccess(AppLanguage.updateSuccess));
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {
@@ -104,7 +105,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
   ) async {
     try {
       await repository.deleteProduct(event.id);
-      emit(AdminProductsOperationSuccess('Produit supprimé avec succès'));
+      emit(AdminProductsOperationSuccess(AppLanguage.deleteSuccess));
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {
@@ -118,8 +119,7 @@ class AdminProductsBloc extends Bloc<AdminProductsEvent, AdminProductsState> {
   ) async {
     try {
       await repository.deleteProducts(event.ids);
-      emit(AdminProductsOperationSuccess(
-          '${event.ids.length} produit(s) supprimé(s) avec succès'));
+      emit(AdminProductsOperationSuccess(AppLanguage.deleteSuccess));
       // Reload products
       add(AdminProductsLoadEvent());
     } catch (e) {

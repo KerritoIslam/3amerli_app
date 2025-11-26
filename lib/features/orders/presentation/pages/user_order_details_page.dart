@@ -131,7 +131,19 @@ class UserOrderDetailsPage extends StatelessWidget {
                           color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: const Icon(Icons.image, color: Colors.grey),
+                        child: product.imageUrl != null &&
+                                product.imageUrl!.isNotEmpty
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: Image.network(
+                                  product.imageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.image,
+                                          color: Colors.grey),
+                                ),
+                              )
+                            : const Icon(Icons.image, color: Colors.grey),
                       ),
                       const SizedBox(width: 12),
                       Expanded(

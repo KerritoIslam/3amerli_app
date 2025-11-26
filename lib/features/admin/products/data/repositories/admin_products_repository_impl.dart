@@ -259,9 +259,38 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
 
   @override
   Future<void> deleteProducts(List<String> ids) async {
-    // Delete products one by one (backend doesn't have bulk delete endpoint)
-    for (final id in ids) {
-      await deleteProduct(id);
+    try {
+      // Convert string IDs to integers as required by the API
+      final productIds = ids.map((id) => int.parse(id)).toList();
+
+      // Use the Dio client directly to send DELETE with body
+      final response = await apiService.client.delete(
+        '/products/admin/bulk',
+        data: {
+          'productIds': productIds,
+        },
+      );
+
+      // Check if the response indicates an error
+      // The API returns success: false for errors even with 404 status
+      if (response.statusCode != null && response.statusCode! >= 400) {
+        throw ApiException(
+          'Delete failed',
+          statusCode: response.statusCode,
+          serverResponse: response.data,
+        );
+      }
+
+      // Also check the success field if present
+      if (response.data is Map && response.data['success'] == false) {
+        throw ApiException(
+          response.data['message'] ?? 'Delete failed',
+          statusCode: response.statusCode,
+          serverResponse: response.data,
+        );
+      }
+    } catch (e) {
+      _handleError(e);
     }
   }
 }

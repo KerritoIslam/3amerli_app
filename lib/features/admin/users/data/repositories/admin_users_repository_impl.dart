@@ -113,7 +113,31 @@ class AdminUsersRepositoryImpl implements AdminUsersRepository {
 
   @override
   Future<void> deleteMultipleUsers(List<String> userIds) async {
-    await apiService.post('/user/delete-multiple', data: {'ids': userIds});
+    // Convert string IDs to integers as required by the API
+    final ids = userIds.map((id) => int.parse(id)).toList();
+
+    // Use the Dio client directly to send DELETE with body (for users bulk delete)
+    final response = await apiService.client.delete(
+      '/user/admin/bulk',
+      data: {
+        'userIds': ids,
+      },
+    );
+
+    // Check if the response indicates an error
+    // The API returns success: false for errors even with 404 status
+    if (response.statusCode != null && response.statusCode! >= 400) {
+      throw Exception(
+        response.data is Map && response.data['message'] != null
+            ? response.data['message']
+            : 'Delete failed',
+      );
+    }
+
+    // Also check the success field if present
+    if (response.data is Map && response.data['success'] == false) {
+      throw Exception(response.data['message'] ?? 'Delete failed');
+    }
   }
 
   @override

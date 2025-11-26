@@ -259,6 +259,11 @@ class AppLanguage {
       AppLocale.fr: 'Étape suivante',
       AppLocale.ar: 'الخطوة التالية',
     },
+    'nextStatus': {
+      AppLocale.en: 'Next Status',
+      AppLocale.fr: 'Statut suivant',
+      AppLocale.ar: 'الحالة التالية',
+    },
     'step': {
       AppLocale.en: 'Step',
       AppLocale.fr: 'Étape',
@@ -842,6 +847,11 @@ class AppLanguage {
       AppLocale.fr: 'En préparation',
       AppLocale.ar: 'قيد التحضير',
     },
+    'preparing': {
+      AppLocale.en: 'Preparing',
+      AppLocale.fr: 'Préparation',
+      AppLocale.ar: 'تحضير',
+    },
     'statusDelivering': {
       AppLocale.en: 'Delivering',
       AppLocale.fr: 'En livraison',
@@ -1197,6 +1207,11 @@ class AppLanguage {
       AppLocale.fr: '+ Ajouter',
       AppLocale.ar: '+ إضافة',
     },
+    'addProduct': {
+      AppLocale.en: 'Add Product',
+      AppLocale.fr: 'Ajouter un produit',
+      AppLocale.ar: 'إضافة منتج',
+    },
     'deleteProductConfirm': {
       AppLocale.en: 'Are you sure you want to delete this product?',
       AppLocale.fr: 'Êtes-vous sûr de vouloir supprimer ce produit ?',
@@ -1271,6 +1286,11 @@ class AppLanguage {
       AppLocale.en: 'Manage brands',
       AppLocale.fr: 'Gérer les marques',
       AppLocale.ar: 'إدارة العلامات التجارية',
+    },
+    'manageProducts': {
+      AppLocale.en: 'Manage Products',
+      AppLocale.fr: 'Gérer les produits',
+      AppLocale.ar: 'إدارة المنتجات',
     },
     'exportProducts': {
       AppLocale.en: 'Export products',
@@ -1934,6 +1954,7 @@ class AppLanguage {
   static String get dateTime => _t('dateTime');
   static String get currentStatus => _t('currentStatus');
   static String get nextStep => _t('nextStep');
+  static String get nextStatus => _t('nextStatus');
   static String get step => _t('step');
   static String get orderNotFound => _t('orderNotFound');
   static String get statusUpdated => _t('statusUpdated');
@@ -2005,6 +2026,7 @@ class AppLanguage {
   static String get inStock => _t('inStock');
   static String get outOfStock => _t('outOfStock');
   static String get statusPreparing => _t('statusPreparing');
+  static String get preparing => _t('preparing');
   static String get statusDelivering => _t('statusDelivering');
 
   // Empty States
@@ -2112,6 +2134,7 @@ class AppLanguage {
   static String get orderNotAvailable => _t('orderNotAvailable');
   static String get loadingProductError => _t('loadingProductError');
   static String get addWithPlus => _t('addWithPlus');
+  static String get addProduct => _t('addProduct');
   static String get deleteProductConfirm => _t('deleteProductConfirm');
   static String get deleteProductsConfirm => _t('deleteProductsConfirm');
   static String get deleteCategoryConfirm => _t('deleteCategoryConfirm');
@@ -2126,6 +2149,7 @@ class AppLanguage {
   static String get selected => _t('selected');
   static String get manageCategories => _t('manageCategories');
   static String get manageBrands => _t('manageBrands');
+  static String get manageProducts => _t('manageProducts');
   static String get exportProducts => _t('exportProducts');
 
   // Cart & Payment

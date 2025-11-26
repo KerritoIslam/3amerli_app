@@ -187,51 +187,81 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
     return ValueListenableBuilder<AppLocale>(
       valueListenable: AppLanguage.localeNotifier,
       builder: (context, locale, _) {
-        return Scaffold(
-          backgroundColor: Colors.white,
-          body: Column(
-            children: [
-              // Header (centered title)
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 40),
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          AppLanguage.users,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
+        return PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              // Fallback if no history
+              context.go('/home'); // Or dashboard
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: Column(
+              children: [
+                // Header (centered title)
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      const SizedBox(width: 40),
+                      Expanded(
+                        child: Center(
+                          child: Text(
+                            AppLanguage.users,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 40),
-                  ],
+                      const SizedBox(width: 40),
+                    ],
+                  ),
                 ),
-              ),
 
-              // Compact Search + Export row (match products: 40px height)
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: SizedBox(
-                  height: 40,
-                  child: Row(
-                    children: [
-                      Expanded(
-                          child: SizedBox(
-                              height: 40,
-                              child:
-                                  AppSearchbar(onChanged: _onSearchChanged))),
-                      const SizedBox(width: 8),
-                      if (_selectedUserIds.isNotEmpty) ...[
+                // Compact Search + Export row (match products: 40px height)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: SizedBox(
+                    height: 40,
+                    child: Row(
+                      children: [
+                        Expanded(
+                            child: SizedBox(
+                                height: 40,
+                                child: AppSearchbar(
+                                    onChanged: _onSearchChanged,
+                                    showFilter: false))),
+                        const SizedBox(width: 8),
+                        if (_selectedUserIds.isNotEmpty) ...[
+                          ElevatedButton(
+                            onPressed: _onDeleteSelected,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              minimumSize: const Size(0, 40),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
+                            ),
+                            child: Text(
+                                '${AppLanguage.delete} (${_selectedUserIds.length})',
+                                style: const TextStyle(fontSize: 13)),
+                          ),
+                          const SizedBox(width: 8),
+                        ],
                         ElevatedButton(
-                          onPressed: _onDeleteSelected,
+                          onPressed: _onExportCSV,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 12, vertical: 10),
@@ -239,110 +269,110 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20)),
                           ),
-                          child: Text(
-                              '${AppLanguage.delete} (${_selectedUserIds.length})',
+                          child: Text(AppLanguage.exportCSV,
                               style: const TextStyle(fontSize: 13)),
                         ),
-                        const SizedBox(width: 8),
                       ],
-                      ElevatedButton(
-                        onPressed: _onExportCSV,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          minimumSize: const Size(0, 40),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                        ),
-                        child: Text(AppLanguage.exportCSV,
-                            style: const TextStyle(fontSize: 13)),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 4),
+
+                // Tabs
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    children: [
+                      _TabButton(
+                        label: AppLanguage.all,
+                        isSelected: _selectedTab == 'all',
+                        onTap: () => _onTabChanged('all'),
+                      ),
+                      const SizedBox(width: 8),
+                      _TabButton(
+                        label: AppLanguage.suspended,
+                        isSelected: _selectedTab == 'suspended',
+                        onTap: () => _onTabChanged('suspended'),
                       ),
                     ],
                   ),
                 ),
-              ),
 
-              const SizedBox(height: 4),
+                const SizedBox(height: 4),
 
-              // Tabs
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  children: [
-                    _TabButton(
-                      label: AppLanguage.all,
-                      isSelected: _selectedTab == 'all',
-                      onTap: () => _onTabChanged('all'),
-                    ),
-                    const SizedBox(width: 8),
-                    _TabButton(
-                      label: AppLanguage.suspended,
-                      isSelected: _selectedTab == 'suspended',
-                      onTap: () => _onTabChanged('suspended'),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 4),
-
-              // Users Table
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    _loadUsers();
-                  },
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: BlocConsumer<AdminUsersBloc, AdminUsersState>(
-                      listener: (context, state) {
-                        if (state is AdminUsersOperationSuccess) {
-                          TopToast.show(context, state.message);
-                          _loadUsers();
-                        }
-                      },
-                      builder: (context, state) {
-                        if (state is AdminUsersLoading) {
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        } else if (state is AdminUsersLoaded) {
-                          return Column(
-                            children: [
-                              _buildUsersTable(state.users),
-                              if (state.isLoadingMore)
-                                const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Center(
-                                      child: CircularProgressIndicator()),
-                                ),
-                            ],
-                          );
-                        } else if (state is AdminUsersBlacklistLoaded) {
-                          return Column(
-                            children: [
-                              _buildUsersTable(state.blacklistedUsers),
-                              if (state.isLoadingMore)
-                                const Padding(
-                                  padding: EdgeInsets.all(8.0),
-                                  child: Center(
-                                      child: CircularProgressIndicator()),
-                                ),
-                            ],
-                          );
-                        } else if (state is AdminUsersError) {
-                          return Center(child: Text(state.message));
-                        }
-                        return const SizedBox.shrink();
-                      },
+                // Users Table
+                Expanded(
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      _loadUsers();
+                    },
+                    child: SingleChildScrollView(
+                      controller: _scrollController,
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: BlocConsumer<AdminUsersBloc, AdminUsersState>(
+                        listener: (context, state) {
+                          if (state is AdminUsersOperationSuccess) {
+                            TopToast.show(context, state.message);
+                            _loadUsers();
+                          }
+                        },
+                        builder: (context, state) {
+                          if (state is AdminUsersLoading) {
+                            return const Center(
+                                child: CircularProgressIndicator());
+                          } else if (state is AdminUsersLoaded) {
+                            return Column(
+                              children: [
+                                _buildUsersTable(state.users),
+                                if (state.isLoadingMore)
+                                  const Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Center(
+                                        child: CircularProgressIndicator()),
+                                  ),
+                              ],
+                            );
+                          } else if (state is AdminUsersBlacklistLoaded) {
+                            return Column(
+                              children: [
+                                _buildUsersTable(state.blacklistedUsers),
+                                if (state.isLoadingMore)
+                                  const Padding(
+                                    padding: EdgeInsets.all(8.0),
+                                    child: Center(
+                                        child: CircularProgressIndicator()),
+                                  ),
+                              ],
+                            );
+                          } else if (state is AdminUsersError) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 40),
+                                  Icon(Icons.error_outline,
+                                      size: 48, color: Colors.red),
+                                  const SizedBox(height: 16),
+                                  Text(state.message,
+                                      textAlign: TextAlign.center),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: _loadUsers,
+                                    child: Text(AppLanguage.retry),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -462,7 +492,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                   child: ListView.separated(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
-                    padding: const EdgeInsets.only(bottom: 100),
+                    padding: EdgeInsets.zero,
                     itemCount: filteredUsers.length,
                     separatorBuilder: (context, index) => Divider(
                       height: 1,
@@ -545,7 +575,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
               ],
             ),
           ),
-          const SizedBox(height: 80),
+          const SizedBox(height: 100),
         ],
       ),
     );

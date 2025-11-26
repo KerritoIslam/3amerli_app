@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:amerli_app/core/error/error_handler.dart';
 import 'package:amerli_app/widgets/searchbar.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 import '../bloc/admin_categories_bloc.dart';
@@ -22,8 +21,7 @@ class AdminCategoriesPage extends StatefulWidget {
 
 class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
   final TextEditingController _searchController = TextEditingController();
-  final Set<String> _selectedIds = {};
-  final Set<String> _selectedSubIds = {};
+
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -63,150 +61,195 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AdminCategoriesBloc, AdminCategoriesState>(
-      listener: (context, state) {
-        if (state is AdminCategoriesError) {
-          ErrorHandler.showError(context, state.message);
-        } else if (state is AdminCategoriesOperationSuccess) {
-          TopToast.show(context, state.message, isError: false);
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Column(
-            children: [
-              // Header with back button
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.of(context).pop(),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color:
-                              Theme.of(context).colorScheme.tertiaryContainer,
-                          shape: BoxShape.circle,
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) =>
+          BlocListener<AdminCategoriesBloc, AdminCategoriesState>(
+        listener: (context, state) {
+          if (state is AdminCategoriesError) {
+            TopToast.show(context, state.message, isError: true);
+          } else if (state is AdminCategoriesOperationSuccess) {
+            TopToast.show(context, state.message, isError: false);
+          }
+        },
+        child: PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/home');
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Header with back button
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .tertiaryContainer,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: SvgPicture.asset(
+                              'assets/icons/back_arrow.svg',
+                              width: 16,
+                              height: 16,
+                              matchTextDirection: true,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              placeholderBuilder: (context) => Icon(
+                                  Icons.arrow_back,
+                                  size: 16,
+                                  color:
+                                      Theme.of(context).colorScheme.onPrimary),
+                            ),
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: SvgPicture.asset(
-                          'assets/icons/back_arrow.svg',
-                          width: 16,
-                          height: 16,
-                          matchTextDirection: true,
-                          color: Theme.of(context).colorScheme.onPrimary,
-                          placeholderBuilder: (context) => Icon(
-                              Icons.arrow_back,
-                              size: 16,
-                              color: Theme.of(context).colorScheme.onPrimary),
+                        Expanded(
+                          child: Center(
+                            child: Text(AppLanguage.manageCategories,
+                                style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black),
+                                textAlign: TextAlign.center),
+                          ),
                         ),
-                      ),
+                        const SizedBox(width: 40),
+                      ],
                     ),
-                    Expanded(
-                      child: Center(
-                        child: Text(AppLanguage.manageCategories,
-                            style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black),
-                            textAlign: TextAlign.center),
-                      ),
-                    ),
-                    const SizedBox(width: 40),
-                  ],
-                ),
-              ),
-
-              // Search + Add compact row
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: SizedBox(
-                  height: 40,
-                  child: Row(
-                    children: [
-                      Expanded(
-                          child: SizedBox(
-                              height: 40,
-                              child: AppSearchbar(onChanged: _onSearch))),
-                      const SizedBox(width: 8),
-                      ElevatedButton(
-                        onPressed: () => context.push('/admin/categories/add'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 10),
-                          minimumSize: const Size(0, 40),
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20)),
-                        ),
-                        child: Text(AppLanguage.add,
-                            style: const TextStyle(fontSize: 13)),
-                      ),
-                    ],
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 16),
+                  // Search + Add compact row
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: SizedBox(
+                      height: 40,
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: SizedBox(
+                                  height: 40,
+                                  child: AppSearchbar(
+                                      onChanged: _onSearch,
+                                      showFilter: false))),
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: () =>
+                                context.push('/admin/categories/add'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              minimumSize: const Size(0, 40),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20)),
+                            ),
+                            child: Text(AppLanguage.add,
+                                style: const TextStyle(fontSize: 13)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
-              // Content
-              Expanded(
-                child: RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<AdminCategoriesBloc>().add(
-                        const AdminCategoriesLoadEvent(page: 1, limit: 20));
-                  },
-                  child: SingleChildScrollView(
-                    controller: _scrollController,
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child:
-                        BlocBuilder<AdminCategoriesBloc, AdminCategoriesState>(
-                            builder: (context, state) {
-                      if (state is AdminCategoriesLoading) {
-                        return const SizedBox(
-                            height: 400,
-                            child: Center(child: CircularProgressIndicator()));
-                      }
-                      if (state is AdminCategoriesLoaded) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildCategoriesTable(state),
-                                if (state.isLoadingMore)
-                                  const Padding(
-                                    padding: EdgeInsets.all(8.0),
-                                    child: Center(
-                                        child: CircularProgressIndicator()),
+                  const SizedBox(height: 16),
+
+                  // Content
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        context.read<AdminCategoriesBloc>().add(
+                            const AdminCategoriesLoadEvent(page: 1, limit: 20));
+                      },
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: BlocBuilder<AdminCategoriesBloc,
+                            AdminCategoriesState>(builder: (context, state) {
+                          if (state is AdminCategoriesLoading) {
+                            return const SizedBox(
+                                height: 400,
+                                child:
+                                    Center(child: CircularProgressIndicator()));
+                          }
+                          if (state is AdminCategoriesError) {
+                            return Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(height: 40),
+                                  Icon(Icons.error_outline,
+                                      size: 48, color: Colors.red),
+                                  const SizedBox(height: 16),
+                                  Text(state.message,
+                                      textAlign: TextAlign.center),
+                                  const SizedBox(height: 16),
+                                  ElevatedButton(
+                                    onPressed: () {
+                                      context.read<AdminCategoriesBloc>().add(
+                                          const AdminCategoriesLoadEvent(
+                                              page: 1, limit: 20));
+                                    },
+                                    child: Text(AppLanguage.retry),
                                   ),
-                                const SizedBox(height: 24),
-                                Text(AppLanguage.subcategories,
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black)),
-                                const SizedBox(height: 12),
-                                _buildSubCategoriesTable(state),
-                                const SizedBox(height: 100),
-                              ]),
-                        );
-                      }
-                      return SizedBox(
-                          height: 400,
-                          child:
-                              Center(child: Text(AppLanguage.noDataAvailable)));
-                    }),
+                                ],
+                              ),
+                            );
+                          }
+                          if (state is AdminCategoriesLoaded) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12.0),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildCategoriesTable(state),
+                                    if (state.isLoadingMore)
+                                      const Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: Center(
+                                            child: CircularProgressIndicator()),
+                                      ),
+                                    const SizedBox(height: 24),
+                                    Text(AppLanguage.subcategories,
+                                        style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.black)),
+                                    const SizedBox(height: 12),
+                                    _buildSubCategoriesTable(state),
+                                    const SizedBox(height: 100),
+                                  ]),
+                            );
+                          }
+                          return SizedBox(
+                              height: 400,
+                              child: Center(
+                                  child: Text(AppLanguage.noDataAvailable)));
+                        }),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -234,26 +277,6 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
                     topLeft: Radius.circular(12),
                     topRight: Radius.circular(12))),
             child: Row(children: [
-              SizedBox(
-                width: 36,
-                child: Checkbox(
-                  value:
-                      _selectedIds.length == state.filteredCategories.length &&
-                          _selectedIds.isNotEmpty,
-                  onChanged: (value) {
-                    setState(() {
-                      if (value == true) {
-                        _selectedIds.addAll(
-                            state.filteredCategories.map((cat) => cat.id));
-                      } else {
-                        _selectedIds.clear();
-                      }
-                    });
-                  },
-                  shape: const CircleBorder(),
-                  activeColor: AppColors.brandDeep,
-                ),
-              ),
               const SizedBox(width: 8),
               Expanded(
                   flex: 4,
@@ -274,28 +297,10 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
 
           // Category Rows
           ...state.filteredCategories.map((category) {
-            final isSelected = _selectedIds.contains(category.id);
             return Column(mainAxisSize: MainAxisSize.min, children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 child: Row(children: [
-                  SizedBox(
-                    width: 36,
-                    child: Checkbox(
-                      value: isSelected,
-                      onChanged: (value) {
-                        setState(() {
-                          if (value == true) {
-                            _selectedIds.add(category.id);
-                          } else {
-                            _selectedIds.remove(category.id);
-                          }
-                        });
-                      },
-                      shape: const CircleBorder(),
-                      activeColor: AppColors.brandDeep,
-                    ),
-                  ),
                   const SizedBox(width: 8),
 
                   // Category info
@@ -412,24 +417,6 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
               borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12), topRight: Radius.circular(12))),
           child: Row(children: [
-            SizedBox(
-                width: 36,
-                child: Checkbox(
-                    value:
-                        _selectedSubIds.length == state.subCategories.length &&
-                            _selectedSubIds.isNotEmpty,
-                    onChanged: (value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedSubIds
-                              .addAll(state.subCategories.map((s) => s.id));
-                        } else {
-                          _selectedSubIds.clear();
-                        }
-                      });
-                    },
-                    shape: const CircleBorder(),
-                    activeColor: AppColors.brandDeep)),
             const SizedBox(width: 8),
             Expanded(
                 flex: 3,
@@ -457,8 +444,6 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
 
         // Rows
         ...state.subCategories.map((subCategory) {
-          final isSelected = _selectedSubIds.contains(subCategory.id);
-
           Category? parent;
           try {
             parent = state.categories
@@ -471,21 +456,6 @@ class _AdminCategoriesPageState extends State<AdminCategoriesPage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
               child: Row(children: [
-                SizedBox(
-                    width: 36,
-                    child: Checkbox(
-                        value: isSelected,
-                        onChanged: (value) {
-                          setState(() {
-                            if (value == true) {
-                              _selectedSubIds.add(subCategory.id);
-                            } else {
-                              _selectedSubIds.remove(subCategory.id);
-                            }
-                          });
-                        },
-                        shape: const CircleBorder(),
-                        activeColor: AppColors.brandDeep)),
                 const SizedBox(width: 8),
 
                 // Subcategory info with image

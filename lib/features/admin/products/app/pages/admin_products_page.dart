@@ -171,305 +171,329 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
           BlocListener<AdminProductsBloc, AdminProductsState>(
         listener: (context, state) {
           if (state is AdminProductsError) {
-            ErrorHandler.showError(context, state.message);
+            TopToast.show(context, state.message, isError: true);
           }
           if (state is AdminProductsOperationSuccess) {
             TopToast.show(context, state.message, isError: false);
           }
         },
-        child: Scaffold(
-          backgroundColor: Colors.white,
-          body: SafeArea(
-            child: Column(
-              children: [
-                // Header
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child:
-                            BlocBuilder<AdminProductsBloc, AdminProductsState>(
-                          bloc: _productsBloc,
-                          builder: (context, state) {
-                            var countText = '';
-                            if (state is AdminProductsLoaded)
-                              countText = ' (${state.products.length})';
-                            return Text(
-                              '${AppLanguage.products}$countText',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(right: 24.0),
-                        child: Builder(
-                          builder: (buttonContext) => InkWell(
-                            onTap: () => _showOptionsMenu(buttonContext),
-                            child: Container(
-                              width: 20,
-                              height: 20,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.more_horiz,
-                                color: Theme.of(context).colorScheme.primary,
-                                size: 14,
-                              ),
+        child: PopScope(
+          canPop: false,
+          onPopInvokedWithResult: (didPop, result) {
+            if (didPop) return;
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/home');
+            }
+          },
+          child: Scaffold(
+            backgroundColor: Colors.white,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 40),
+                        Expanded(
+                          child: Text(
+                            AppLanguage.manageProducts,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.black,
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Search and Action Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      // Search Field
-                      Expanded(
-                        child: SizedBox(
-                          height: 40,
-                          child: AppSearchbar(
-                            onChanged: _onSearch,
-                            onFilterTap: _openFilters,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-
-                      // Add Button
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          context.push('/admin/products/add');
-                        },
-                        icon: const Icon(Icons.add, size: 18),
-                        label: Text(AppLanguage.add),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Delete Selected Button (visible when items are selected)
-                if (_selectedProductIds.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        Text(
-                          '${_selectedProductIds.length} ${AppLanguage.selected}',
-                          style: TextStyle(
-                            color: Colors.grey.shade700,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const Spacer(),
-                        TextButton.icon(
-                          onPressed: _onDeleteSelected,
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          label: Text(
-                            AppLanguage.delete,
-                            style: const TextStyle(color: Colors.red),
+                        Builder(
+                          builder: (ctx) => InkWell(
+                            onTap: () => _showOptionsMenu(ctx),
+                            borderRadius: BorderRadius.circular(4),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: Colors.transparent,
+                                border: Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 1,
+                                ),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                Icons.more_horiz,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 20,
+                              ),
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
 
-                const SizedBox(height: 8),
+                  // Search and Add Product
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 40,
+                            child: AppSearchbar(
+                              controller: _searchController,
+                              onChanged: _onSearch,
+                              showFilter: true,
+                              onFilterTap: _openFilters,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.push('/admin/products/add');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Theme.of(context).colorScheme.primary,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 10),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            AppLanguage.add,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (_selectedProductIds.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          ElevatedButton(
+                            onPressed: _onDeleteSelected,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 10),
+                              elevation: 0,
+                            ),
+                            child: Text(
+                              '${AppLanguage.delete} (${_selectedProductIds.length})',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
 
-                // Product Table
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      _productsBloc
-                          .add(AdminProductsLoadEvent(page: 1, limit: 20));
-                    },
-                    child: SingleChildScrollView(
-                      controller: _scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: BlocBuilder<AdminProductsBloc, AdminProductsState>(
-                        bloc: _productsBloc,
-                        builder: (context, state) {
-                          // Debug logging
-                          print(
-                              '🖼️ [AdminProductsPage] BlocBuilder rebuild - state: ${state.runtimeType}');
+                  const SizedBox(height: 16),
 
-                          if (state is AdminProductsLoading) {
-                            return const Center(
-                                child: CircularProgressIndicator());
-                          }
+                  // Products Table
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        context
+                            .read<AdminProductsBloc>()
+                            .add(AdminProductsLoadEvent(page: 1, limit: 20));
+                      },
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child:
+                            BlocBuilder<AdminProductsBloc, AdminProductsState>(
+                          builder: (context, state) {
+                            if (state is AdminProductsLoading) {
+                              return const Center(
+                                  child: CircularProgressIndicator());
+                            }
 
-                          if (state is AdminProductsLoaded) {
-                            print(
-                                '🖼️ [AdminProductsPage] Displaying ${state.products.length} products');
-
-                            if (state.products.isEmpty) {
+                            if (state is AdminProductsError) {
                               return Center(
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(
-                                      Icons.inventory_2_outlined,
-                                      size: 64,
-                                      color: Colors.grey.shade400,
-                                    ),
+                                    const SizedBox(height: 40),
+                                    Icon(Icons.error_outline,
+                                        size: 48, color: Colors.red),
                                     const SizedBox(height: 16),
-                                    Text(
-                                      AppLanguage.noProductsFound,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.grey.shade600,
-                                      ),
+                                    Text(state.message,
+                                        textAlign: TextAlign.center),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        context.read<AdminProductsBloc>().add(
+                                            AdminProductsLoadEvent(
+                                                page: 1, limit: 20));
+                                      },
+                                      child: Text(AppLanguage.retry),
                                     ),
                                   ],
                                 ),
                               );
                             }
 
-                            return Column(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.symmetric(
-                                      horizontal: 10),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(12),
-                                      topRight: Radius.circular(12),
-                                    ),
-                                    border: Border.all(
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                      width: 1,
-                                    ),
-                                  ),
+                            if (state is AdminProductsLoaded) {
+                              if (state.products.isEmpty) {
+                                return Center(
                                   child: Column(
-                                    mainAxisSize: MainAxisSize.min,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      // Table Header
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 6,
-                                          vertical: 6,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.grey.shade50,
-                                          borderRadius: const BorderRadius.only(
-                                            topLeft: Radius.circular(12),
-                                            topRight: Radius.circular(12),
-                                          ),
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            // Select All Checkbox
-                                            SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: Checkbox(
-                                                value: _selectedProductIds
-                                                        .length ==
-                                                    state.products.length,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    if (value == true) {
-                                                      _selectedProductIds
-                                                          .addAll(
-                                                        state.products
-                                                            .map((p) => p.id),
-                                                      );
-                                                    } else {
-                                                      _selectedProductIds
-                                                          .clear();
-                                                    }
-                                                  });
-                                                },
-                                                shape: const CircleBorder(),
-                                                activeColor:
-                                                    AppColors.brandDeep,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Expanded(
-                                              flex: 4,
-                                              child: Text(
-                                                AppLanguage.product,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 10,
-                                                ),
-                                              ),
-                                            ),
-                                            Expanded(
-                                              flex: 2,
-                                              child: Text(
-                                                AppLanguage.price,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 11,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                            Expanded(
-                                              flex: 2,
-                                              child: Text(
-                                                AppLanguage.stock,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 11,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              width: 50,
-                                              child: Text(
-                                                AppLanguage.actions,
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.w600,
-                                                  fontSize: 11,
-                                                ),
-                                                textAlign: TextAlign.center,
-                                              ),
-                                            ),
-                                          ],
+                                      Icon(
+                                        Icons.inventory_2_outlined,
+                                        size: 64,
+                                        color: Colors.grey.shade400,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        AppLanguage.noProductsFound,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey.shade600,
                                         ),
                                       ),
+                                    ],
+                                  ),
+                                );
+                              }
 
-                                      // Product List
-                                      Flexible(
-                                        child: ListView.separated(
+                              return Column(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: const BorderRadius.only(
+                                        topLeft: Radius.circular(12),
+                                        topRight: Radius.circular(12),
+                                      ),
+                                      border: Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      children: [
+                                        // Header
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade50,
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                              topLeft: Radius.circular(12),
+                                              topRight: Radius.circular(12),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              SizedBox(
+                                                width: 24,
+                                                height: 24,
+                                                child: Checkbox(
+                                                  value: _selectedProductIds
+                                                          .length ==
+                                                      state.products.length,
+                                                  onChanged: (value) {
+                                                    setState(() {
+                                                      if (value == true) {
+                                                        _selectedProductIds
+                                                            .addAll(state
+                                                                .products
+                                                                .map((p) =>
+                                                                    p.id));
+                                                      } else {
+                                                        _selectedProductIds
+                                                            .clear();
+                                                      }
+                                                    });
+                                                  },
+                                                  activeColor:
+                                                      AppColors.brandDeep,
+                                                  shape: const CircleBorder(),
+                                                  side: BorderSide(
+                                                      color:
+                                                          Colors.grey.shade400),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              SizedBox(
+                                                width: 40,
+                                                child: Text(
+                                                  AppLanguage.image,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  AppLanguage.name,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 1,
+                                                child: Text(
+                                                  AppLanguage.price,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 1,
+                                                child: Text(
+                                                  AppLanguage.stock,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                              SizedBox(
+                                                width: 40,
+                                                child: Text(
+                                                  AppLanguage.actions,
+                                                  style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        // List
+                                        ListView.separated(
                                           shrinkWrap: true,
                                           physics:
                                               const NeverScrollableScrollPhysics(),
@@ -481,7 +505,7 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                             color: Theme.of(context)
                                                 .colorScheme
                                                 .primary
-                                                .withOpacity(0.12),
+                                                .withValues(alpha: 0.12),
                                           ),
                                           itemBuilder: (context, index) {
                                             final product =
@@ -489,7 +513,6 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                             final isSelected =
                                                 _selectedProductIds
                                                     .contains(product.id);
-
                                             return _ProductRow(
                                               product: product,
                                               isSelected: isSelected,
@@ -506,39 +529,39 @@ class _AdminProductsPageState extends State<AdminProductsPage> {
                                               },
                                               onEdit: () {
                                                 context.push(
-                                                  '/admin/products/edit/${product.id}',
-                                                );
+                                                    '/admin/products/edit/${product.id}');
                                               },
-                                              onDelete: () =>
-                                                  _onDeleteProduct(product.id),
+                                              onDelete: () {
+                                                _onDeleteProduct(product.id);
+                                              },
                                             );
                                           },
                                         ),
-                                      ),
-                                      if (state.isLoadingMore)
-                                        const Padding(
-                                          padding: EdgeInsets.all(8.0),
-                                          child: Center(
-                                              child:
-                                                  CircularProgressIndicator()),
-                                        ),
-                                    ],
+                                        if (state.isLoadingMore)
+                                          const Padding(
+                                            padding: EdgeInsets.all(8.0),
+                                            child: Center(
+                                                child:
+                                                    CircularProgressIndicator()),
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 80),
-                              ],
-                            );
-                          }
+                                  const SizedBox(height: 80),
+                                ],
+                              );
+                            }
 
-                          return const SizedBox.shrink();
-                        },
+                            return const SizedBox.shrink();
+                          },
+                        ),
                       ),
                     ),
                   ),
-                ),
 
-                const SizedBox(height: 16),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ),

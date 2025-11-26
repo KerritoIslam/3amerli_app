@@ -65,25 +65,26 @@ class _FailurePageState extends State<FailurePage>
 
   @override
   Widget build(BuildContext context) {
-    const errorColor = Color(0xFFE53935); // Red color for error
+    final errorColor = Theme.of(context).colorScheme.error;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
               '/cart', (route) => route.settings.name == '/'),
         ),
-        title: Text('Échec du paiement',
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.w700, color: Colors.black)),
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(AppLanguage.paymentFailed,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurface)),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: SafeArea(
         child: Stack(
@@ -99,11 +100,12 @@ class _FailurePageState extends State<FailurePage>
                   padding: const EdgeInsets.symmetric(
                       horizontal: 18.0, vertical: 16.0),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(40),
                     boxShadow: [
                       BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.2),
+                          color: Colors.black.withValues(alpha: 0.1),
                           blurRadius: 8,
                           offset: const Offset(0, 4))
                     ],
@@ -156,12 +158,13 @@ class _FailurePageState extends State<FailurePage>
                                       (route) => route.settings.name == '/'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: errorColor,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onError,
                             shape: const StadiumBorder(),
                           ),
                           child: Text(AppLanguage.retryPayment,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700)),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700)),
                         ),
                       ),
 
@@ -174,14 +177,15 @@ class _FailurePageState extends State<FailurePage>
                           onPressed: () => Navigator.of(context)
                               .pushNamedAndRemoveUntil('/', (route) => false),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: errorColor),
+                            side: BorderSide(color: errorColor),
                             shape: const StadiumBorder(),
                             backgroundColor: Colors.transparent,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onSurface,
                           ),
                           child: Text(AppLanguage.backToHome,
-                              style: const TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w600)),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -215,8 +219,8 @@ class _FailurePageState extends State<FailurePage>
                           scale: (_xMark.value).clamp(0.0, 1.0) * 1.25,
                           child: Opacity(
                             opacity: _xMark.value.clamp(0.0, 1.0),
-                            child: const Icon(Icons.close,
-                                size: 64, color: errorColor),
+                            child:
+                                Icon(Icons.close, size: 64, color: errorColor),
                           ),
                         ),
                       ],
@@ -237,7 +241,9 @@ class _FailurePageState extends State<FailurePage>
                     Text(
                       AppLanguage.paymentFailedMessage,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                     ),
                   ],
                 ),
@@ -251,13 +257,19 @@ class _FailurePageState extends State<FailurePage>
   Widget _summaryRow(String label, String value,
       {bool emphasize = false, bool isError = false}) {
     final labelStyle = emphasize
-        ? const TextStyle(fontWeight: FontWeight.w700)
-        : const TextStyle(color: Colors.black54);
+        ? TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.onSurface)
+        : TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
     final valueStyle = emphasize
         ? TextStyle(
             fontWeight: FontWeight.w800,
-            color: isError ? const Color(0xFFE53935) : null)
-        : const TextStyle(fontWeight: FontWeight.w600);
+            color: isError
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.onSurface)
+        : TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [

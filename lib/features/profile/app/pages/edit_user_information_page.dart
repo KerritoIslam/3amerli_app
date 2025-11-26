@@ -122,6 +122,84 @@ class _EditUserInformationPageState extends State<EditUserInformationPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Center(
+                          child: BlocBuilder<ProfileBloc, ProfileState>(
+                            builder: (context, state) {
+                              final user = state is ProfileLoaded
+                                  ? state.user
+                                  : widget.user;
+                              return Stack(
+                                children: [
+                                  Container(
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: ClipOval(
+                                      child: (user?.profilePic != null &&
+                                              user!.profilePic!.isNotEmpty)
+                                          ? Image.network(
+                                              user.profilePic!,
+                                              fit: BoxFit.cover,
+                                              width: 100,
+                                              height: 100,
+                                              errorBuilder:
+                                                  (context, error, stackTrace) {
+                                                return Container(
+                                                  color: Colors.grey.shade200,
+                                                  alignment: Alignment.center,
+                                                  child: Icon(
+                                                    Icons.person,
+                                                    size: 50,
+                                                    color: Colors.grey.shade400,
+                                                  ),
+                                                );
+                                              },
+                                            )
+                                          : Container(
+                                              color: Colors.grey.shade200,
+                                              alignment: Alignment.center,
+                                              child: Icon(
+                                                Icons.person,
+                                                size: 50,
+                                                color: Colors.grey.shade400,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    bottom: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(4),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                            color: Colors.white, width: 2),
+                                      ),
+                                      child: const Icon(
+                                        Icons.camera_alt,
+                                        size: 16,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 32),
                         _buildTextField(
                           label: AppLanguage.representativeNameLabel,
                           controller: _nameController,

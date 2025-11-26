@@ -15,7 +15,7 @@ class OrdersRemoteDataSource {
       status != null && status >= 200 && status < 300;
 
   /// GET /order/all
-  Future<List<OrderModel>> fetchOrders(
+  Future<Map<String, dynamic>> fetchOrders(
       {int page = 1, int pageSize = 10}) async {
     try {
       final resp = await apiService.get('/order/all',
@@ -24,9 +24,13 @@ class OrdersRemoteDataSource {
         final data = resp.data as Map<String, dynamic>;
         // The response body has a 'data' field which is a list of orders
         final items = (data['data'] as List<dynamic>?) ?? [];
-        return items
+        final models = items
             .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
             .toList();
+        return {
+          'items': models,
+          'meta': data['meta'],
+        };
       }
       final errorMsg = extractErrorMessage(resp.data);
       throw ApiException(errorMsg,
