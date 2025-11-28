@@ -4,6 +4,9 @@ import 'package:amerli_app/features/orders/data/models/create_order_result.dart'
     as model;
 import 'package:amerli_app/features/orders/domain/repositories/orders_repository.dart';
 import 'package:amerli_app/features/orders/data/datasources/orders_remote_datasource.dart';
+import 'package:amerli_app/features/orders/domain/entities/tracking_step.dart';
+import 'package:amerli_app/features/orders/data/models/tracking_step_model.dart'
+    as model;
 
 class OrdersRepositoryImpl implements OrdersRepository {
   final OrdersRemoteDataSource remoteDataSource;
@@ -11,9 +14,10 @@ class OrdersRepositoryImpl implements OrdersRepository {
   OrdersRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<OrdersResult> fetchOrders({int page = 1, int limit = 20}) async {
-    final result =
-        await remoteDataSource.fetchOrders(page: page, pageSize: limit);
+  Future<OrdersResult> fetchOrders(
+      {int page = 1, int limit = 20, String? status}) async {
+    final result = await remoteDataSource.fetchOrders(
+        page: page, pageSize: limit, status: status);
     final models = result['items'] as List;
     final meta = result['meta'] as Map<String, dynamic>?;
 
@@ -32,5 +36,13 @@ class OrdersRepositoryImpl implements OrdersRepository {
     final model.CreateOrderResult result =
         await remoteDataSource.createOrder(payload);
     return result.toEntity();
+  }
+
+  @override
+  Future<List<TrackingStep>> fetchTracking(String orderId) async {
+    final result = await remoteDataSource.fetchTracking(orderId);
+    return result
+        .map((e) => model.TrackingStepModel.fromJson(e).toEntity())
+        .toList();
   }
 }

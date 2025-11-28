@@ -193,17 +193,30 @@ class _CategoriesPageState extends State<CategoriesPage> {
                                           ),
                                     onTap: () async {
                                       if (c.subcategories.isNotEmpty) {
-                                        final result =
-                                            await Navigator.of(context)
-                                                .push<Set<int>>(
-                                                    MaterialPageRoute(
-                                                        builder: (_) =>
-                                                            SubcategoriesPage(
-                                                                parent: c)));
+                                        final result = await Navigator.of(
+                                                context)
+                                            .push<SubcategoryResult>(
+                                                MaterialPageRoute(
+                                                    builder: (_) =>
+                                                        SubcategoriesPage(
+                                                            parent: c,
+                                                            initialSelection:
+                                                                _selected)));
                                         if (result != null) {
                                           setState(() {
-                                            _selected.addAll(result);
+                                            // Remove all subcategories of this parent from _selected
+                                            final subIds = c.subcategories
+                                                .map((e) => e.id)
+                                                .toSet();
+                                            _selected.removeAll(subIds);
+                                            // Add the new selection
+                                            _selected.addAll(result.selected);
                                           });
+                                          // Propagate the apply action up to FiltersPage
+                                          if (result.apply && mounted) {
+                                            Navigator.of(context)
+                                                .pop(_selected);
+                                          }
                                         }
                                       } else {
                                         _toggle(c);

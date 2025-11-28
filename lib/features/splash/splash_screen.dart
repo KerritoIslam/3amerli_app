@@ -49,7 +49,7 @@ class _SplashScreenState extends State<SplashScreen>
     _smokeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1000),
-    )..repeat();
+    );
   }
 
   @override
@@ -95,13 +95,30 @@ class _SplashScreenState extends State<SplashScreen>
       _exitAnimation =
           Tween<double>(begin: 0.0, end: -1.sw).animate(_exitCurve);
 
-      _mainController.forward().then((_) {
-        if (mounted) {
-          widget.onAnimationComplete();
-        }
-      });
       _isInitialized = true;
+      _preloadAssets();
     }
+  }
+
+  Future<void> _preloadAssets() async {
+    try {
+      // Preload the truck image to ensure it's ready before animation starts
+      await precacheImage(
+          const AssetImage('assets/logo/logo_mix.png'), context);
+    } catch (e) {
+      // ignore: avoid_print
+      print('Error loading assets: $e');
+    }
+
+    if (!mounted) return;
+
+    // Start animations only after assets are loaded
+    _smokeController.repeat();
+    _mainController.forward().then((_) {
+      if (mounted) {
+        widget.onAnimationComplete();
+      }
+    });
   }
 
   @override

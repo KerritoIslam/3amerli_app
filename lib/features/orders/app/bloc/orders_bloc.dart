@@ -1,3 +1,4 @@
+import 'package:amerli_app/features/orders/domain/entities/order.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'orders_event.dart';
 import 'orders_state.dart';
@@ -13,11 +14,29 @@ class OrdersBloc extends Bloc<OrdersEvent, OrdersState> {
   }
 
   Future<void> _onLoad(OrdersLoadEvent event, Emitter<OrdersState> emit) async {
-    emit(OrdersLoading());
+    final isFirstPage = event.page == 1;
+    List<Order> currentOrders = [];
+
+    if (state is OrdersLoaded && !isFirstPage) {
+      currentOrders = (state as OrdersLoaded).items;
+    } else {
+      emit(OrdersLoading());
+    }
+
     try {
-      final result = await repository.fetchOrders(page: event.page);
-      emit(OrdersLoaded(result.orders,
-          hasNextPage: result.hasNextPage, total: result.total));
+      final result = await repository.fetchOrders(
+        page: event.page,
+        status: event.status,
+      );
+
+      final newOrders =
+          isFirstPage ? result.orders : [...currentOrders, ...result.orders];
+
+      emit(OrdersLoaded(
+        newOrders,
+        hasNextPage: result.hasNextPage,
+        total: result.total,
+      ));
     } catch (e) {
       emit(OrdersError(e.toString()));
     }

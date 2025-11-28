@@ -26,43 +26,73 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
         AppLanguage.ordersTabCanceled,
       ];
   int selected = 0;
+  final ScrollController _scrollController = ScrollController();
+  final Color _primary = const Color(0xFFA7C957);
+  final Color _dark = const Color(0xFF083B2E);
+  late OrdersBloc _ordersBloc;
+
   @override
   void initState() {
     super.initState();
-    sl<OrdersBloc>().add(OrdersLoadEvent());
+    _ordersBloc = sl<OrdersBloc>();
+    _loadOrders();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
+    _scrollController.dispose();
     super.dispose();
   }
 
-  List<Order> _filterForIndex(List<Order> items, int tabIndex) {
-    if (tabIndex == 0) {
-      return items;
+  void _onScroll() {
+    if (_isBottom) {
+      final state = _ordersBloc.state;
+      if (state is OrdersLoaded && state.hasNextPage) {
+        final currentCount = state.items.length;
+        final nextPage = (currentCount / 20).ceil() + 1;
+
+        _ordersBloc.add(OrdersLoadEvent(
+          page: nextPage,
+          status: _getStatusForTab(selected),
+        ));
+      }
     }
-    if (tabIndex == 1) {
-      return items
-          .where((o) =>
-              o.status == OrderStatus.preparing ||
-              o.status == OrderStatus.delivering)
-          .toList();
-    }
-    if (tabIndex == 2) {
-      return items.where((o) => o.status == OrderStatus.delivered).toList();
-    }
-    return items.where((o) => o.status == OrderStatus.canceled).toList();
   }
 
-  // Old single-index filter removed; use _filterForIndex instead
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
+  }
 
-  final Color _primary = const Color(0xFFA7C957);
-  final Color _dark = const Color(0xFF083B2E);
+  void _loadOrders() {
+    _ordersBloc.add(OrdersLoadEvent(
+      page: 1,
+      status: _getStatusForTab(selected),
+    ));
+  }
+
+  String? _getStatusForTab(int index) {
+    switch (index) {
+      case 0:
+        return null; // All
+      case 1:
+        return 'IN_PROGRESS'; // In Progress
+      case 2:
+        return 'DELIVERED';
+      case 3:
+        return 'CANCELED';
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
-      value: sl<OrdersBloc>(),
+      value: _ordersBloc,
       child: BlocListener<OrdersBloc, OrdersState>(
         listener: (context, state) {
           if (state is OrdersError) {
@@ -85,7 +115,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                               color: _dark))),
                   const SizedBox(height: 16),
 
-                  // Tabs with sliding indicator and swipe-to-change via PageView
+                  // Tabs
                   LayoutBuilder(builder: (context, constraints) {
                     final tabWidth = constraints.maxWidth / tabs.length;
                     return Directionality(
@@ -101,6 +131,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                     child: GestureDetector(
                                       onTap: () {
                                         setState(() => selected = i);
+                                        _loadOrders();
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -149,30 +180,37 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                       if (state is OrdersError) {
                         return Center(child: Text(state.message));
                       }
-                      // If OrderCreationError, trigger a load to fetch orders
                       if (state is OrderCreationError) {
-                        // Trigger load on next frame to avoid build-during-build
                         WidgetsBinding.instance.addPostFrameCallback((_) {
-                          context.read<OrdersBloc>().add(OrdersLoadEvent());
+                          _loadOrders();
                         });
                         return const Center(child: CircularProgressIndicator());
                       }
                       if (state is OrdersLoaded) {
-                        final filtered = _filterForIndex(state.items, selected);
-                        if (filtered.isEmpty) {
+                        if (state.items.isEmpty) {
                           return Center(child: Text(AppLanguage.noOrdersFound));
                         }
                         return RefreshIndicator(
                           onRefresh: () async {
-                            context.read<OrdersBloc>().add(OrdersLoadEvent());
+                            _loadOrders();
                           },
                           child: ListView.separated(
+                            controller: _scrollController,
                             padding: const EdgeInsets.only(bottom: 100),
-                            itemCount: filtered.length,
+                            itemCount: state.items.length +
+                                (state.hasNextPage ? 1 : 0),
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: 16),
                             itemBuilder: (context, index) {
-                              final order = filtered[index];
+                              if (index >= state.items.length) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+                              final order = state.items[index];
                               return GestureDetector(
                                 onTap: () {
                                   Navigator.push(
@@ -190,7 +228,11 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            OrderTrackingPage(order: order),
+                                            BlocProvider.value(
+                                          value: _ordersBloc,
+                                          child:
+                                              OrderTrackingPage(order: order),
+                                        ),
                                       ),
                                     );
                                   },
@@ -248,7 +290,7 @@ class _OrderCard extends StatelessWidget {
         border: Border.all(color: const Color(0xFFE6E6E6)),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
+              color: Colors.black.withOpacity(0.05),
               blurRadius: 6,
               offset: const Offset(0, 2))
         ],

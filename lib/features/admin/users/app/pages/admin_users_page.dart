@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../utils/constants/app_colors.dart';
 import '../../../../../widgets/searchbar.dart';
@@ -670,11 +671,26 @@ class _UserRow extends StatelessWidget {
           // Phone
           Expanded(
             flex: 3,
-            child: Text(
-              user.phone,
-              style: const TextStyle(fontSize: 10),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: InkWell(
+              onTap: () async {
+                final Uri launchUri = Uri(
+                  scheme: 'tel',
+                  path: user.phone.replaceAll(' ', ''),
+                );
+                if (await canLaunchUrl(launchUri)) {
+                  await launchUrl(launchUri);
+                }
+              },
+              child: Text(
+                user.phone,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.blue,
+                  decoration: TextDecoration.underline,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ),
 

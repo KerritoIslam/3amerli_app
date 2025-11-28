@@ -8,6 +8,8 @@ import 'package:amerli_app/core/utils/top_toast.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
+import 'package:amerli_app/features/orders/app/bloc/orders_bloc.dart';
+import 'package:amerli_app/core/config/injection.dart';
 
 /// Minimal, clean SuccessPage implementation.
 class SuccessPage extends StatefulWidget {
@@ -192,8 +194,11 @@ class _SuccessPageState extends State<SuccessPage>
                             if (widget.order != null) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      OrderTrackingPage(order: widget.order!),
+                                  builder: (_) => BlocProvider.value(
+                                    value: sl<OrdersBloc>(),
+                                    child:
+                                        OrderTrackingPage(order: widget.order!),
+                                  ),
                                 ),
                               );
                             } else {

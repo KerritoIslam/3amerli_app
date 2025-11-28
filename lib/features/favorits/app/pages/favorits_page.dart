@@ -144,27 +144,55 @@ class _FavoritsView extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.only(
                         top: 8.0, left: 12.0, right: 12.0),
-                    child: BlocBuilder<fav_feature.FavoritsBloc, FavoritsState>(
-                      builder: (context, state) {
-                        if (state is FavoritsLoading) {
-                          return const ProductsList(
-                              products: [], isLoading: true);
-                        }
-                        if (state is FavoritsLoaded) {
-                          if (state.products.isEmpty) {
-                            return Center(
-                                child: Text(AppLanguage.noFavoritesFound,
-                                    style:
-                                        Theme.of(context).textTheme.bodyLarge));
-                          }
-                          return ProductsList(products: state.products);
-                        }
-                        if (state is FavoritsError) {
-                          return Center(
-                              child: Text(AppLanguage.noFavoritesFound));
-                        }
-                        return const SizedBox.shrink();
+                    child: RefreshIndicator(
+                      onRefresh: () async {
+                        context
+                            .read<fav_feature.FavoritsBloc>()
+                            .add(FavoritsLoadEvent());
                       },
+                      child:
+                          BlocBuilder<fav_feature.FavoritsBloc, FavoritsState>(
+                        builder: (context, state) {
+                          if (state is FavoritsLoading) {
+                            return const ProductsList(
+                                products: [], isLoading: true);
+                          }
+                          if (state is FavoritsLoaded) {
+                            if (state.products.isEmpty) {
+                              // Wrap in ListView for pull-to-refresh support
+                              return ListView(
+                                children: [
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height *
+                                        0.6,
+                                    child: Center(
+                                        child: Text(
+                                            AppLanguage.noFavoritesFound,
+                                            style: Theme.of(context)
+                                                .textTheme
+                                                .bodyLarge)),
+                                  )
+                                ],
+                              );
+                            }
+                            return ProductsList(products: state.products);
+                          }
+                          if (state is FavoritsError) {
+                            return ListView(
+                              children: [
+                                SizedBox(
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.6,
+                                  child: Center(
+                                      child:
+                                          Text(AppLanguage.noFavoritesFound)),
+                                )
+                              ],
+                            );
+                          }
+                          return const SizedBox.shrink();
+                        },
+                      ),
                     ),
                   ),
                 ),

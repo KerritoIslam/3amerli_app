@@ -3,74 +3,128 @@ import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import '../../domain/entities/order.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../orders/app/bloc/orders_bloc.dart';
+import '../../../orders/app/bloc/orders_event.dart';
+import '../../../orders/app/bloc/orders_state.dart';
+import 'package:amerli_app/features/orders/domain/entities/tracking_step.dart';
+import 'package:amerli_app/features/orders/domain/repositories/orders_repository.dart';
+import 'package:amerli_app/core/config/injection.dart';
 
-class OrderTrackingPage extends StatelessWidget {
+class OrderTrackingPage extends StatefulWidget {
   final Order order;
   const OrderTrackingPage({super.key, required this.order});
 
+  @override
+  State<OrderTrackingPage> createState() => _OrderTrackingPageState();
+}
+
+class _OrderTrackingPageState extends State<OrderTrackingPage> {
+  late Order _order;
+  List<TrackingStep>? _trackingSteps;
+  bool _isLoading = true;
   static const Color _primary = Color(0xFFA7C957);
   static const Color _dark = Color(0xFF083B2E);
+
+  @override
+  void initState() {
+    super.initState();
+    _order = widget.order;
+    _fetchTracking();
+  }
+
+  Future<void> _fetchTracking() async {
+    try {
+      final steps = await sl<OrdersRepository>().fetchTracking(_order.id);
+      if (mounted) {
+        setState(() {
+          _trackingSteps = steps;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   Widget _buildStep({
-    required bool active,
     required IconData icon,
     required String title,
-    required String date,
-    required String time,
     required OrderStatus stepStatus,
     bool showTopConnector = true,
     bool showBottomConnector = true,
   }) {
-    // Make circles bigger; diameter 44 (radius ~22)
+    // Find if this step exists in the tracking history
+    final step = _trackingSteps?.firstWhere(
+      (s) => s.status == stepStatus,
+      orElse: () => TrackingStep(
+          createdAt: DateTime(1900), status: OrderStatus.confirmed), // dummy
+    );
+
+    // Check if step is valid (not dummy)
+    final bool active = step != null && step.createdAt.year != 1900;
+
+    // For connectors:
+    // Top connector is active if THIS step is active
+    // Bottom connector is active if NEXT step is active
+
+    // Define the sequence
+    final sequence = [
+      OrderStatus.confirmed,
+      OrderStatus.preparing,
+      OrderStatus.delivering,
+      OrderStatus.delivered
+    ];
+
+    final currentIndex = sequence.indexOf(stepStatus);
+    final nextStatus =
+        currentIndex < sequence.length - 1 ? sequence[currentIndex + 1] : null;
+
+    final nextStep = nextStatus != null
+        ? _trackingSteps?.firstWhere(
+            (s) => s.status == nextStatus,
+            orElse: () => TrackingStep(
+                createdAt: DateTime(1900), status: OrderStatus.confirmed),
+          )
+        : null;
+
+    final bool nextActive = nextStep != null && nextStep.createdAt.year != 1900;
+
     final circleSize = 44.0;
-    // connector thickness and lengths
     const connectorWidth = 3.0;
-    // increase connector lengths to create more spacing between states
-    // keep inter-step SizedBox at 0 so connectors form a continuous line
     const connectorTopHeight = 24.0;
     const connectorBottomHeight = 24.0;
 
-    // determine whether connectors should be shown as active (colored) based on current order.status
-    int statusIndex(OrderStatus s) {
-      switch (s) {
-        case OrderStatus.confirmed:
-          return 0;
-        case OrderStatus.preparing:
-          return 1;
-        case OrderStatus.delivering:
-          return 2;
-        case OrderStatus.delivered:
-          return 3;
-        case OrderStatus.canceled:
-          return -1; // canceled is special
-      }
-    }
-
-    final stepIdx = statusIndex(stepStatus);
-    final currentIdx = statusIndex(order.status);
-
     Color connectorColorTop() {
       if (!showTopConnector) return const Color(0xFFE5E7EB);
-      // top connector (between stepIdx-1 and stepIdx) is active if we've reached at least this step
-      if (currentIdx >= stepIdx) return AppColors.lightPrimary;
-      return const Color(0xFFE5E7EB);
+      return active ? AppColors.lightPrimary : const Color(0xFFE5E7EB);
     }
 
     Color connectorColorBottom() {
       if (!showBottomConnector) return const Color(0xFFE5E7EB);
-      // bottom connector (between stepIdx and stepIdx+1) is active if we've reached the next step
-      if (currentIdx >= stepIdx + 1) return AppColors.lightPrimary;
-      return const Color(0xFFE5E7EB);
+      return nextActive ? AppColors.lightPrimary : const Color(0xFFE5E7EB);
+    }
+
+    String dateStr = '';
+    String timeStr = '';
+
+    if (active) {
+      final dt = step.createdAt;
+      dateStr = '${dt.day} ${_month(dt.month)} ${dt.year}';
+      timeStr = _formatTime(dt);
     }
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // left column: top connector + circle + bottom connector
         SizedBox(
           width: 56,
           child: Column(
             children: [
-              // top connector (touches circle)
               if (showTopConnector)
                 Container(
                     width: connectorWidth,
@@ -86,7 +140,6 @@ class OrderTrackingPage extends StatelessWidget {
                     size: 20,
                     color: active ? Colors.white : Colors.grey.shade700),
               ),
-              // bottom connector (touches circle)
               if (showBottomConnector)
                 Container(
                     width: connectorWidth,
@@ -96,7 +149,6 @@ class OrderTrackingPage extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        // center
         Expanded(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -107,14 +159,13 @@ class OrderTrackingPage extends StatelessWidget {
                     color: active ? _dark : Colors.grey.shade700)),
             const SizedBox(height: 6),
             if (active)
-              Text(date,
+              Text(dateStr,
                   style: TextStyle(
                       color: _dark, fontWeight: FontWeight.w400, fontSize: 13)),
           ]),
         ),
-        // time (with AM/PM)
         if (active)
-          Text(time,
+          Text(timeStr,
               style: TextStyle(
                   color: _dark, fontWeight: FontWeight.w400, fontSize: 13)),
       ],
@@ -123,125 +174,126 @@ class OrderTrackingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // For mock purposes we derive times from createdAt
-    final created = order.createdAt;
-    final confirmedDate =
-        '${created.day} ${_month(created.month)} ${created.year}';
-    final confirmedTime = _formatTime(created);
-
-    // build a simple timeline ordering
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
-              child: Row(
-                children: [
-                  InkWell(
-                    onTap: () => Navigator.of(context).maybePop(),
-                    borderRadius: BorderRadius.circular(24),
-                    child: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.tertiaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: SvgPicture.asset(
-                        'assets/icons/back_arrow.svg',
-                        width: 16,
-                        height: 16,
-                        matchTextDirection: true,
-                        colorFilter: ColorFilter.mode(
-                            Theme.of(context).colorScheme.onPrimary,
-                            BlendMode.srcIn),
-                        placeholderBuilder: (context) => Icon(
-                          Icons.arrow_back,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.onPrimary,
+    return BlocListener<OrdersBloc, OrdersState>(
+      listener: (context, state) {
+        if (state is OrdersLoaded) {
+          try {
+            final updated = state.items.firstWhere((o) => o.id == _order.id);
+            setState(() {
+              _order = updated;
+            });
+          } catch (_) {}
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              context.read<OrdersBloc>().add(OrdersLoadEvent());
+              await _fetchTracking();
+            },
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () => Navigator.of(context).maybePop(),
+                        borderRadius: BorderRadius.circular(24),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color:
+                                Theme.of(context).colorScheme.tertiaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: SvgPicture.asset(
+                            'assets/icons/back_arrow.svg',
+                            width: 16,
+                            height: 16,
+                            matchTextDirection: true,
+                            colorFilter: ColorFilter.mode(
+                                Theme.of(context).colorScheme.onPrimary,
+                                BlendMode.srcIn),
+                            placeholderBuilder: (context) => Icon(
+                              Icons.arrow_back,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const Spacer(),
+                      Text(AppLanguage.trackMyOrder,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: _dark)),
+                      const Spacer(flex: 2),
+                    ],
                   ),
-                  const Spacer(),
-                  Text(AppLanguage.trackMyOrder,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: _dark)),
-                  const Spacer(flex: 2),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text('${AppLanguage.orderNumberPrefix}${order.id}',
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: _dark)))),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12),
-                child: Column(
-                  children: [
-                    _buildStep(
-                        active: true,
-                        icon: Icons.check,
-                        title: OrderStatus.confirmed.displayLabel,
-                        date: confirmedDate,
-                        time: confirmedTime,
-                        stepStatus: OrderStatus.confirmed,
-                        showTopConnector: false,
-                        showBottomConnector: true),
-                    const SizedBox(height: 0),
-                    _buildStep(
-                        active: order.status == OrderStatus.preparing ||
-                            order.status == OrderStatus.delivering ||
-                            order.status == OrderStatus.delivered,
-                        icon: Icons.inventory_2_outlined,
-                        title: OrderStatus.preparing.displayLabel,
-                        date: confirmedDate,
-                        time: confirmedTime,
-                        stepStatus: OrderStatus.preparing,
-                        showTopConnector: true,
-                        showBottomConnector: true),
-                    const SizedBox(height: 0),
-                    _buildStep(
-                        active: order.status == OrderStatus.delivering ||
-                            order.status == OrderStatus.delivered,
-                        icon: Icons.local_shipping,
-                        title: OrderStatus.delivering.displayLabel,
-                        date: confirmedDate,
-                        time: confirmedTime,
-                        stepStatus: OrderStatus.delivering,
-                        showTopConnector: true,
-                        showBottomConnector: true),
-                    const SizedBox(height: 0),
-                    _buildStep(
-                        active: order.status == OrderStatus.delivered,
-                        icon: Icons.mark_email_read,
-                        title: OrderStatus.delivered.displayLabel,
-                        date: confirmedDate,
-                        time: confirmedTime,
-                        stepStatus: OrderStatus.delivered,
-                        showTopConnector: true,
-                        showBottomConnector: false),
-                    const SizedBox(height: 12),
-                  ],
                 ),
-              ),
-            )
-          ],
+                const SizedBox(height: 12),
+                Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                            '${AppLanguage.orderNumberPrefix}${_order.id}',
+                            style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: _dark)))),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20.0, vertical: 12),
+                          child: Column(
+                            children: [
+                              _buildStep(
+                                  icon: Icons.check,
+                                  title: OrderStatus.confirmed.displayLabel,
+                                  stepStatus: OrderStatus.confirmed,
+                                  showTopConnector: false,
+                                  showBottomConnector: true),
+                              const SizedBox(height: 0),
+                              _buildStep(
+                                  icon: Icons.inventory_2_outlined,
+                                  title: OrderStatus.preparing.displayLabel,
+                                  stepStatus: OrderStatus.preparing,
+                                  showTopConnector: true,
+                                  showBottomConnector: true),
+                              const SizedBox(height: 0),
+                              _buildStep(
+                                  icon: Icons.local_shipping,
+                                  title: OrderStatus.delivering.displayLabel,
+                                  stepStatus: OrderStatus.delivering,
+                                  showTopConnector: true,
+                                  showBottomConnector: true),
+                              const SizedBox(height: 0),
+                              _buildStep(
+                                  icon: Icons.mark_email_read,
+                                  title: OrderStatus.delivered.displayLabel,
+                                  stepStatus: OrderStatus.delivered,
+                                  showTopConnector: true,
+                                  showBottomConnector: false),
+                              const SizedBox(height: 12),
+                            ],
+                          ),
+                        ),
+                )
+              ],
+            ),
+          ),
         ),
       ),
     );

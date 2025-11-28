@@ -192,6 +192,7 @@ class _ProductsListState extends State<ProductsList> {
           mainAxisSpacing: 12,
           childAspectRatio: 0.64,
         ),
+        physics: const AlwaysScrollableScrollPhysics(),
         itemCount: products.length +
             ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
         itemBuilder: (context, index) {

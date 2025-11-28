@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../bloc/admin_orders_bloc.dart';
 import '../bloc/admin_orders_event.dart';
 import '../bloc/admin_orders_state.dart';
@@ -224,6 +225,16 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
                               _InfoRow(
                                 label: AppLanguage.phone,
                                 value: order.customerPhone,
+                                onTap: () async {
+                                  final Uri launchUri = Uri(
+                                    scheme: 'tel',
+                                    path:
+                                        order.customerPhone.replaceAll(' ', ''),
+                                  );
+                                  if (await canLaunchUrl(launchUri)) {
+                                    await launchUrl(launchUri);
+                                  }
+                                },
                               ),
                               const SizedBox(height: 12),
                               _InfoRow(
@@ -462,33 +473,40 @@ class _ProductRow extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   const _InfoRow({
     required this.label,
     required this.value,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: onTap != null ? Colors.blue : null,
+              decoration: onTap != null ? TextDecoration.underline : null,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

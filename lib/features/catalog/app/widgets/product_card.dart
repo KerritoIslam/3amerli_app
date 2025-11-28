@@ -241,7 +241,7 @@ class _ProductCardState extends State<ProductCard> {
                                     fontSize: 10.sp,
                                     color: Theme.of(context)
                                         .colorScheme
-                                        .secondary),
+                                        .onSecondary),
                           ),
                         ],
                         if ((widget.subtitle ?? '').isNotEmpty) ...[

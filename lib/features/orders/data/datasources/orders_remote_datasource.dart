@@ -16,10 +16,14 @@ class OrdersRemoteDataSource {
 
   /// GET /order/all
   Future<Map<String, dynamic>> fetchOrders(
-      {int page = 1, int pageSize = 10}) async {
+      {int page = 1, int pageSize = 10, String? status}) async {
     try {
-      final resp = await apiService.get('/order/all',
-          queryParameters: {'page': page, 'limit': pageSize});
+      final queryParams = <String, dynamic>{'page': page, 'limit': pageSize};
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+      final resp =
+          await apiService.get('/order/all', queryParameters: queryParams);
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         final data = resp.data as Map<String, dynamic>;
         // The response body has a 'data' field which is a list of orders
@@ -98,6 +102,33 @@ class OrdersRemoteDataSource {
 
       developer.log(
           'Dio error getOrderProducts - status: $status, serverResponse: $serverResp',
+          name: 'OrdersRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
+      final errorMsg = extractErrorMessage(serverResp);
+      throw ApiException(errorMsg,
+          statusCode: status, isNetworkError: true, serverResponse: serverResp);
+    }
+  }
+
+  /// GET /api/v1/tracking/{orderId}
+  Future<List<Map<String, dynamic>>> fetchTracking(String orderId) async {
+    try {
+      final resp = await apiService.get('/tracking/$orderId');
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        final list = resp.data as List<dynamic>;
+        return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      final errorMsg = extractErrorMessage(resp.data);
+      throw ApiException(errorMsg,
+          statusCode: resp.statusCode, serverResponse: resp.data);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+
+      developer.log(
+          'Dio error fetchTracking - status: $status, serverResponse: $serverResp',
           name: 'OrdersRemoteDataSource',
           error: e,
           stackTrace: StackTrace.current,

@@ -1,22 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
-import '../bloc/catalog_bloc.dart';
-import '../bloc/catalog_event.dart';
 import '../../domain/entities/category.dart';
+
+class SubcategoryResult {
+  final Set<int> selected;
+  final bool apply;
+  SubcategoryResult(this.selected, this.apply);
+}
 
 class SubcategoriesPage extends StatefulWidget {
   final Category parent;
-  const SubcategoriesPage({super.key, required this.parent});
+  final Set<int> initialSelection;
+  const SubcategoriesPage(
+      {super.key, required this.parent, required this.initialSelection});
 
   @override
   State<SubcategoriesPage> createState() => _SubcategoriesPageState();
 }
 
 class _SubcategoriesPageState extends State<SubcategoriesPage> {
-  final Set<int> _selected = <int>{};
+  late Set<int> _selected;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with intersection of all selected and this category's subcategories
+    final subIds = widget.parent.subcategories.map((e) => e.id).toSet();
+    _selected = widget.initialSelection.intersection(subIds);
+  }
 
   void _toggle(Category child) {
     setState(() {
@@ -26,10 +39,6 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
         _selected.add(child.id);
       }
     });
-    try {
-      final catalogBloc = context.read<CatalogBloc>();
-      catalogBloc.add(CatalogLoadEvent(query: child.name));
-    } catch (_) {}
   }
 
   @override
@@ -49,7 +58,8 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                 Row(
                   children: [
                     InkWell(
-                      onTap: () => Navigator.of(context).pop(),
+                      onTap: () => Navigator.of(context)
+                          .pop(SubcategoryResult(_selected, false)),
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
                         width: 32,
@@ -93,15 +103,6 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                                 widget.parent.subcategories.map((e) => e.id));
                           }
                         });
-                        final selectedNames = widget.parent.subcategories
-                            .where((e) => _selected.contains(e.id))
-                            .map((e) => e.name)
-                            .join(',');
-                        try {
-                          context
-                              .read<CatalogBloc>()
-                              .add(CatalogLoadEvent(query: selectedNames));
-                        } catch (_) {}
                       },
                       child: Text(AppLanguage.all),
                     ),
@@ -156,15 +157,8 @@ class _SubcategoriesPageState extends State<SubcategoriesPage> {
                           width: double.infinity,
                           child: OutlinedButton(
                             onPressed: () {
-                              final selectedNames = widget.parent.subcategories
-                                  .where((e) => _selected.contains(e.id))
-                                  .map((e) => e.name)
-                                  .join(',');
-                              try {
-                                context.read<CatalogBloc>().add(
-                                    CatalogLoadEvent(query: selectedNames));
-                              } catch (_) {}
-                              Navigator.of(context).pop(_selected);
+                              Navigator.of(context)
+                                  .pop(SubcategoryResult(_selected, true));
                             },
                             style: OutlinedButton.styleFrom(
                                 shape: const StadiumBorder(),
