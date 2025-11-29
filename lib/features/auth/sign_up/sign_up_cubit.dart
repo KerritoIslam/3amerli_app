@@ -8,11 +8,49 @@ import 'package:amerli_app/features/auth/domain/entities/supermarket.dart';
 import 'package:amerli_app/core/network/api_exception.dart' show ApiException;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
+import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpCubit extends Cubit<SignUpState> {
   final AuthRepositoryImpl repository;
 
-  SignUpCubit({required this.repository}) : super(const SignUpState());
+  SignUpCubit({required this.repository}) : super(const SignUpState()) {
+    _initCooldown();
+  }
+
+  Timer? _timer;
+
+  Future<void> _initCooldown() async {
+    final prefs = await SharedPreferences.getInstance();
+    final expiry = prefs.getInt('otp_cooldown_expiry');
+    if (expiry != null) {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      if (expiry > now) {
+        final remaining = ((expiry - now) / 1000).ceil();
+        _startTimer(remaining);
+      }
+    }
+  }
+
+  void _startTimer(int seconds) {
+    _timer?.cancel();
+    _safeEmit(state.copyWith(cooldownRemaining: seconds));
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (state.cooldownRemaining <= 1) {
+        timer.cancel();
+        _safeEmit(state.copyWith(cooldownRemaining: 0));
+      } else {
+        _safeEmit(
+            state.copyWith(cooldownRemaining: state.cooldownRemaining - 1));
+      }
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _timer?.cancel();
+    return super.close();
+  }
 
   void _safeEmit(SignUpState s) {
     if (!isClosed) emit(s);
@@ -33,6 +71,8 @@ class SignUpCubit extends Cubit<SignUpState> {
   }
 
   Future<void> sendCode() async {
+    if (state.cooldownRemaining > 0) return;
+
     if (state.phoneNumber.trim().isEmpty) {
       _safeEmit(state.copyWith(status: VerificationStatus.noNumberEntered));
       return;
@@ -41,6 +81,14 @@ class SignUpCubit extends Cubit<SignUpState> {
         state.copyWith(status: VerificationStatus.loading, errorMessage: null));
     try {
       final response = await repository.sendOtp(state.phoneNumber);
+
+      // Set cooldown
+      final prefs = await SharedPreferences.getInstance();
+      final expiry = DateTime.now()
+          .add(const Duration(seconds: 30))
+          .millisecondsSinceEpoch;
+      await prefs.setInt('otp_cooldown_expiry', expiry);
+      _startTimer(30);
 
       String? otp;
       final mod = dotenv.env['MOD'];

@@ -40,6 +40,7 @@ class _CatalogPageState extends State<CatalogPage> {
   late final OffersBloc _offersBloc;
   late final CategoriesBloc _categoriesBloc;
   late final CatalogBloc _catalogBloc;
+  final ScrollController _scrollController = ScrollController();
   final PageController _offersPageController =
       PageController(viewportFraction: 1.0);
 
@@ -54,12 +55,26 @@ class _CatalogPageState extends State<CatalogPage> {
     _categoriesBloc = sl<CategoriesBloc>();
     _catalogBloc = sl<CatalogBloc>();
 
+    _scrollController.addListener(_onScroll);
+
     // Dispatch load events after first frame so UI is ready to show loading state
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // _offersBloc.add(OffersLoadEvent());
       _categoriesBloc.add(CategoriesLoadEvent());
       _catalogBloc.add(CatalogLoadEvent());
     });
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent * 0.7) {
+      final state = _catalogBloc.state;
+      if (state is CatalogLoaded && state.hasMore) {
+        _loadMoreAsync();
+      } else if (state is CatalogLoadingMore && state.hasMore) {
+        // Already loading, do nothing
+      }
+    }
   }
 
   // Fetch products with current category filter
@@ -91,6 +106,8 @@ class _CatalogPageState extends State<CatalogPage> {
   @override
   void dispose() {
     _offersPageController.dispose();
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -191,162 +208,157 @@ class _CatalogPageState extends State<CatalogPage> {
                 // Wait a bit to ensure the loading state is processed
                 await Future.delayed(const Duration(seconds: 1));
               },
-              child: NestedScrollView(
-                floatHeaderSlivers: true,
-                headerSliverBuilder: (context, innerBoxIsScrolled) {
-                  return [
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.only(
-                            top: 20, left: 28, right: 28, bottom: 20),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ValueListenableBuilder<AppLocale>(
-                              valueListenable: AppLanguage.localeNotifier,
-                              builder: (context, locale, _) {
-                                return Row(
-                                  children: [
-                                    Text(AppLanguage.welcomeTo,
+              child: CustomScrollView(
+                controller: _scrollController,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          top: 20, left: 28, right: 28, bottom: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ValueListenableBuilder<AppLocale>(
+                            valueListenable: AppLanguage.localeNotifier,
+                            builder: (context, locale, _) {
+                              return Row(
+                                children: [
+                                  Text(AppLanguage.welcomeTo,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineLarge
+                                          ?.copyWith(fontSize: 24)),
+                                  const SizedBox(width: 8),
+                                  SizedBox(
+                                      height: 32,
+                                      width: 116,
+                                      child: Image.asset(
+                                          'assets/logo/full_logo.png',
+                                          width: 116,
+                                          height: 116)),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 15),
+                          // Search + notifications
+                          SizedBox(
+                            height: 40,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: AppSearchbar(
+                                    onChanged: (value) => context
+                                        .read<CatalogBloc>()
+                                        .add(CatalogLoadEvent(query: value)),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                InkWell(
+                                  onTap: () => context.push('/notifications'),
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: IconCircle(
+                                    asset: 'assets/icons/notifications.svg',
+                                    isSelected: false,
+                                    size: 40,
+                                    keepIconColor: true,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverAppBar(
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    surfaceTintColor: Colors.transparent,
+                    floating: true,
+                    snap: true,
+                    pinned: false,
+                    toolbarHeight: 0,
+                    collapsedHeight: 0,
+                    expandedHeight: _categoriesHeight,
+                    flexibleSpace: FlexibleSpaceBar(
+                      background: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Container(
+                          key: _categoriesKey,
+                          padding: const EdgeInsets.symmetric(horizontal: 28),
+                          child: Column(
+                            children: [
+                              // Categories header
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(AppLanguage.categories,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .headlineSmall
+                                          ?.copyWith(
+                                              fontWeight: FontWeight.bold)),
+                                  InkWell(
+                                    onTap: () =>
+                                        context.push('/filters/categories'),
+                                    child: Text(AppLanguage.viewAll,
                                         style: Theme.of(context)
                                             .textTheme
-                                            .headlineLarge
-                                            ?.copyWith(fontSize: 24)),
-                                    const SizedBox(width: 8),
-                                    SizedBox(
-                                        height: 32,
-                                        width: 116,
-                                        child: Image.asset(
-                                            'assets/logo/full_logo.png',
-                                            width: 116,
-                                            height: 116)),
-                                  ],
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 15),
-                            // Search + notifications
-                            SizedBox(
-                              height: 40,
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: AppSearchbar(
-                                      onChanged: (value) => context
-                                          .read<CatalogBloc>()
-                                          .add(CatalogLoadEvent(query: value)),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  InkWell(
-                                    onTap: () => context.push('/notifications'),
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: IconCircle(
-                                      asset: 'assets/icons/notifications.svg',
-                                      isSelected: false,
-                                      size: 40,
-                                      keepIconColor: true,
-                                    ),
+                                            .bodyMedium
+                                            ?.copyWith(
+                                                color: AppColors.hint,
+                                                decoration:
+                                                    TextDecoration.underline,
+                                                decorationColor:
+                                                    AppColors.hint)),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SliverAppBar(
-                      backgroundColor:
-                          Theme.of(context).scaffoldBackgroundColor,
-                      surfaceTintColor: Colors.transparent,
-                      floating: true,
-                      snap: true,
-                      pinned: false,
-                      toolbarHeight: 0,
-                      collapsedHeight: 0,
-                      expandedHeight: _categoriesHeight,
-                      flexibleSpace: FlexibleSpaceBar(
-                        background: SingleChildScrollView(
-                          physics: const NeverScrollableScrollPhysics(),
-                          child: Container(
-                            key: _categoriesKey,
-                            padding: const EdgeInsets.symmetric(horizontal: 28),
-                            child: Column(
-                              children: [
-                                // Categories header
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(AppLanguage.categories,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .headlineSmall
-                                            ?.copyWith(
-                                                fontWeight: FontWeight.bold)),
-                                    InkWell(
-                                      onTap: () =>
-                                          context.push('/filters/categories'),
-                                      child: Text(AppLanguage.viewAll,
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .bodyMedium
-                                              ?.copyWith(
-                                                  color: AppColors.hint,
-                                                  decoration:
-                                                      TextDecoration.underline,
-                                                  decorationColor:
-                                                      AppColors.hint)),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                // Categories grid
-                                BlocBuilder<CategoriesBloc, CategoriesState>(
-                                    builder: (context, state) {
-                                  if (state is CategoriesLoading) {
-                                    return categoriesSkeletonGrid(
-                                        count: 6,
-                                        crossAxisCount: 3,
-                                        itemHeight: 90);
-                                  }
-                                  if (state is CategoriesError) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  if (state is CategoriesLoaded) {
-                                    const maxCategoriesToShow = 9;
-                                    final hasMore = state.items.length >
-                                        maxCategoriesToShow;
-                                    final displayCategories = hasMore
-                                        ? state.items
-                                            .take(maxCategoriesToShow)
-                                            .toList()
-                                        : state.items;
-
-                                    return CategoryGrid(
-                                      categories: displayCategories,
+                              const SizedBox(height: 12),
+                              // Categories grid
+                              BlocBuilder<CategoriesBloc, CategoriesState>(
+                                  builder: (context, state) {
+                                if (state is CategoriesLoading) {
+                                  return categoriesSkeletonGrid(
+                                      count: 6,
                                       crossAxisCount: 3,
-                                      itemHeight: 90,
-                                      showMoreIndicator: hasMore,
-                                      onSelectionChanged: (selectedIds) {
-                                        _updateSelectedCategories(selectedIds);
-                                      },
-                                    );
-                                  }
+                                      itemHeight: 90);
+                                }
+                                if (state is CategoriesError) {
                                   return const SizedBox.shrink();
-                                }),
-                                const SizedBox(height: 12), // Bottom padding
-                              ],
-                            ),
+                                }
+                                if (state is CategoriesLoaded) {
+                                  const maxCategoriesToShow = 9;
+                                  final hasMore =
+                                      state.items.length > maxCategoriesToShow;
+                                  final displayCategories = hasMore
+                                      ? state.items
+                                          .take(maxCategoriesToShow)
+                                          .toList()
+                                      : state.items;
+
+                                  return CategoryGrid(
+                                    categories: displayCategories,
+                                    crossAxisCount: 3,
+                                    itemHeight: 90,
+                                    showMoreIndicator: hasMore,
+                                    onSelectionChanged: (selectedIds) {
+                                      _updateSelectedCategories(selectedIds);
+                                    },
+                                  );
+                                }
+                                return const SizedBox.shrink();
+                              }),
+                              const SizedBox(height: 12), // Bottom padding
+                            ],
                           ),
                         ),
                       ),
                     ),
-                  ];
-                },
-                body: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: BlocBuilder<CatalogBloc, CatalogState>(
+                  ),
+                  BlocBuilder<CatalogBloc, CatalogState>(
                       bloc: _catalogBloc,
                       builder: (context, state) {
                         // Debug logging
@@ -358,13 +370,15 @@ class _CatalogPageState extends State<CatalogPage> {
                         final isLoadingMore = state is CatalogLoadingMore;
 
                         if (state is CatalogError) {
-                          return Center(
-                            child: Text(
-                              AppLanguage.noProductsFound,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyMedium
-                                  ?.copyWith(color: AppColors.hint),
+                          return SliverFillRemaining(
+                            child: Center(
+                              child: Text(
+                                AppLanguage.noProductsFound,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodyMedium
+                                    ?.copyWith(color: AppColors.hint),
+                              ),
                             ),
                           );
                         }
@@ -379,16 +393,23 @@ class _CatalogPageState extends State<CatalogPage> {
                           products = state.products;
                           hasMore = state.hasMore;
                         } else if (isLoading) {
-                          return ProductsList(products: [], isLoading: true);
+                          return ProductsList(
+                            products: [],
+                            isLoading: true,
+                            padding: const EdgeInsets.symmetric(horizontal: 28),
+                            asSliver: true,
+                          );
                         }
 
                         if (products.isEmpty && !isLoading) {
-                          return Center(
-                              child: Text(AppLanguage.noProductsFound,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyMedium
-                                      ?.copyWith(color: AppColors.hint)));
+                          return SliverFillRemaining(
+                            child: Center(
+                                child: Text(AppLanguage.noProductsFound,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.copyWith(color: AppColors.hint))),
+                          );
                         }
 
                         return ProductsList(
@@ -396,10 +417,12 @@ class _CatalogPageState extends State<CatalogPage> {
                           products: products,
                           isLoading: isLoadingMore,
                           hasMore: hasMore,
-                          onLoadMore: () => _loadMoreAsync(),
+                          // onLoadMore is handled by _onScroll in CustomScrollView
+                          padding: const EdgeInsets.symmetric(horizontal: 28),
+                          asSliver: true,
                         );
                       }),
-                ),
+                ],
               ),
             ),
           ),

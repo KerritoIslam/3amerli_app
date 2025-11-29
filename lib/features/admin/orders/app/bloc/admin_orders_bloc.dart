@@ -3,6 +3,7 @@ import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/repositories/admin_orders_repository.dart';
 import 'admin_orders_event.dart';
 import 'admin_orders_state.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
   final AdminOrdersRepository repository;
@@ -52,7 +53,7 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
         currentPage: event.page,
       ));
     } catch (e) {
-      emit(AdminOrdersError(e.toString()));
+      emit(AdminOrdersError(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -63,7 +64,7 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
       final order = await repository.getOrderById(event.orderId);
       emit(AdminOrderDetailLoaded(order));
     } catch (e) {
-      emit(AdminOrdersError(e.toString()));
+      emit(AdminOrdersError(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -75,7 +76,7 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
       // Reload order detail after update
       add(AdminOrdersLoadDetailEvent(event.orderId));
     } catch (e) {
-      emit(AdminOrdersError(e.toString()));
+      emit(AdminOrdersError(ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -114,10 +115,7 @@ class AdminOrdersBloc extends Bloc<AdminOrdersEvent, AdminOrdersState> {
         emit(AdminOrdersOperationSuccess(AppLanguage.updateSuccess));
       }
     } catch (e) {
-      String message = e.toString();
-      if (message.contains('Exception:')) {
-        message = message.replaceAll('Exception:', '').trim();
-      }
+      String message = ErrorHandler.getErrorMessage(e);
 
       // 2. Handle error state without reloading
       if (state is AdminOrdersLoaded) {

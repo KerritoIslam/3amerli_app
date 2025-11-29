@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/widgets/animated_bottom_nav.dart';
@@ -61,45 +62,66 @@ class _AdminPageState extends State<AdminPage> {
         BlocProvider.value(value: sl<AdminProductsBloc>()),
         BlocProvider(create: (_) => sl<AdminUsersBloc>()),
       ],
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: Stack(
-          children: [
-            // Build an Offstage + Navigator for each tab
-            for (int i = 0; i < _pages.length; i++)
-              Positioned.fill(
-                child: Offstage(
-                  offstage: _selected != i,
-                  child: SafeArea(
-                    top: true,
-                    bottom: false,
-                    child: Navigator(
-                      key: _navigatorKeys[i],
-                      onGenerateRoute: (settings) =>
-                          MaterialPageRoute(builder: (_) => _pages[i]),
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, result) async {
+          if (didPop) return;
+
+          final NavigatorState? currentNavigator =
+              _navigatorKeys[_selected].currentState;
+          if (currentNavigator != null && currentNavigator.canPop()) {
+            await currentNavigator.maybePop();
+            return;
+          }
+
+          if (_selected != 0) {
+            setState(() => _selected = 0);
+            return;
+          }
+
+          // If on dashboard and can't pop, we exit the app
+          SystemNavigator.pop();
+        },
+        child: Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: Stack(
+            children: [
+              // Build an Offstage + Navigator for each tab
+              for (int i = 0; i < _pages.length; i++)
+                Positioned.fill(
+                  child: Offstage(
+                    offstage: _selected != i,
+                    child: SafeArea(
+                      top: true,
+                      bottom: false,
+                      child: Navigator(
+                        key: _navigatorKeys[i],
+                        onGenerateRoute: (settings) =>
+                            MaterialPageRoute(builder: (_) => _pages[i]),
+                      ),
+                    ),
+                  ),
+                ),
+
+              // Bottom navigation bar
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  top: false,
+                  bottom: true,
+                  child: Center(
+                    child: AnimatedBottomNavBar(
+                      items: navItems,
+                      selectedIndex: _selected,
+                      onItemSelected: _onItemSelected,
                     ),
                   ),
                 ),
               ),
-
-            // Bottom navigation bar
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SafeArea(
-                top: false,
-                bottom: true,
-                child: Center(
-                  child: AnimatedBottomNavBar(
-                    items: navItems,
-                    selectedIndex: _selected,
-                    onItemSelected: _onItemSelected,
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -351,7 +351,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // Orders today (count + percent)
           _StatCard(
             title: AppLanguage.ordersToday,
-            value: '${state.stats.totalOrders}',
+            value: AppLanguage.formatNumber(state.stats.totalOrders),
             percentage: state.stats.ordersPercentageChange != 0
                 ? '${state.stats.ordersPercentageChange > 0 ? '+' : ''}${state.stats.ordersPercentageChange.toStringAsFixed(2)}%'
                 : null,
@@ -365,7 +365,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // Turnover
           _StatCard(
             title: AppLanguage.turnover,
-            value: '${state.stats.totalRevenue.toStringAsFixed(0)},00',
+            value: AppLanguage.formatNumber(state.stats.totalRevenue),
             subValue: 'DZD',
             percentage: state.stats.revenuePercentageChange != null
                 ? '${state.stats.revenuePercentageChange! > 0 ? '+' : ''}${state.stats.revenuePercentageChange!.toStringAsFixed(2)}%'
@@ -382,7 +382,8 @@ class _DashboardPageState extends State<DashboardPage> {
           // Active supermarkets
           _StatCard(
             title: AppLanguage.activeSupermarkets,
-            value: '${state.stats.supermarketsActiveToday}',
+            value:
+                AppLanguage.formatNumber(state.stats.supermarketsActiveToday),
             percentage: state.stats.supermarketsPercentageChange != 0
                 ? '${state.stats.supermarketsPercentageChange > 0 ? '+' : ''}${state.stats.supermarketsPercentageChange.toStringAsFixed(2)}%'
                 : null,
@@ -398,7 +399,7 @@ class _DashboardPageState extends State<DashboardPage> {
           // Deliveries (delivered orders count)
           _StatCard(
             title: AppLanguage.deliveriesInProgress,
-            value: '${state.stats.deliveredOrdersCount}',
+            value: AppLanguage.formatNumber(state.stats.deliveredOrdersCount),
             percentage: state.stats.deliveredOrdersPercentageChange != 0
                 ? '${state.stats.deliveredOrdersPercentageChange > 0 ? '+' : ''}${state.stats.deliveredOrdersPercentageChange.toStringAsFixed(2)}%'
                 : null,

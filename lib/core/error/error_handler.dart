@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:amerli_app/core/ui/toast/toast_service.dart';
 import 'package:amerli_app/core/network/api_exception.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 /// Error handler utility to display errors as toasts or dialogs
 class ErrorHandler {
@@ -96,16 +97,16 @@ class ErrorHandler {
         return 'Erreur serveur: Réessayez plus tard';
       }
 
-      return "network error";
+      return AppLanguage.somethingWentWrongCheckConnection;
     }
 
     // Network errors
     if (error is SocketException) {
-      return 'Erreur réseau: Vérifiez votre connexion internet';
+      return AppLanguage.somethingWentWrongCheckConnection;
     }
 
     if (error is HttpException) {
-      return 'Erreur réseau: Impossible de se connecter au serveur';
+      return AppLanguage.somethingWentWrongCheckConnection;
     }
 
     if (error is FormatException) {
@@ -120,7 +121,7 @@ class ErrorHandler {
         errorString.contains('connection') ||
         errorString.contains('timeout') ||
         errorString.contains('failed host lookup')) {
-      return 'Erreur réseau: Vérifiez votre connexion internet';
+      return AppLanguage.somethingWentWrongCheckConnection;
     }
 
     if (errorString.contains('404')) {
@@ -140,7 +141,7 @@ class ErrorHandler {
     }
 
     // Default error message
-    return 'Une erreur est survenue';
+    return AppLanguage.somethingWentWrongCheckConnection;
   }
 
   static void _showErrorDialog(BuildContext context, String message) {

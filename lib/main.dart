@@ -27,6 +27,7 @@ import 'dart:async';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'features/cart/app/bloc/cart_bloc.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -73,6 +74,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   late final Settings _settings;
   late final GoRouter _router;
+  late final StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
   @override
   void initState() {
@@ -91,17 +93,34 @@ class _MyAppState extends State<MyApp> {
     _applyLanguage(_settings.language);
     _settings.languageNotifier.addListener(_onLanguageChanged);
 
-    // Listen for theme changes
-    // _settings.themeModeNotifier.addListener(() {
-    //   if (mounted) {
-    //     setState(() {
-    //       _themeMode = _settings.themeModeNotifier.value;
-    //     });
-    //   }
-    // });
-
     // Setup notifications
     _setupNotifications();
+
+    // Listen for connectivity changes
+    _connectivitySubscription = Connectivity()
+        .onConnectivityChanged
+        .listen((ConnectivityResult result) {
+      final isOffline = result == ConnectivityResult.none;
+      if (isOffline) {
+        // Navigate to offline page if not already there
+        final currentPath =
+            _router.routerDelegate.currentConfiguration.uri.path;
+        if (currentPath != '/offline') {
+          _router.push('/offline');
+        }
+      } else {
+        // If we are online and on offline page, go back
+        final currentPath =
+            _router.routerDelegate.currentConfiguration.uri.path;
+        if (currentPath == '/offline') {
+          if (_router.canPop()) {
+            _router.pop();
+          } else {
+            _router.go('/home');
+          }
+        }
+      }
+    });
   }
 
   Future<void> _setupNotifications() async {
@@ -134,6 +153,7 @@ class _MyAppState extends State<MyApp> {
   void dispose() {
     // Remove language listener to prevent memory leaks
     _settings.languageNotifier.removeListener(_onLanguageChanged);
+    _connectivitySubscription.cancel();
     super.dispose();
   }
 

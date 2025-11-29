@@ -50,6 +50,7 @@ import '../../features/profile/app/pages/user_information_page.dart';
 import '../../features/profile/app/pages/edit_user_information_page.dart';
 import 'package:amerli_app/features/auth/domain/entities/user.dart';
 import '../../features/cart/app/pages/cart.dart';
+import 'package:amerli_app/core/ui/pages/offline_page.dart';
 
 // Use GoRouter's built-in GoRouterRefreshStream helper which converts a Stream
 // into a ChangeNotifier that GoRouter can listen to.
@@ -518,6 +519,10 @@ GoRouter createRouter(
                 params['reason'] ?? params['error'] ?? 'Erreur inconnue',
           );
         },
+      ),
+      GoRoute(
+        path: '/offline',
+        builder: (context, state) => const OfflinePage(),
       ),
     ],
   );

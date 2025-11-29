@@ -116,6 +116,11 @@ class AppLanguage {
       AppLocale.fr: 'Vous n\'avez pas reçu le code ?',
       AppLocale.ar: 'لم تتلق الرمز؟',
     },
+    'resendIn': {
+      AppLocale.en: 'Resend in',
+      AppLocale.fr: 'Renvoyer dans',
+      AppLocale.ar: 'إعادة الإرسال في',
+    },
     'verifyMyNumber': {
       AppLocale.en: 'Verify my number',
       AppLocale.fr: 'Vérifier mon numéro',
@@ -1892,6 +1897,28 @@ class AppLanguage {
       AppLocale.fr: 'Ex: Alimentation générale',
       AppLocale.ar: 'مثال: مواد غذائية عامة',
     },
+    'somethingWentWrongCheckConnection': {
+      AppLocale.en:
+          'Something went wrong: please check your internet connection otherwise',
+      AppLocale.fr:
+          'Une erreur est survenue : veuillez vérifier votre connexion internet sinon',
+      AppLocale.ar: 'حدث خطأ ما: يرجى التحقق من اتصالك بالإنترنت وإلا',
+    },
+    'numSuffixK': {
+      AppLocale.en: 'k',
+      AppLocale.fr: 'k',
+      AppLocale.ar: 'k',
+    },
+    'numSuffixM': {
+      AppLocale.en: 'M',
+      AppLocale.fr: 'M',
+      AppLocale.ar: 'M',
+    },
+    'numSuffixB': {
+      AppLocale.en: 'B',
+      AppLocale.fr: 'Md',
+      AppLocale.ar: 'B',
+    },
   };
 
   static String _t(String key) => _translations[key]?[current] ?? key;
@@ -1914,6 +1941,7 @@ class AppLanguage {
   static String get verifyNumber => _t('verifyNumber');
   static String get codeSent => _t('codeSent');
   static String get noCodeReceived => _t('noCodeReceived');
+  static String get resendIn => _t('resendIn');
   static String get verifyMyNumber => _t('verifyMyNumber');
   static String get consentText => _t('consentText');
   static String get consentPrefix => _t('consentPrefix');
@@ -2307,4 +2335,26 @@ class AppLanguage {
   static String get invalidNumber => _t('invalidNumber');
   static String get minPriceRestriction => _t('minPriceRestriction');
   static String get deletedImagesRestoreNote => _t('deletedImagesRestoreNote');
+  static String get somethingWentWrongCheckConnection =>
+      _t('somethingWentWrongCheckConnection');
+
+  static String get numSuffixK => _t('numSuffixK');
+  static String get numSuffixM => _t('numSuffixM');
+  static String get numSuffixB => _t('numSuffixB');
+
+  static String formatNumber(num value) {
+    if (value >= 1000000000) {
+      double v = value / 1000000000;
+      return '${v.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')}$numSuffixB';
+    }
+    if (value >= 1000000) {
+      double v = value / 1000000;
+      return '${v.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')}$numSuffixM';
+    }
+    if (value >= 1000) {
+      double v = value / 1000;
+      return '${v.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '')}$numSuffixK';
+    }
+    return value.toString();
+  }
 }

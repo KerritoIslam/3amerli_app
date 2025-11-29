@@ -23,6 +23,8 @@ class ProductsList extends StatefulWidget {
   final ProductItemBuilder? itemBuilder;
   final bool isLoading;
   final bool hasMore;
+  final EdgeInsetsGeometry? padding;
+  final bool asSliver;
 
   const ProductsList({
     super.key,
@@ -33,6 +35,8 @@ class ProductsList extends StatefulWidget {
     this.itemBuilder,
     this.isLoading = false,
     this.hasMore = true,
+    this.padding,
+    this.asSliver = false,
   }) : assert(columns > 0 && rowsToTrigger > 0);
 
   @override
@@ -95,13 +99,75 @@ class _ProductsListState extends State<ProductsList> {
 
   @override
   Widget build(BuildContext context) {
+    if (widget.asSliver) {
+      return _buildSliver(context);
+    }
+    return _buildBox(context);
+  }
+
+  Widget _buildSliver(BuildContext context) {
+    final products = widget.products;
+
+    if (products.isEmpty) {
+      if (widget.isLoading) {
+        return SliverPadding(
+          padding:
+              (widget.padding ?? const EdgeInsets.symmetric(horizontal: 12))
+                  .add(const EdgeInsets.symmetric(vertical: 8)),
+          sliver: SliverGrid(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: widget.columns,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.64,
+            ),
+            delegate: SliverChildBuilderDelegate(
+              (context, index) => _buildSkeletonItem(context),
+              childCount: widget.columns * 2,
+            ),
+          ),
+        );
+      }
+      return SliverToBoxAdapter(
+        child: Center(
+            child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Text(AppLanguage.noProductsFound),
+        )),
+      );
+    }
+
+    return SliverPadding(
+      padding: (widget.padding ?? const EdgeInsets.symmetric(horizontal: 12))
+          .add(EdgeInsets.only(
+        top: 8,
+        bottom: widget.hasMore ? 8 : 100,
+      )),
+      sliver: SliverGrid(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: widget.columns,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.64,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => _buildProductItem(context, index, products),
+          childCount: products.length +
+              ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBox(BuildContext context) {
     final products = widget.products;
 
     if (products.isEmpty) {
       if (widget.isLoading) {
         return GridView.builder(
-          // No controller, uses PrimaryScrollController if available
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding:
+              (widget.padding ?? const EdgeInsets.symmetric(horizontal: 12))
+                  .add(const EdgeInsets.symmetric(vertical: 8)),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: widget.columns,
             crossAxisSpacing: 12,
@@ -109,42 +175,10 @@ class _ProductsListState extends State<ProductsList> {
             childAspectRatio: 0.64,
           ),
           itemCount: widget.columns * 2,
-          itemBuilder: (context, index) => Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SkeletonBox(
-                  height: 120.h,
-                  width: double.infinity,
-                  borderRadius: BorderRadius.circular(22.r),
-                ),
-                SizedBox(height: 8.h),
-                SkeletonBox(
-                  height: 14.h,
-                  width: 100.w,
-                ),
-                SizedBox(height: 4.h),
-                SkeletonBox(
-                  height: 12.h,
-                  width: 60.w,
-                ),
-                const Spacer(),
-                SkeletonBox(
-                  height: 16.h,
-                  width: 80.w,
-                ),
-              ],
-            ),
-          ),
+          itemBuilder: (context, index) => _buildSkeletonItem(context),
         );
       }
-
-      return const Center(child: Text('No products'));
+      return Center(child: Text(AppLanguage.noProductsFound));
     }
 
     return NotificationListener<ScrollNotification>(
@@ -177,15 +211,11 @@ class _ProductsListState extends State<ProductsList> {
         return false;
       },
       child: GridView.builder(
-        // No controller, uses PrimaryScrollController if available
-        padding: EdgeInsets.only(
-          left: 12,
-          right: 12,
+        padding: (widget.padding ?? const EdgeInsets.symmetric(horizontal: 12))
+            .add(EdgeInsets.only(
           top: 8,
-          bottom: widget.hasMore
-              ? 8
-              : 100, // Add extra space when no more items to prevent bottom nav covering
-        ),
+          bottom: widget.hasMore ? 8 : 100,
+        )),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: widget.columns,
           crossAxisSpacing: 12,
@@ -195,137 +225,143 @@ class _ProductsListState extends State<ProductsList> {
         physics: const AlwaysScrollableScrollPhysics(),
         itemCount: products.length +
             ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
-        itemBuilder: (context, index) {
-          if (index >= products.length) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.all(8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SkeletonBox(
-                    height: 120.h,
-                    width: double.infinity,
-                    borderRadius: BorderRadius.circular(22.r),
-                  ),
-                  SizedBox(height: 8.h),
-                  SkeletonBox(
-                    height: 14.h,
-                    width: 100.w,
-                  ),
-                  SizedBox(height: 4.h),
-                  SkeletonBox(
-                    height: 12.h,
-                    width: 60.w,
-                  ),
-                  const Spacer(),
-                  SkeletonBox(
-                    height: 16.h,
-                    width: 80.w,
-                  ),
-                ],
-              ),
-            );
-          }
+        itemBuilder: (context, index) =>
+            _buildProductItem(context, index, products),
+      ),
+    );
+  }
 
-          final product = products[index];
+  Widget _buildSkeletonItem(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SkeletonBox(
+            height: 120.h,
+            width: double.infinity,
+            borderRadius: BorderRadius.circular(22.r),
+          ),
+          SizedBox(height: 8.h),
+          SkeletonBox(
+            height: 14.h,
+            width: 100.w,
+          ),
+          SizedBox(height: 4.h),
+          SkeletonBox(
+            height: 12.h,
+            width: 60.w,
+          ),
+          const Spacer(),
+          SkeletonBox(
+            height: 16.h,
+            width: 80.w,
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Keep the builder-based trigger as a backup or alternative
-          final itemsFromEnd = widget.rowsToTrigger * widget.columns;
-          final thresholdIndex =
-              (products.length - itemsFromEnd).clamp(0, products.length);
+  Widget _buildProductItem(
+      BuildContext context, int index, List<Product> products) {
+    if (index >= products.length) {
+      return _buildSkeletonItem(context);
+    }
 
-          if (!_isRequestingMore &&
-              widget.hasMore &&
-              widget.onLoadMore != null &&
-              index >= thresholdIndex) {
-            // Debounce/throttle is handled by _isRequestingMore, but we need to reset it eventually
-            // The scroll listener handles the main logic, but this is good for initial loads
-            // where scroll might not happen yet.
-            // However, to avoid double triggers, we can rely on _isRequestingMore flag.
-            // We'll leave this here but it shares the flag.
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (!_isRequestingMore && mounted) {
-                _isRequestingMore = true;
-                final future = widget.onLoadMore!.call();
-                future.whenComplete(() {
-                  if (mounted) {
-                    setState(() {
-                      _isRequestingMore = false;
-                    });
-                  }
+    final product = products[index];
+
+    // Keep the builder-based trigger as a backup or alternative
+    // Only trigger if NOT in sliver mode (sliver mode relies on external controller)
+    if (!widget.asSliver) {
+      final itemsFromEnd = widget.rowsToTrigger * widget.columns;
+      final thresholdIndex =
+          (products.length - itemsFromEnd).clamp(0, products.length);
+
+      if (!_isRequestingMore &&
+          widget.hasMore &&
+          widget.onLoadMore != null &&
+          index >= thresholdIndex) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!_isRequestingMore && mounted) {
+            _isRequestingMore = true;
+            final future = widget.onLoadMore!.call();
+            future.whenComplete(() {
+              if (mounted) {
+                setState(() {
+                  _isRequestingMore = false;
                 });
               }
             });
           }
+        });
+      }
+    }
 
-          if (widget.itemBuilder != null) {
-            return widget.itemBuilder!(context, product, index);
+    if (widget.itemBuilder != null) {
+      return widget.itemBuilder!(context, product, index);
+    }
+
+    // Render ProductCard; CartBloc is provided by parent pages
+    final card = ProductCard(
+      imageUrl: product.pics.isNotEmpty ? product.pics.first : null,
+      isFavorite: product.isFavorit,
+      onFavoriteToggle: () {
+        // Toggle favorite in backend
+        try {
+          final favoritesBloc = sl<FavoritesBloc>();
+          if (product.isFavorit) {
+            // Remove from favorites - pass productId as id
+            favoritesBloc.add(FavoritesRemoveEvent(id: product.id));
+          } else {
+            // Add to favorites - userId will be fetched from auth service in the repository
+            favoritesBloc
+                .add(FavoritesAddEvent(userId: 0, productId: product.id));
           }
 
-          // Render ProductCard; CartBloc is provided by parent pages
-          final card = ProductCard(
-            imageUrl: product.pics.isNotEmpty ? product.pics.first : null,
-            isFavorite: product.isFavorit,
-            onFavoriteToggle: () {
-              // Toggle favorite in backend
-              try {
-                final favoritesBloc = sl<FavoritesBloc>();
-                if (product.isFavorit) {
-                  // Remove from favorites - pass productId as id
-                  favoritesBloc.add(FavoritesRemoveEvent(id: product.id));
-                } else {
-                  // Add to favorites - userId will be fetched from auth service in the repository
-                  favoritesBloc
-                      .add(FavoritesAddEvent(userId: 0, productId: product.id));
-                }
+          // Refresh catalog to reflect changes after a short delay
+          Future.delayed(const Duration(milliseconds: 500), () {
+            final catalogBloc = sl<CatalogBloc>();
+            catalogBloc.add(
+                CatalogLoadEvent(loadMore: false, timestamp: DateTime.now()));
+          });
 
-                // Refresh catalog to reflect changes after a short delay
-                Future.delayed(const Duration(milliseconds: 500), () {
-                  final catalogBloc = sl<CatalogBloc>();
-                  catalogBloc.add(CatalogLoadEvent(
-                      loadMore: false, timestamp: DateTime.now()));
-                });
-
-                // Show toast
-                TopToast.show(
-                  context,
-                  product.isFavorit
-                      ? '${product.name} ${AppLanguage.removedFromFavorites}'
-                      : '${product.name} ${AppLanguage.addedToFavorites}',
-                );
-              } catch (e) {
-                debugPrint('Error toggling favorite: $e');
-                TopToast.show(
-                  context,
-                  AppLanguage.error,
-                  isError: true,
-                );
-              }
-            },
-            title: product.name,
-            subtitle: product.description,
-            price: product.price,
-            soldBy: product.soldBy,
-            sellerName: product.sellerName,
-            brand: product.brand,
-            productId: product.id,
-            stock: product.stock,
-            quantityPerBatch: product.quantityPerBatch,
-            onTap: () async {
-              await Navigator.of(context).push(MaterialPageRoute(
-                  builder: (ctx) => ProductDetailsPage(product: product)));
-              if (context.mounted) {
-                sl<CatalogBloc>().add(CatalogLoadEvent());
-              }
-            },
+          // Show toast
+          TopToast.show(
+            context,
+            product.isFavorit
+                ? '${product.name} ${AppLanguage.removedFromFavorites}'
+                : '${product.name} ${AppLanguage.addedToFavorites}',
           );
-          return card;
-        },
-      ),
+        } catch (e) {
+          debugPrint('Error toggling favorite: $e');
+          TopToast.show(
+            context,
+            AppLanguage.error,
+            isError: true,
+          );
+        }
+      },
+      title: product.name,
+      subtitle: product.description,
+      price: product.price,
+      soldBy: product.soldBy,
+      sellerName: product.sellerName,
+      brand: product.brand,
+      productId: product.id,
+      stock: product.stock,
+      quantityPerBatch: product.quantityPerBatch,
+      onTap: () async {
+        await Navigator.of(context).push(MaterialPageRoute(
+            builder: (ctx) => ProductDetailsPage(product: product)));
+        if (context.mounted) {
+          sl<CatalogBloc>().add(CatalogLoadEvent());
+        }
+      },
     );
+    return card;
   }
 }

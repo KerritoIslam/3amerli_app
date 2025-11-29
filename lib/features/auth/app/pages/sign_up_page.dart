@@ -677,15 +677,26 @@ class _SignUpViewState extends State<_SignUpView> with WidgetsBindingObserver {
                                           const Spacer(),
                                           Center(
                                             child: TextButton(
-                                              onPressed: () {
-                                                cubit.sendCode();
-                                              },
+                                              onPressed:
+                                                  state.cooldownRemaining > 0
+                                                      ? null
+                                                      : () {
+                                                          cubit.sendCode();
+                                                        },
                                               child: Text(
-                                                AppLanguage.noCodeReceived,
+                                                state.cooldownRemaining > 0
+                                                    ? '${AppLanguage.resendIn} ${state.cooldownRemaining}s'
+                                                    : AppLanguage
+                                                        .noCodeReceived,
                                                 style:
                                                     AppTextStyles.body.copyWith(
-                                                  color: Theme.of(context)
-                                                      .primaryColor,
+                                                  color:
+                                                      state.cooldownRemaining >
+                                                              0
+                                                          ? Theme.of(context)
+                                                              .disabledColor
+                                                          : Theme.of(context)
+                                                              .primaryColor,
                                                   fontWeight: FontWeight.bold,
                                                 ),
                                               ),

@@ -181,7 +181,7 @@ class _TopProductsChartState extends State<TopProductsChart>
                                 ],
                               ),
                               child: Text(
-                                product.soldCount.toString(),
+                                AppLanguage.formatNumber(product.soldCount),
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,

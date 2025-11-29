@@ -19,6 +19,7 @@ class SignUpState extends Equatable {
   final String? errorMessage;
   final bool isForbidden;
   final String? otp;
+  final int cooldownRemaining;
 
   const SignUpState({
     this.status = VerificationStatus.noNumberEntered,
@@ -28,6 +29,7 @@ class SignUpState extends Equatable {
     this.errorMessage,
     this.isForbidden = false,
     this.otp,
+    this.cooldownRemaining = 0,
   });
 
   SignUpState copyWith({
@@ -38,6 +40,7 @@ class SignUpState extends Equatable {
     String? errorMessage,
     bool? isForbidden,
     String? otp,
+    int? cooldownRemaining,
   }) {
     return SignUpState(
       status: status ?? this.status,
@@ -47,6 +50,7 @@ class SignUpState extends Equatable {
       errorMessage: errorMessage,
       isForbidden: isForbidden ?? this.isForbidden,
       otp: otp ?? this.otp,
+      cooldownRemaining: cooldownRemaining ?? this.cooldownRemaining,
     );
   }
 
@@ -58,6 +62,7 @@ class SignUpState extends Equatable {
         result,
         errorMessage,
         isForbidden,
-        otp
+        otp,
+        cooldownRemaining,
       ];
 }
