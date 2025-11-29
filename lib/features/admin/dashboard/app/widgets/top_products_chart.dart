@@ -17,7 +17,7 @@ class _TopProductsChartState extends State<TopProductsChart>
   late AnimationController _animationController;
   late List<Animation<double>> _heightAnimations;
 
-  late final List<ProductData> _products;
+  late List<ProductData> _products;
 
   @override
   void initState() {
@@ -28,6 +28,20 @@ class _TopProductsChartState extends State<TopProductsChart>
       vsync: this,
     );
 
+    _initData();
+    _animationController.forward();
+  }
+
+  @override
+  void didUpdateWidget(TopProductsChart oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.products != oldWidget.products) {
+      _initData();
+      _animationController.forward(from: 0.0);
+    }
+  }
+
+  void _initData() {
     // Initialize products from widget (map domain entity to view model)
     final input = widget.products;
     _products = input.isNotEmpty
@@ -42,6 +56,7 @@ class _TopProductsChartState extends State<TopProductsChart>
     // Calculate relative heights (0.0 to 1.0)
     final maxSold =
         _products.map((p) => p.soldCount).reduce((a, b) => a > b ? a : b);
+
     _heightAnimations = _products.map((product) {
       return Tween<double>(
         begin: 0.0,
@@ -54,7 +69,10 @@ class _TopProductsChartState extends State<TopProductsChart>
       );
     }).toList();
 
-    _animationController.forward();
+    // Reset selection if out of bounds
+    if (_selectedIndex >= _products.length) {
+      _selectedIndex = 0;
+    }
   }
 
   @override
@@ -67,6 +85,18 @@ class _TopProductsChartState extends State<TopProductsChart>
     setState(() {
       _selectedIndex = index;
     });
+  }
+
+  String _formatNumber(int number) {
+    if (number >= 1000000000) {
+      return '${(number / 1000000000).toStringAsFixed(1)}b';
+    } else if (number >= 1000000) {
+      return '${(number / 1000000).toStringAsFixed(1)}m';
+    } else if (number >= 1000) {
+      return '${(number / 1000).toStringAsFixed(1)}k';
+    } else {
+      return number.toString();
+    }
   }
 
   @override
@@ -181,7 +211,7 @@ class _TopProductsChartState extends State<TopProductsChart>
                                 ],
                               ),
                               child: Text(
-                                AppLanguage.formatNumber(product.soldCount),
+                                _formatNumber(product.soldCount),
                                 style: const TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w600,

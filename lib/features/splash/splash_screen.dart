@@ -26,6 +26,7 @@ class _SplashScreenState extends State<SplashScreen>
   // Phase 3: Lift
   late Animation<double> _textLiftAnimation;
   late Animation<double> _truckLiftAnimation;
+  late Animation<double> _handLiftAnimation;
 
   // Phase 4: Exit
   late Animation<double> _exitAnimation;
@@ -90,6 +91,10 @@ class _SplashScreenState extends State<SplashScreen>
       // Truck might tilt or move up slightly too
       _truckLiftAnimation =
           Tween<double>(begin: 0.0, end: -5.h).animate(_liftCurve);
+      // Hand moves up more (relative to truck) to match text
+      // Total hand movement = -5.h (truck) + -10.h (hand relative) = -15.h
+      _handLiftAnimation =
+          Tween<double>(begin: 0.0, end: -10.h).animate(_liftCurve);
 
       // Phase 4: Exit (0.6 - 1.0) - Slower exit (40% of 7s = 2.8s)
       _exitAnimation =
@@ -197,9 +202,35 @@ class _SplashScreenState extends State<SplashScreen>
                             if (_mainController.value > 0.2 &&
                                 _truckEnterAnimation.value < 0.5.sw)
                               _buildSmokeEffect(),
-                            Image.asset(
-                              'assets/logo/logo_mix.png',
-                              height: 200.h,
+                            Stack(
+                              children: [
+                                // Body (Right 65%)
+                                ClipRect(
+                                  clipper: HorizontalSplitClipper(0.46, 1.0),
+                                  child: Image.asset(
+                                    'assets/logo/logo_mix.png',
+                                    height: 200.h,
+                                  ),
+                                ),
+                                // Hand (Left 35%)
+                                AnimatedBuilder(
+                                  animation: _handLiftAnimation,
+                                  builder: (context, child) {
+                                    return Transform.translate(
+                                      offset:
+                                          Offset(0, _handLiftAnimation.value),
+                                      child: child,
+                                    );
+                                  },
+                                  child: ClipRect(
+                                    clipper: HorizontalSplitClipper(0.0, 0.46),
+                                    child: Image.asset(
+                                      'assets/logo/logo_mix.png',
+                                      height: 200.h,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
@@ -222,13 +253,6 @@ class _SplashScreenState extends State<SplashScreen>
         return Transform.translate(
           offset: Offset(10.w,
               0), // Shift slightly right to connect better, or left if needed. User said left.
-          // Wait, user said "shift them to the left to be connected".
-          // If it's to the left of the truck, moving it left moves it AWAY.
-          // Unless the truck image has empty space on the left?
-          // I will try shifting it RIGHT (positive) to connect to the truck body.
-          // But the user explicitly said "shift them to the left".
-          // Maybe they mean the smoke is currently appearing ON the truck?
-          // I'll stick to the user's "left" instruction: negative offset.
           child: Transform.translate(
             offset: Offset(
                 -60.w, 0), // Closer to truck (assuming left shift connects it)
@@ -274,5 +298,27 @@ class SmokePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant SmokePainter oldDelegate) {
     return oldDelegate.animationValue != animationValue;
+  }
+}
+
+class HorizontalSplitClipper extends CustomClipper<Rect> {
+  final double startPct;
+  final double endPct;
+
+  HorizontalSplitClipper(this.startPct, this.endPct);
+
+  @override
+  Rect getClip(Size size) {
+    return Rect.fromLTRB(
+      size.width * startPct,
+      0.0,
+      size.width * endPct,
+      size.height,
+    );
+  }
+
+  @override
+  bool shouldReclip(HorizontalSplitClipper oldClipper) {
+    return oldClipper.startPct != startPct || oldClipper.endPct != endPct;
   }
 }

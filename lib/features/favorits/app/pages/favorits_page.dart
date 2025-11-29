@@ -15,6 +15,8 @@ import 'package:amerli_app/core/config/injection.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:amerli_app/widgets/draggable_floating_cart_button.dart';
+import 'package:amerli_app/features/cart/app/pages/cart.dart';
 
 class FavoritsPage extends StatelessWidget {
   const FavoritsPage({super.key});
@@ -57,148 +59,164 @@ class _FavoritsView extends StatelessWidget {
         ),
       ],
       child: Scaffold(
-        body: SafeArea(
-          child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Top app-bar like row: back button + centered title
-                Row(
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16.0, vertical: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    InkWell(
-                      onTap: () => Navigator.of(context).pop(),
-                      borderRadius: BorderRadius.circular(24),
-                      child: Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color:
-                              Theme.of(context).colorScheme.tertiaryContainer,
-                          shape: BoxShape.circle,
+                    // Top app-bar like row: back button + centered title
+                    Row(
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.of(context).pop(),
+                          borderRadius: BorderRadius.circular(24),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .tertiaryContainer,
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: SvgPicture.asset(
+                              'assets/icons/back_arrow.svg',
+                              width: 16,
+                              height: 16,
+                              matchTextDirection: true,
+                              colorFilter: ColorFilter.mode(
+                                  Theme.of(context).colorScheme.onPrimary,
+                                  BlendMode.srcIn),
+                              placeholderBuilder: (context) => Icon(
+                                Icons.arrow_back,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.onPrimary,
+                              ),
+                            ),
+                          ),
                         ),
-                        alignment: Alignment.center,
-                        child: SvgPicture.asset(
-                          'assets/icons/back_arrow.svg',
-                          width: 16,
-                          height: 16,
-                          matchTextDirection: true,
-                          colorFilter: ColorFilter.mode(
-                              Theme.of(context).colorScheme.onPrimary,
-                              BlendMode.srcIn),
-                          placeholderBuilder: (context) => Icon(
-                            Icons.arrow_back,
-                            size: 16,
-                            color: Theme.of(context).colorScheme.onPrimary,
+
+                        Expanded(
+                          child: Center(
+                            child: Text(
+                              AppLanguage.favorites,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+
+                        // balance spacing with an invisible box same as back button
+                        const SizedBox(width: 40, height: 40),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    // Categories row
+                    BlocBuilder<CategoriesBloc, CategoriesState>(
+                        builder: (context, state) {
+                      if (state is CategoriesLoading) {
+                        return _categoriesSkeletonRow();
+                      }
+
+                      if (state is CategoriesError) {
+                        return Center(
+                            child: Text(AppLanguage.noCategoriesFound));
+                      }
+                      if (state is CategoriesLoaded) {
+                        return CategoriesRow(
+                            categories: state.items,
+                            onTap: (cat) {
+                              // Reload favorites filtered by category
+                              context
+                                  .read<fav_feature.FavoritsBloc>()
+                                  .add(FavoritsLoadEvent());
+                            });
+                      }
+                      return const SizedBox.shrink();
+                    }),
+
+                    const SizedBox(height: 12),
+
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                            top: 8.0, left: 12.0, right: 12.0),
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            context
+                                .read<fav_feature.FavoritsBloc>()
+                                .add(FavoritsLoadEvent());
+                          },
+                          child: BlocBuilder<fav_feature.FavoritsBloc,
+                              FavoritsState>(
+                            builder: (context, state) {
+                              if (state is FavoritsLoading) {
+                                return const ProductsList(
+                                    products: [], isLoading: true);
+                              }
+                              if (state is FavoritsLoaded) {
+                                if (state.products.isEmpty) {
+                                  // Wrap in ListView for pull-to-refresh support
+                                  return ListView(
+                                    children: [
+                                      SizedBox(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                0.6,
+                                        child: Center(
+                                            child: Text(
+                                                AppLanguage.noFavoritesFound,
+                                                style: Theme.of(context)
+                                                    .textTheme
+                                                    .bodyLarge)),
+                                      )
+                                    ],
+                                  );
+                                }
+                                return ProductsList(products: state.products);
+                              }
+                              if (state is FavoritsError) {
+                                return ListView(
+                                  children: [
+                                    SizedBox(
+                                      height:
+                                          MediaQuery.of(context).size.height *
+                                              0.6,
+                                      child: Center(
+                                          child: Text(
+                                              AppLanguage.noFavoritesFound)),
+                                    )
+                                  ],
+                                );
+                              }
+                              return const SizedBox.shrink();
+                            },
                           ),
                         ),
                       ),
                     ),
-
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          AppLanguage.favorites,
-                          style: Theme.of(context)
-                              .textTheme
-                              .headlineLarge
-                              ?.copyWith(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-
-                    // balance spacing with an invisible box same as back button
-                    const SizedBox(width: 40, height: 40),
                   ],
                 ),
-
-                const SizedBox(height: 12),
-
-                // Categories row
-                BlocBuilder<CategoriesBloc, CategoriesState>(
-                    builder: (context, state) {
-                  if (state is CategoriesLoading) {
-                    return _categoriesSkeletonRow();
-                  }
-
-                  if (state is CategoriesError) {
-                    return Center(child: Text(AppLanguage.noCategoriesFound));
-                  }
-                  if (state is CategoriesLoaded) {
-                    return CategoriesRow(
-                        categories: state.items,
-                        onTap: (cat) {
-                          // Reload favorites filtered by category
-                          context
-                              .read<fav_feature.FavoritsBloc>()
-                              .add(FavoritsLoadEvent());
-                        });
-                  }
-                  return const SizedBox.shrink();
-                }),
-
-                const SizedBox(height: 12),
-
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(
-                        top: 8.0, left: 12.0, right: 12.0),
-                    child: RefreshIndicator(
-                      onRefresh: () async {
-                        context
-                            .read<fav_feature.FavoritsBloc>()
-                            .add(FavoritsLoadEvent());
-                      },
-                      child:
-                          BlocBuilder<fav_feature.FavoritsBloc, FavoritsState>(
-                        builder: (context, state) {
-                          if (state is FavoritsLoading) {
-                            return const ProductsList(
-                                products: [], isLoading: true);
-                          }
-                          if (state is FavoritsLoaded) {
-                            if (state.products.isEmpty) {
-                              // Wrap in ListView for pull-to-refresh support
-                              return ListView(
-                                children: [
-                                  SizedBox(
-                                    height: MediaQuery.of(context).size.height *
-                                        0.6,
-                                    child: Center(
-                                        child: Text(
-                                            AppLanguage.noFavoritesFound,
-                                            style: Theme.of(context)
-                                                .textTheme
-                                                .bodyLarge)),
-                                  )
-                                ],
-                              );
-                            }
-                            return ProductsList(products: state.products);
-                          }
-                          if (state is FavoritsError) {
-                            return ListView(
-                              children: [
-                                SizedBox(
-                                  height:
-                                      MediaQuery.of(context).size.height * 0.6,
-                                  child: Center(
-                                      child:
-                                          Text(AppLanguage.noFavoritesFound)),
-                                )
-                              ],
-                            );
-                          }
-                          return const SizedBox.shrink();
-                        },
-                      ),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
+            Positioned.fill(
+              child: DraggableFloatingCartButton(
+                onCartTap: () {
+                  Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CartPage()));
+                },
+              ),
+            ),
+          ],
         ),
       ), // Scaffold closing
     ); // MultiBlocListener closing
