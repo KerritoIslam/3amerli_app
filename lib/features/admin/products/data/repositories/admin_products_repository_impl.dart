@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'package:dio/dio.dart';
 
 import 'package:amerli_app/core/dio/api_service.dart';
+import 'package:amerli_app/core/network/api_exception.dart';
 import '../../domain/entities/product.dart';
 import '../../domain/repositories/admin_products_repository.dart';
 import '../models/product_model.dart';
@@ -56,6 +58,8 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
     String? category,
     List<int>? categoryIds,
     List<int>? brandIds,
+    int page = 1,
+    int limit = 20,
   }) async {
     final qp = <String, dynamic>{};
     if (query != null && query.isNotEmpty) qp['search'] = query;
@@ -66,6 +70,8 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
     if (brandIds != null && brandIds.isNotEmpty) {
       qp['brandIds'] = brandIds.join(',');
     }
+    qp['page'] = page;
+    qp['limit'] = limit;
 
     final resp =
         await apiService.get('/products/admin/all', queryParameters: qp);
@@ -132,12 +138,108 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
   // Create/update/delete are still not implemented against multipart endpoints.
   // Keep the existing signatures but throw to avoid accidental use.
   @override
-  Future<void> addProduct(Product product) async =>
-      throw UnsupportedError('addProduct not implemented for remote admin API');
+  Future<void> addProduct(Product product) async {
+    try {
+      final formData = await _createProductFormData(product);
+      final resp = await apiService.post('/products/create', data: formData);
+      if (resp.statusCode == null ||
+          resp.statusCode! < 200 ||
+          resp.statusCode! >= 300) {
+        throw Exception('Failed to add product: ${resp.statusCode}');
+      }
+    } catch (e) {
+      print('[ADMIN PRODUCTS] Add product error: $e');
+      _handleError(e);
+    }
+  }
+
+  Never _handleError(dynamic e) {
+    if (e is DioException) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+
+      // Log the error for debugging
+      print('[ADMIN PRODUCTS] Dio error: status=$status, data=$data');
+
+      throw ApiException(
+        "network error",
+        statusCode: status,
+        serverResponse: data,
+        isNetworkError: true,
+      );
+    }
+    throw e;
+  }
 
   @override
-  Future<void> updateProduct(Product product) async => throw UnsupportedError(
-      'updateProduct not implemented for remote admin API');
+  Future<void> updateProduct(Product product) async {
+    try {
+      // First, get the current product to find which pictures to delete
+
+      // Use explicit picturesToDelete list if available
+      final picturesToDelete = product.picturesToDelete;
+
+      final formData = await _createProductFormData(product,
+          picturesToDelete: picturesToDelete);
+      final resp =
+          await apiService.put('/products/${product.id}', data: formData);
+      if (resp.statusCode == null ||
+          resp.statusCode! < 200 ||
+          resp.statusCode! >= 300) {
+        throw Exception('Failed to update product: ${resp.statusCode}');
+      }
+    } catch (e) {
+      print('[ADMIN PRODUCTS] Update product error: $e');
+      _handleError(e);
+    }
+  }
+
+  Future<FormData> _createProductFormData(
+    Product product, {
+    List<int>? picturesToDelete,
+  }) async {
+    final map = <String, dynamic>{
+      'name': product.name,
+      'description': product.description ?? '',
+      'categoryId': int.tryParse(product.categoryId ?? '') ?? 0,
+      'brandId': int.tryParse(product.brandId ?? '') ?? 0,
+      'quantityPerBatch': product.quantityPerLot,
+      'price': product.pricePerLot,
+      'quantity': product.availableQuantity,
+      'specification': product.specifications,
+    };
+
+    if (product.expirationDate != null) {
+      map['expirationDate'] =
+          product.expirationDate!.toIso8601String().split('T')[0];
+    }
+
+    // Add picture IDs to delete if any
+    if (picturesToDelete != null && picturesToDelete.isNotEmpty) {
+      map['picturesToDelete'] = picturesToDelete;
+    }
+
+    final formData = FormData.fromMap(map);
+
+    // Add images
+    for (var i = 0; i < product.images.length; i++) {
+      final imagePath = product.images[i];
+      // Only upload local files (not starting with http)
+      if (!imagePath.startsWith('http')) {
+        try {
+          final file = await MultipartFile.fromFile(
+            imagePath,
+            filename: imagePath.split('/').last,
+          );
+          formData.files.add(MapEntry('pictures', file));
+        } catch (e) {
+          print('Error loading image file: $imagePath - $e');
+        }
+      }
+    }
+
+    return formData;
+  }
 
   @override
   Future<void> deleteProduct(String id) async {
@@ -151,15 +253,44 @@ class AdminProductsRepositoryImpl implements AdminProductsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN PRODUCTS] Delete product error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
   @override
   Future<void> deleteProducts(List<String> ids) async {
-    // Delete products one by one (backend doesn't have bulk delete endpoint)
-    for (final id in ids) {
-      await deleteProduct(id);
+    try {
+      // Convert string IDs to integers as required by the API
+      final productIds = ids.map((id) => int.parse(id)).toList();
+
+      // Use the Dio client directly to send DELETE with body
+      final response = await apiService.client.delete(
+        '/products/admin/bulk',
+        data: {
+          'productIds': productIds,
+        },
+      );
+
+      // Check if the response indicates an error
+      // The API returns success: false for errors even with 404 status
+      if (response.statusCode != null && response.statusCode! >= 400) {
+        throw ApiException(
+          'Delete failed',
+          statusCode: response.statusCode,
+          serverResponse: response.data,
+        );
+      }
+
+      // Also check the success field if present
+      if (response.data is Map && response.data['success'] == false) {
+        throw ApiException(
+          response.data['message'] ?? 'Delete failed',
+          statusCode: response.statusCode,
+          serverResponse: response.data,
+        );
+      }
+    } catch (e) {
+      _handleError(e);
     }
   }
 }

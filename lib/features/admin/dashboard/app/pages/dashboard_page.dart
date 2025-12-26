@@ -16,6 +16,7 @@ import 'package:amerli_app/widgets/icon_circle.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/top_products_chart.dart';
 import 'package:amerli_app/core/config/injection.dart' as di;
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 // Small helper to carry display values without importing User entity here
 class UserDisplay {
@@ -34,7 +35,6 @@ class DashboardPage extends StatefulWidget {
 class _DashboardPageState extends State<DashboardPage> {
   @override
   void initState() {
-    
     super.initState();
     context.read<DashboardBloc>().add(DashboardLoadEvent());
     // Request latest profile from server; fallback to cached auth on error/offline
@@ -50,62 +50,65 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     // Ensure a ProfileBloc is available for children (use DI factory). If a
     // parent already provides ProfileBloc, this will shadow it harmlessly.
-    return BlocProvider<ProfileBloc>(
-      create: (_) => di.sl<ProfileBloc>()..add(LoadProfileEvent()),
-      child: BlocListener<DashboardBloc, DashboardState>(
-        listener: (context, state) {
-          if (state is DashboardError) {
-            ErrorHandler.showError(context, state.message);
-          }
-        },
-        child: Scaffold(
-          backgroundColor: const Color(0xFFFFFEFB),
-          body: BlocBuilder<DashboardBloc, DashboardState>(
-            builder: (context, state) {
-              if (state is DashboardLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) => BlocProvider<ProfileBloc>(
+        create: (_) => di.sl<ProfileBloc>()..add(LoadProfileEvent()),
+        child: BlocListener<DashboardBloc, DashboardState>(
+          listener: (context, state) {
+            if (state is DashboardError) {
+              ErrorHandler.showError(context, state.message);
+            }
+          },
+          child: Scaffold(
+            backgroundColor: const Color(0xFFFFFEFB),
+            body: BlocBuilder<DashboardBloc, DashboardState>(
+              builder: (context, state) {
+                if (state is DashboardLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              if (state is DashboardLoaded) {
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<DashboardBloc>().add(DashboardLoadEvent());
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Profile Header
-                        _buildProfileHeader(context),
+                if (state is DashboardLoaded) {
+                  return RefreshIndicator(
+                    onRefresh: () async {
+                      context.read<DashboardBloc>().add(DashboardLoadEvent());
+                    },
+                    child: SingleChildScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Profile Header
+                          _buildProfileHeader(context),
 
-                        // Welcome Banner
-                        _buildWelcomeBanner(context),
+                          // Welcome Banner
+                          _buildWelcomeBanner(context),
 
-                        // Stats Grid (2x2)
-                        _buildStatsGrid(state),
+                          // Stats Grid (2x2)
+                          _buildStatsGrid(state),
 
-                        // Performance Section
-                        _buildPerformanceSection(state),
+                          // Performance Section
+                          _buildPerformanceSection(state),
 
-                        // Top Products Section
-                        _buildTopProductsSection(context, state),
+                          // Top Products Section
+                          _buildTopProductsSection(context, state),
 
-                        const SizedBox(height: 100), // Bottom nav padding
-                      ],
+                          const SizedBox(height: 100), // Bottom nav padding
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              }
+                  );
+                }
 
-              if (state is DashboardError) {
-                return const Center(
-                  child: Text('Aucune donnée disponible'),
-                );
-              }
+                if (state is DashboardError) {
+                  return Center(
+                    child: Text(AppLanguage.noDataAvailable),
+                  );
+                }
 
-              return const SizedBox.shrink();
-            },
+                return const SizedBox.shrink();
+              },
+            ),
           ),
         ),
       ),
@@ -138,23 +141,28 @@ class _DashboardPageState extends State<DashboardPage> {
             Widget avatar(UserDisplay userDisplay) {
               // Validate the URL before using it to avoid passing invalid URIs to NetworkImage
               final pic = userDisplay.profilePic;
-              final bool hasValidNetworkUrl = pic != null && pic.isNotEmpty && (Uri.tryParse(pic)?.hasScheme ?? false);
-              if (!hasValidNetworkUrl && pic != null && pic.isNotEmpty) {
-                // Debug log: in dev builds this helps track down where filenames slip through
-                // ignore: avoid_print
-                print('[dashboard] profilePic is non-empty but not an absolute URL: $pic');
-              }
+              final bool hasValidNetworkUrl = pic != null &&
+                  pic.isNotEmpty &&
+                  (Uri.tryParse(pic)?.hasScheme ?? false);
 
               return GestureDetector(
                 onTap: () {
                   try {
-                    Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AdminProfilePage()));
+                    Navigator.of(ctx).push(MaterialPageRoute(
+                        builder: (_) => const AdminProfilePage()));
                   } catch (_) {}
                 },
                 child: CircleAvatar(
                   radius: 20,
-                  backgroundImage: hasValidNetworkUrl ? NetworkImage(pic) : null,
-                  child: !hasValidNetworkUrl ? const Icon(Icons.person, size: 24) : null,
+                  backgroundColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
+                  backgroundImage:
+                      hasValidNetworkUrl ? NetworkImage(pic) : null,
+                  child: !hasValidNetworkUrl
+                      ? Icon(Icons.person,
+                          size: 24,
+                          color: Theme.of(context).colorScheme.onSurface)
+                      : null,
                 ),
               );
             }
@@ -167,15 +175,22 @@ class _DashboardPageState extends State<DashboardPage> {
                 builder: (c, s) {
                   final st = s.data;
                   if (st is ProfileLoaded) {
-                    return avatar(UserDisplay(name: st.user.name, profilePic: st.user.profilePic));
+                    return avatar(UserDisplay(
+                        name: st.user.name, profilePic: st.user.profilePic));
                   }
-                  if (st is ProfileLoading) return const SizedBox(width: 40, height: 40, child: CircularProgressIndicator(strokeWidth: 2));
+                  if (st is ProfileLoading)
+                    return const SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: CircularProgressIndicator(strokeWidth: 2));
                   // on error/fallback show cached auth if available
                   if (authBloc != null && authBloc.state is Authenticated) {
                     final u = (authBloc.state as Authenticated).user;
-                    return avatar(UserDisplay(name: u.name, profilePic: u.profilePic));
+                    return avatar(
+                        UserDisplay(name: u.name, profilePic: u.profilePic));
                   }
-                  return avatar(UserDisplay(name: 'Admin', profilePic: null));
+                  return avatar(
+                      UserDisplay(name: AppLanguage.admin, profilePic: null));
                 },
               );
             }
@@ -183,34 +198,12 @@ class _DashboardPageState extends State<DashboardPage> {
             // No ProfileBloc: try AuthBloc directly
             if (authBloc != null && authBloc.state is Authenticated) {
               final u = (authBloc.state as Authenticated).user;
-              final pic = u.profilePic;
-              final bool hasValidNetworkUrl = pic != null && pic.isNotEmpty && (Uri.tryParse(pic)?.hasScheme ?? false);
-              if (!hasValidNetworkUrl && pic != null && pic.isNotEmpty) {
-                // ignore: avoid_print
-                print('[dashboard] AuthBloc user profilePic is non-empty but not an absolute URL: $pic');
-              }
-              return GestureDetector(
-                onTap: () {
-                  try {
-                    Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AdminProfilePage()));
-                  } catch (_) {}
-                },
-                child: CircleAvatar(
-                  radius: 20,
-                  backgroundImage: hasValidNetworkUrl ? NetworkImage(pic) : null,
-                  child: !hasValidNetworkUrl ? const Icon(Icons.person, size: 24) : null,
-                ),
-              );
+              return avatar(
+                  UserDisplay(name: u.name, profilePic: u.profilePic));
             }
 
-            return GestureDetector(
-              onTap: () {
-                try {
-                  Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AdminProfilePage()));
-                } catch (_) {}
-              },
-              child: const CircleAvatar(radius: 20, child: Icon(Icons.person, size: 24)),
-            );
+            return avatar(
+                UserDisplay(name: AppLanguage.admin, profilePic: null));
           }),
 
           const SizedBox(width: 12),
@@ -223,10 +216,12 @@ class _DashboardPageState extends State<DashboardPage> {
                   initialData: profileBloc.state,
                   builder: (c, s) {
                     final st = s.data;
-                    String name = 'Admin';
+                    String name = AppLanguage.admin;
                     if (st is ProfileLoaded) {
                       name = st.user.name;
-                    } else if (authBloc != null && authBloc.state is Authenticated) name = (authBloc.state as Authenticated).user.name;
+                    } else if (authBloc != null &&
+                        authBloc.state is Authenticated)
+                      name = (authBloc.state as Authenticated).user.name;
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -239,7 +234,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                         Text(
-                          'Admin',
+                          AppLanguage.admin,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w400,
@@ -266,7 +261,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       ),
                     ),
                     Text(
-                      'Admin',
+                      AppLanguage.admin,
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
@@ -281,7 +276,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Admin',
+                    AppLanguage.admin,
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -289,7 +284,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     ),
                   ),
                   Text(
-                    'Admin',
+                    AppLanguage.admin,
                     style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w400,
@@ -321,16 +316,16 @@ class _DashboardPageState extends State<DashboardPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          const Text(
-            'Bienvenue sur ',
-            style: TextStyle(
+          Text(
+            AppLanguage.welcomeTo,
+            style: const TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.black,
             ),
           ),
           // Logo placeholder - replace with actual logo
-         Image.asset(
+          Image.asset(
             'assets/logo/full_logo.png',
             height: 32,
           ),
@@ -355,49 +350,61 @@ class _DashboardPageState extends State<DashboardPage> {
         children: [
           // Orders today (count + percent)
           _StatCard(
-            title: 'Commandes\ndu jour',
+            title: AppLanguage.ordersToday,
             value: '${state.stats.totalOrders}',
             percentage: state.stats.ordersPercentageChange != 0
                 ? '${state.stats.ordersPercentageChange > 0 ? '+' : ''}${state.stats.ordersPercentageChange.toStringAsFixed(2)}%'
                 : null,
-            isPositive: state.stats.ordersPercentageChange == 0 ? null : state.stats.ordersPercentageChange > 0,
+            isPositive: state.stats.ordersPercentageChange == 0
+                ? null
+                : state.stats.ordersPercentageChange > 0,
             backgroundColor: Theme.of(context).colorScheme.primary,
             textColor: Colors.white,
           ),
 
           // Turnover
           _StatCard(
-            title: 'Chiffre\nd\'affaires',
+            title: AppLanguage.turnover,
             value: '${state.stats.totalRevenue.toStringAsFixed(0)},00',
             subValue: 'DZD',
             percentage: state.stats.revenuePercentageChange != null
                 ? '${state.stats.revenuePercentageChange! > 0 ? '+' : ''}${state.stats.revenuePercentageChange!.toStringAsFixed(2)}%'
                 : null,
-            isPositive: state.stats.revenuePercentageChange == null ? null : state.stats.revenuePercentageChange! > 0,
-            backgroundColor: Theme.of(context).extension<BrandColors>()?.brandDeep ?? Theme.of(context).colorScheme.primary,
+            isPositive: state.stats.revenuePercentageChange == null
+                ? null
+                : state.stats.revenuePercentageChange! > 0,
+            backgroundColor:
+                Theme.of(context).extension<BrandColors>()?.brandDeep ??
+                    Theme.of(context).colorScheme.primary,
             textColor: Colors.white,
           ),
 
           // Active supermarkets
           _StatCard(
-            title: 'Supérettes\nactives',
+            title: AppLanguage.activeSupermarkets,
             value: '${state.stats.supermarketsActiveToday}',
             percentage: state.stats.supermarketsPercentageChange != 0
                 ? '${state.stats.supermarketsPercentageChange > 0 ? '+' : ''}${state.stats.supermarketsPercentageChange.toStringAsFixed(2)}%'
                 : null,
-            isPositive: state.stats.supermarketsPercentageChange == 0 ? null : state.stats.supermarketsPercentageChange > 0,
-            backgroundColor: Theme.of(context).extension<BrandColors>()?.brandDeep ?? Theme.of(context).colorScheme.primary,
+            isPositive: state.stats.supermarketsPercentageChange == 0
+                ? null
+                : state.stats.supermarketsPercentageChange > 0,
+            backgroundColor:
+                Theme.of(context).extension<BrandColors>()?.brandDeep ??
+                    Theme.of(context).colorScheme.primary,
             textColor: Colors.white,
           ),
 
           // Deliveries (delivered orders count)
           _StatCard(
-            title: 'Livraisons\nen cours',
+            title: AppLanguage.deliveriesInProgress,
             value: '${state.stats.deliveredOrdersCount}',
             percentage: state.stats.deliveredOrdersPercentageChange != 0
                 ? '${state.stats.deliveredOrdersPercentageChange > 0 ? '+' : ''}${state.stats.deliveredOrdersPercentageChange.toStringAsFixed(2)}%'
                 : null,
-            isPositive: state.stats.deliveredOrdersPercentageChange == 0 ? null : state.stats.deliveredOrdersPercentageChange > 0,
+            isPositive: state.stats.deliveredOrdersPercentageChange == 0
+                ? null
+                : state.stats.deliveredOrdersPercentageChange > 0,
             backgroundColor: Theme.of(context).colorScheme.primary,
             textColor: Theme.of(context).colorScheme.onPrimary,
           ),
@@ -412,9 +419,9 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Performances',
-            style: TextStyle(
+          Text(
+            AppLanguage.performance,
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: Colors.black,
@@ -443,7 +450,7 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Évolution des ventes',
+                  AppLanguage.salesEvolution,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
@@ -452,7 +459,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Chiffre d\'affaires et nombre de commandes comparés sur les 6 derniers mois',
+                  AppLanguage.salesEvolutionDesc,
                   style: TextStyle(
                     fontSize: 12,
                     color: Colors.grey[600],
@@ -482,16 +489,29 @@ class _DashboardPageState extends State<DashboardPage> {
                 ? state.stats.recentSales
                     .map((d) => Text(
                           _shortMonth(d.date.month),
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                         ))
                     .toList()
-                : const [
-                    Text('Jan', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('Fév', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('Mar', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('Avr', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('Mai', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Text('Juin', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                : [
+                    Text(AppLanguage.jan,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(AppLanguage.feb,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(AppLanguage.mar,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(AppLanguage.apr,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(AppLanguage.may,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey)),
+                    Text(AppLanguage.jun,
+                        style:
+                            const TextStyle(fontSize: 12, color: Colors.grey)),
                   ],
           ),
         ),
@@ -501,19 +521,19 @@ class _DashboardPageState extends State<DashboardPage> {
 
   // Short French month abbreviations
   String _shortMonth(int month) {
-    const months = [
-      'Jan',
-      'Fév',
-      'Mar',
-      'Avr',
-      'Mai',
-      'Juin',
-      'Juil',
-      'Aoû',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Déc'
+    final months = [
+      AppLanguage.jan,
+      AppLanguage.feb,
+      AppLanguage.mar,
+      AppLanguage.apr,
+      AppLanguage.may,
+      AppLanguage.jun,
+      AppLanguage.jul,
+      AppLanguage.aug,
+      AppLanguage.sep,
+      AppLanguage.oct,
+      AppLanguage.nov,
+      AppLanguage.dec
     ];
 
     if (month < 1 || month > 12) return '';
@@ -659,14 +679,16 @@ class _SalesChartPainter extends CustomPainter {
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
-  // Find max value for scaling
-  double maxAmount = sales.map((s) => s.amount).reduce((a, b) => a > b ? a : b).toDouble();
-  // avoid divide-by-zero when all amounts are zero
-  if (maxAmount == 0) maxAmount = 1;
-  final chartHeight = size.height - 30; // Leave space for labels
-  final chartWidth = size.width;
-  // spacing: if there is only one point, avoid division by zero
-  final spacing = sales.length > 1 ? chartWidth / (sales.length - 1) : chartWidth;
+    // Find max value for scaling
+    double maxAmount =
+        sales.map((s) => s.amount).reduce((a, b) => a > b ? a : b).toDouble();
+    // avoid divide-by-zero when all amounts are zero
+    if (maxAmount == 0) maxAmount = 1;
+    final chartHeight = size.height - 50; // Leave space for labels
+    final chartWidth = size.width;
+    // spacing: if there is only one point, avoid division by zero
+    final spacing =
+        sales.length > 1 ? chartWidth / (sales.length - 1) : chartWidth;
 
     // Create path for line
     final path = Path();

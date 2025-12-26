@@ -400,6 +400,15 @@
               "default": 10,
               "type": "number"
             }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term for filtering users",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -1226,7 +1235,7 @@
                     "description": "The quantity of the product per batch.",
                     "example": 25
                   },
-                  "specifications": {
+                  "specification": {
                     "type": "string",
                     "description": "Optional: Product specifications, submitted as a single comma-separated string.",
                     "example": "Material: Metal, Screen: 7 inch"
@@ -1236,6 +1245,15 @@
                     "format": "date",
                     "description": "The product expiration date (YYYY-MM-DD).",
                     "example": "2027-12-31"
+                  },
+                  "picturesToDelete": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "description": "Optional: List of picture IDs to be deleted from the product.",
+                    "example": "1"
                   }
                 }
               }
@@ -1368,7 +1386,7 @@
                     "description": "The quantity of the product per batch.",
                     "example": 20
                   },
-                  "specifications": {
+                  "specification": {
                     "type": "string",
                     "description": "Optional: Product specifications, submitted as a single comma-separated string (e.g., \"Color: Blue, Weight: 2kg\").",
                     "example": "Material: Plastic, Screen: 6.1 inch"
@@ -1428,43 +1446,35 @@
         ]
       }
     },
-    "/api/v1/products/{productId}/pictures": {
+    "/api/v1/products/admin/bulk": {
       "delete": {
-        "operationId": "ProductController_deleteProductImages_api/v1",
-        "parameters": [
-          {
-            "name": "productId",
-            "required": true,
-            "in": "path",
-            "description": "Product ID",
-            "schema": {
-              "type": "number"
-            }
-          }
-        ],
+        "operationId": "ProductController_bulkRemove_api/v1",
+        "parameters": [],
         "requestBody": {
           "required": true,
-          "description": "Picture IDs to delete",
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/DeleteProductPicturesDto"
+                "$ref": "#/components/schemas/BulkDeleteProductsDto"
               }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "Product pictures soft deleted and queued for file deletion"
+            "description": "Products successfully deleted"
           },
           "400": {
-            "description": "Bad request"
+            "description": "Invalid input data or other error"
           },
           "401": {
             "description": "Unauthorized"
           },
+          "403": {
+            "description": "User does not own one or more products"
+          },
           "404": {
-            "description": "No product pictures found with the given IDs for this product"
+            "description": "One or more products not found"
           },
           "429": {
             "description": "Too many requests (Rate limiting)"
@@ -1478,7 +1488,7 @@
             "bearer": []
           }
         ],
-        "summary": "Delete specific images from a product",
+        "summary": "Delete products in bulk",
         "tags": [
           "products"
         ]
@@ -1933,6 +1943,11 @@
                     "type": "string",
                     "format": "binary",
                     "description": "Category picture file"
+                  },
+                  "parentCategoryId": {
+                    "type": "number",
+                    "description": "Parent category ID (optional)",
+                    "example": 1
                   }
                 },
                 "required": [
@@ -1994,11 +2009,17 @@
                   "picture": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Category picture file"
+                    "description": "category picture file"
+                  },
+                  "newParentCategoryId": {
+                    "type": "string",
+                    "description": "new parent category ID (optional) as number sting or null string to remove parent and empty string to keep current parent",
+                    "example": 1
                   }
                 },
                 "required": [
-                  "label"
+                  "label",
+                  "newParentCategoryId"
                 ]
               }
             }
@@ -2049,6 +2070,36 @@
           }
         ],
         "summary": "Delete a category",
+        "tags": [
+          "categories"
+        ]
+      }
+    },
+    "/api/v1/categories/subcategories/all": {
+      "get": {
+        "operationId": "CategoryController_getAllSubcategories_api/v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Returns all subcategories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SubCategoryResDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get all subcategories",
         "tags": [
           "categories"
         ]
@@ -2349,6 +2400,15 @@
               "maximum": 100,
               "default": 10,
               "type": "number"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search term to filter orders",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -2904,6 +2964,19 @@
               "default": 10,
               "type": "number"
             }
+          },
+          {
+            "name": "lang",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ar",
+                "fr",
+                "en"
+              ],
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -3011,13 +3084,40 @@
         ]
       }
     },
-    "/api/v1/analytics/daily-stats": {
-      "get": {
-        "operationId": "AnalyticsController_getAnalytics_api/v1",
+    "/api/v1/notifications/language": {
+      "patch": {
+        "operationId": "NotificationsController_updateLanguage_api/v1",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fcmToken": {
+                    "type": "string",
+                    "example": "example_fcm_token"
+                  },
+                  "language": {
+                    "type": "string",
+                    "example": "en"
+                  }
+                },
+                "required": [
+                  "language",
+                  "fcmToken"
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
-            "description": ""
+            "description": "Notification language updated successfully"
+          },
+          "400": {
+            "description": "Bad Request"
           }
         },
         "security": [
@@ -3025,6 +3125,47 @@
             "bearer": []
           }
         ],
+        "summary": "Update notification language preference",
+        "tags": [
+          "Notifications"
+        ]
+      }
+    },
+    "/api/v1/analytics/daily-stats": {
+      "get": {
+        "description": "Retrieves daily statistics including orders, revenue, and other key metrics for admin dashboard",
+        "operationId": "AnalyticsController_getAnalytics_api/v1",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Daily analytics statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "totalOrders": 150,
+                    "totalRevenue": 25000,
+                    "newUsers": 12,
+                    "completedOrders": 140,
+                    "cancelledOrders": 10
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get daily analytics statistics",
         "tags": [
           "Analytics"
         ]
@@ -3032,11 +3173,38 @@
     },
     "/api/v1/analytics/turnover": {
       "get": {
+        "description": "Retrieves monthly turnover data showing revenue trends over time",
         "operationId": "AnalyticsController_getTurnover_api/v1",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Monthly turnover data retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": [
+                    {
+                      "month": "January",
+                      "turnover": 50000
+                    },
+                    {
+                      "month": "February",
+                      "turnover": 55000
+                    },
+                    {
+                      "month": "March",
+                      "turnover": 60000
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
           }
         },
         "security": [
@@ -3044,6 +3212,7 @@
             "bearer": []
           }
         ],
+        "summary": "Get monthly turnover",
         "tags": [
           "Analytics"
         ]
@@ -3051,11 +3220,36 @@
     },
     "/api/v1/analytics/top-products": {
       "get": {
+        "description": "Retrieves a list of the top-selling products based on order quantity",
         "operationId": "AnalyticsController_getTopProducts_api/v1",
         "parameters": [],
         "responses": {
           "200": {
-            "description": ""
+            "description": "Top selling products retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": [
+                    {
+                      "productId": 1,
+                      "totalQuantity": 250,
+                      "productImage": "http://example.com/product1.jpg"
+                    },
+                    {
+                      "productId": 2,
+                      "totalQuantity": 180,
+                      "productImage": "http://example.com/product2.jpg"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Invalid or missing token"
+          },
+          "403": {
+            "description": "Forbidden - Admin role required"
           }
         },
         "security": [
@@ -3063,63 +3257,7 @@
             "bearer": []
           }
         ],
-        "tags": [
-          "Analytics"
-        ]
-      }
-    },
-    "/api/v1/analytics/test/daily-stats": {
-      "get": {
-        "operationId": "AnalyticsController_getTestAnalytics_api/v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Analytics"
-        ]
-      }
-    },
-    "/api/v1/analytics/test/turnover": {
-      "get": {
-        "operationId": "AnalyticsController_getTestTurnover_api/v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "tags": [
-          "Analytics"
-        ]
-      }
-    },
-    "/api/v1/analytics/test/top-products": {
-      "get": {
-        "operationId": "AnalyticsController_getTestTopProducts_api/v1",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": ""
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
+        "summary": "Get top selling products",
         "tags": [
           "Analytics"
         ]
@@ -3152,10 +3290,60 @@
     "/api/v1/invoices": {
       "get": {
         "operationId": "InvoiceController_findAll_api/v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "List of user invoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get all invoices (admin)",
@@ -3167,10 +3355,60 @@
     "/api/v1/invoices/user": {
       "get": {
         "operationId": "InvoiceController_findUserInvoices_api/v1",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "required": false,
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 10,
+              "type": "number"
+            }
+          }
+        ],
         "responses": {
           "200": {
-            "description": ""
+            "description": "List of user invoices",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginationResponseDto"
+                }
+              }
+            }
           }
         },
         "summary": "Get all invoices for a specific user",
@@ -3333,49 +3571,6 @@
         "summary": "Generate a sample PDF for testing",
         "tags": [
           "invoices"
-        ]
-      }
-    },
-    "/api/v1/settings/language": {
-      "put": {
-        "operationId": "SettingsController_updateLanguage_api/v1",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateLanguageDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Language preference updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Settings"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid language value"
-          },
-          "401": {
-            "description": "Unauthorized"
-          }
-        },
-        "security": [
-          {
-            "bearer": []
-          }
-        ],
-        "summary": "Update user language preference",
-        "tags": [
-          "settings"
         ]
       }
     }
@@ -3877,10 +4072,16 @@
             "type": "string",
             "example": "OTP sent to +1234567890",
             "description": "A success message."
+          },
+          "otp": {
+            "type": "string",
+            "example": "123456",
+            "description": "The OTP code sent to the user (for testing purposes)."
           }
         },
         "required": [
-          "message"
+          "message",
+          "otp"
         ]
       },
       "OtpValidationDto": {
@@ -4047,15 +4248,13 @@
             "example": true,
             "description": "Whether the product is loved (favorited) by the current user"
           },
-          "picture": {
-            "type": "string",
+          "pictures": {
             "example": "https://example.com/image.png",
-            "description": "URL of the main picture of the product"
-          },
-          "buyerCount": {
-            "type": "number",
-            "example": 10,
-            "description": "Number of buyers for the product"
+            "description": "URL of the main picture of the product",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -4065,8 +4264,7 @@
           "brand",
           "category",
           "isLoved",
-          "picture",
-          "buyerCount"
+          "pictures"
         ]
       },
       "PaginatedProductResDtoResponse": {
@@ -4134,6 +4332,20 @@
           },
           "loveCount": {
             "type": "number"
+          },
+          "quantityPerBatch": {
+            "type": "number",
+            "example": 12,
+            "description": "quantity Per Batch of the product"
+          },
+          "specifications": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isLoved": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -4145,7 +4357,10 @@
           "brand",
           "category",
           "pictures",
-          "loveCount"
+          "loveCount",
+          "quantityPerBatch",
+          "specifications",
+          "isLoved"
         ]
       },
       "CreateProductDto": {
@@ -4188,7 +4403,7 @@
             "description": "Quantity produced per batch",
             "example": 20
           },
-          "specifications": {
+          "specification": {
             "description": "An array of strings for product specifications",
             "example": [
               "Material: Steel",
@@ -4216,11 +4431,11 @@
           "expirationDate"
         ]
       },
-      "DeleteProductPicturesDto": {
+      "BulkDeleteProductsDto": {
         "type": "object",
         "properties": {
-          "pictureIds": {
-            "description": "Array of product picture IDs to delete",
+          "productIds": {
+            "description": "An array of product IDs to delete.",
             "example": [
               1,
               2,
@@ -4233,7 +4448,7 @@
           }
         },
         "required": [
-          "pictureIds"
+          "productIds"
         ]
       },
       "WholesellerProductDto": {
@@ -4254,10 +4469,15 @@
             "example": 129.99,
             "description": "Price of the product"
           },
-          "picture": {
-            "type": "string",
-            "example": "https://example.com/image.png",
-            "description": "URL of the main picture of the product"
+          "pictures": {
+            "example": [
+              "https://example.com/image.png"
+            ],
+            "description": "URL of the main picture of the product",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "brand": {
             "type": "string",
@@ -4285,7 +4505,7 @@
           "id",
           "name",
           "price",
-          "picture",
+          "pictures",
           "brand",
           "category",
           "createdAt",
@@ -4338,10 +4558,15 @@
             "example": "Nike",
             "description": "Brand label of the product"
           },
-          "picture": {
-            "type": "string",
-            "example": "https://example.com/image.png",
-            "description": "URL of the main picture of the product"
+          "pictures": {
+            "example": [
+              "https://example.com/image.png"
+            ],
+            "description": "URL of the main picture of the product",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "category": {
             "type": "string",
@@ -4355,7 +4580,7 @@
           "name",
           "price",
           "brand",
-          "picture",
+          "pictures",
           "category"
         ]
       },
@@ -4452,12 +4677,59 @@
             "type": "string",
             "example": "https://example.com/image.png",
             "description": "URL of the picture of the category"
+          },
+          "hasChildren": {
+            "type": "boolean",
+            "example": true,
+            "description": "does the category has subcategories"
           }
         },
         "required": [
           "id",
           "label",
           "pictureUrl"
+        ]
+      },
+      "ParentCategoryDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "pictureUrl": {
+            "type": "string"
+          },
+          "id": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "label",
+          "pictureUrl",
+          "id"
+        ]
+      },
+      "SubCategoryResDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "id": {
+            "type": "number"
+          },
+          "pictureUrl": {
+            "type": "string"
+          },
+          "parentCategory": {
+            "$ref": "#/components/schemas/ParentCategoryDto"
+          }
+        },
+        "required": [
+          "label",
+          "id",
+          "pictureUrl",
+          "parentCategory"
         ]
       },
       "BrandResDto": {
@@ -5076,7 +5348,8 @@
               "Low Stock",
               "Status Update",
               "Expiring Soon",
-              "Admin Alerts"
+              "Admin Alerts",
+              "Test"
             ],
             "example": "Orders"
           }
@@ -5123,11 +5396,17 @@
               "web"
             ],
             "example": "android"
+          },
+          "lang": {
+            "type": "string",
+            "description": "The preferred language of the user.",
+            "example": "en"
           }
         },
         "required": [
           "fcmToken",
-          "os"
+          "os",
+          "lang"
         ]
       },
       "RegisterTokenResponseDto": {
@@ -5165,7 +5444,7 @@
           },
           "title": {
             "type": "string",
-            "description": "The title of the notification.",
+            "description": "The title i18 key of the notification.",
             "example": "New Message"
           },
           "type": {
@@ -5178,13 +5457,14 @@
               "Low Stock",
               "Status Update",
               "Expiring Soon",
-              "Admin Alerts"
+              "Admin Alerts",
+              "Test"
             ],
             "example": "Orders"
           },
           "body": {
             "type": "string",
-            "description": "The body of the notification.",
+            "description": "The i18 body key of the notification.",
             "example": "You have a new message from John Doe."
           },
           "receiverId": {
@@ -5240,60 +5520,15 @@
         "type": "object",
         "properties": {}
       },
-      "UpdateLanguageDto": {
+      "PaginationResponseDto": {
         "type": "object",
         "properties": {
-          "language": {
-            "type": "string",
-            "description": "User preferred language",
-            "enum": [
-              "ar",
-              "fr",
-              "en"
-            ],
-            "example": "en"
+          "meta": {
+            "$ref": "#/components/schemas/PaginationMetaDto"
           }
         },
         "required": [
-          "language"
-        ]
-      },
-      "Settings": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "number",
-            "description": "Unique identifier for the entity",
-            "example": 1
-          },
-          "createdAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when the entity was created",
-            "example": "2023-10-05T14:48:00.000Z"
-          },
-          "updatedAt": {
-            "format": "date-time",
-            "type": "string",
-            "description": "Timestamp when the entity was last updated",
-            "example": "2023-10-05T14:48:00.000Z"
-          },
-          "language": {
-            "type": "string",
-            "description": "User preferred language",
-            "enum": [
-              "ar",
-              "fr",
-              "en"
-            ],
-            "example": "en"
-          }
-        },
-        "required": [
-          "id",
-          "createdAt",
-          "updatedAt",
-          "language"
+          "meta"
         ]
       }
     }

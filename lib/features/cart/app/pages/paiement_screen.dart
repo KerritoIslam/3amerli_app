@@ -1,5 +1,6 @@
 import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
 import 'package:amerli_app/features/cart/app/bloc/cart_state.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
 import 'package:amerli_app/features/cart/domain/entities/cart_item.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_state.dart';
@@ -18,6 +19,9 @@ import 'package:amerli_app/widgets/bottom_cart_summary.dart';
 import 'package:amerli_app/features/cart/app/pages/address_selection_page.dart';
 import 'package:amerli_app/features/cart/app/pages/payment_webview_page.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class PaiementScreen extends StatefulWidget {
   const PaiementScreen({super.key});
@@ -49,6 +53,10 @@ class _PaiementScreenState extends State<PaiementScreen> {
         _orderCreated = true;
         _createdOrderId = state.order.id; // Store the order ID
         _createdOrder = state.order; // Store the full order
+
+        // Clear the cart
+        context.read<CartBloc>().add(CartClearEvent());
+
         // ignore: avoid_print
         print(
             '✅ Order created! Order ID: $_createdOrderId | CheckoutUrl: $_pendingCheckoutUrl | Payment Method: $_selectedPaymentMethod | Animation complete: $_animationComplete');
@@ -63,9 +71,13 @@ class _PaiementScreenState extends State<PaiementScreen> {
           print('⏳ Waiting for animation to complete...');
         }
         // Otherwise, animation will trigger navigation when complete
-      } else if (state is OrdersError) {
+      } else if (state is OrderCreationError) {
         // ignore: avoid_print
         print('❌ Error creating order: ${state.message}');
+
+        // Show error toast to user
+        TopToast.show(context, state.message, isError: true);
+
         setState(() {
           _paying = false;
           _animationComplete = false;
@@ -89,6 +101,14 @@ class _PaiementScreenState extends State<PaiementScreen> {
       print(
           '💵 Cash payment detected, going to success page with order ID: $_createdOrderId');
 
+      // Calculate total amount
+      double totalAmount = 0;
+      if (_createdOrder != null) {
+        for (var product in _createdOrder!.products) {
+          totalAmount += product.price * product.quantity;
+        }
+      }
+
       // Reset paying state
       setState(() {
         _paying = false;
@@ -103,6 +123,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
                   orderId: _createdOrderId,
                   paymentMethod: 'CASH',
                   order: _createdOrder,
+                  date: _createdOrder?.createdAt.toString(),
+                  amount: totalAmount.toStringAsFixed(2),
                 )),
       );
       return;
@@ -145,12 +167,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
   void _onPay(List<CartItem> cartItems) async {
     // Validate that an address is selected
     if (_selectedAddress == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(AppLanguage.selectDeliveryAddress),
-          backgroundColor: Colors.orange,
-        ),
-      );
+      TopToast.show(context, AppLanguage.selectDeliveryAddress, isError: true);
       return;
     }
 
@@ -230,11 +247,11 @@ class _PaiementScreenState extends State<PaiementScreen> {
         elevation: 0,
         leading: InkWell(
           onTap: () => Navigator.of(context).pop(),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(20.r),
           child: Container(
-            width: 32,
-            height: 32,
-            margin: const EdgeInsets.all(8),
+            width: 32.w,
+            height: 32.w,
+            margin: EdgeInsets.all(8.w),
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.tertiaryContainer,
               shape: BoxShape.circle,
@@ -242,22 +259,23 @@ class _PaiementScreenState extends State<PaiementScreen> {
             alignment: Alignment.center,
             child: SvgPicture.asset(
               'assets/icons/back_arrow.svg',
-              width: 14,
-              height: 14,
+              width: 14.w,
+              height: 14.h,
+              matchTextDirection: true,
               color: Theme.of(context).colorScheme.onPrimary,
               placeholderBuilder: (context) => Icon(
                 Icons.arrow_back,
-                size: 14,
+                size: 14.w,
                 color: Theme.of(context).colorScheme.onPrimary,
               ),
             ),
           ),
         ),
         title: Text(AppLanguage.payment,
-            style: const TextStyle(
+            style: TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.w700,
-                fontSize: 18)),
+                fontSize: 18.sp)),
         centerTitle: true,
       ),
       // Body will be a Stack so we can position the BottomCartSummary above
@@ -268,43 +286,43 @@ class _PaiementScreenState extends State<PaiementScreen> {
           // Main scrollable content with bottom padding so last items aren't hidden
           Positioned.fill(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0.w),
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
 
                     // Payment Method Selection (moved to top)
-                    const SizedBox(height: 16),
+                    SizedBox(height: 16.h),
                     Text(AppLanguage.paymentMethodTitle,
-                        style: const TextStyle(
-                            fontSize: 16,
+                        style: TextStyle(
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A1A))),
-                    const SizedBox(height: 8),
+                            color: const Color(0xFF1A1A1A))),
+                    SizedBox(height: 8.h),
                     _paymentMethodSelection(),
 
                     // Order preview
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
                     Text(AppLanguage.myProducts,
-                        style: const TextStyle(
-                            fontSize: 16,
+                        style: TextStyle(
+                            fontSize: 16.sp,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF1A1A1A))),
-                    const SizedBox(height: 8),
+                            color: const Color(0xFF1A1A1A))),
+                    SizedBox(height: 8.h),
                     _orderPreview(),
 
                     // Adresse
-                    const SizedBox(height: 20),
+                    SizedBox(height: 20.h),
                     Row(
                       children: [
                         Expanded(
                             child: Text(AppLanguage.address,
-                                style: const TextStyle(
-                                    fontSize: 16,
+                                style: TextStyle(
+                                    fontSize: 16.sp,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1A1A1A)))),
+                                    color: const Color(0xFF1A1A1A)))),
                         GestureDetector(
                           onTap: _openAddressSelection,
                           child: Text(
@@ -312,19 +330,19 @@ class _PaiementScreenState extends State<PaiementScreen> {
                                 ? AppLanguage.addAddress
                                 : AppLanguage.edit,
                             style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 14.sp,
                                 color: Theme.of(context).colorScheme.primary),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8.h),
                     _selectedAddress != null
                         ? _addressCard()
                         : _emptyAddressCard(),
 
                     // give enough bottom space so content isn't hidden by the summary
-                    const SizedBox(height: 140),
+                    SizedBox(height: 140.h),
                   ],
                 ),
               ),
@@ -335,10 +353,10 @@ class _PaiementScreenState extends State<PaiementScreen> {
           Positioned(
             left: 0,
             right: 0,
-            bottom: kBottomNavigationBarHeight + 64,
+            bottom: kBottomNavigationBarHeight + 64.h,
             child: Padding(
               // match CartPage horizontal padding
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0.w),
               child: Center(
                 child: Stack(
                   alignment: Alignment.center,
@@ -401,8 +419,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
 
                             // Size matching the BottomCartSummary placement (matches horizontal padding)
                             final double w =
-                                MediaQuery.of(context).size.width - 40;
-                            final double h = 56;
+                                MediaQuery.of(context).size.width - 40.w;
+                            final double h = 56.h;
 
                             // Render the BottomCartSummary always but allow replacing the pay button
                             // with the animation overlay when paying.
@@ -451,7 +469,8 @@ class _PaiementScreenState extends State<PaiementScreen> {
 
   Widget _orderPreview() {
     return BlocBuilder<CartBloc, CartState>(builder: (context, cartState) {
-      final cartItems = cartState is CartLoaded ? cartState.items : const [];
+      final List<CartItem> cartItems =
+          cartState is CartLoaded ? cartState.items : const <CartItem>[];
 
       // show up to 3 images
       final images = cartItems
@@ -460,53 +479,245 @@ class _PaiementScreenState extends State<PaiementScreen> {
           .take(3)
           .toList();
 
-      return Container(
-        height: 100,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3))
-            ]),
-        child: Row(
-          children: [
-            for (int i = 0; i < 3; i++)
-              Padding(
-                padding: EdgeInsets.only(right: i == 2 ? 0 : 12),
-                child: _productThumb(i < images.length ? images[i] : null),
-              ),
-            const Spacer(),
-            // small summary
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(AppLanguage.viewDetails,
-                    style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontWeight: FontWeight.w600)),
-              ],
-            )
-          ],
+      return GestureDetector(
+        onTap: () => _showCartDetails(context, cartItems),
+        child: Container(
+          height: 100.h,
+          padding: EdgeInsets.all(12.w),
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16.r),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.06),
+                    blurRadius: 6.r,
+                    offset: Offset(0, 3.h))
+              ]),
+          child: Row(
+            children: [
+              for (int i = 0; i < 3; i++)
+                Padding(
+                  padding: EdgeInsets.only(right: i == 2 ? 0 : 12.w),
+                  child: _productThumb(i < images.length ? images[i] : null),
+                ),
+              const Spacer(),
+              // small summary
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(AppLanguage.viewDetails,
+                      style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontWeight: FontWeight.w600)),
+                ],
+              )
+            ],
+          ),
         ),
       );
     });
   }
 
+  void _showCartDetails(BuildContext context, List<CartItem> cartItems) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (_, scrollController) {
+          return Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+            ),
+            child: Column(
+              children: [
+                SizedBox(height: 12.h),
+                Container(
+                  width: 40.w,
+                  height: 4.h,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2.r),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.all(16.w),
+                  child: Text(
+                    AppLanguage.myCart,
+                    style: TextStyle(
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: BlocBuilder<CatalogBloc, CatalogState>(
+                    builder: (context, catalogState) {
+                      List<Product> sourceProducts = [];
+                      if (catalogState is CatalogLoaded ||
+                          catalogState is CatalogLoadingMore) {
+                        sourceProducts =
+                            (catalogState as dynamic).products as List<Product>;
+                      }
+
+                      final productsInCart = cartItems
+                          .map((ci) {
+                            final id = int.tryParse(ci.productId) ?? -1;
+                            final p = sourceProducts.firstWhere(
+                              (sp) => sp.id == id,
+                              orElse: () => Product(
+                                id: id,
+                                name: ci.name,
+                                description: '',
+                                price: ci.price,
+                                stock: 0,
+                                pics: ci.imageUrl != null &&
+                                        ci.imageUrl!.isNotEmpty
+                                    ? [ci.imageUrl!]
+                                    : const [],
+                                brand: ci.brand,
+                                soldBy: ci.soldBy,
+                              ),
+                            );
+                            return Product(
+                              id: p.id,
+                              name: p.name,
+                              description: p.description,
+                              price: p.price,
+                              stock: p.stock,
+                              sellerId: p.sellerId,
+                              soldBy: p.soldBy,
+                              pics: p.pics,
+                              brand: p.brand,
+                              markId: p.markId,
+                              isFavorit: p.isFavorit,
+                              quantity: ci.quantity,
+                            );
+                          })
+                          .where((p) => p.quantity > 0)
+                          .toList();
+
+                      if (productsInCart.isEmpty) {
+                        return Center(child: Text(AppLanguage.emptyCart));
+                      }
+
+                      return ListView.builder(
+                        controller: scrollController,
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        itemCount: productsInCart.length,
+                        itemBuilder: (context, index) {
+                          final product = productsInCart[index];
+                          // Use a simple tile or reuse ProductsTilesList logic
+                          // Since ProductsTilesList is a widget that takes a list, we can't use it inside ListView.builder easily unless we wrap it.
+                          // But ProductsTilesList builds a ListView itself?
+                          // Let's check ProductsTilesList.
+                          // If ProductsTilesList is a ListView, we should use it directly instead of ListView.builder here.
+                          // But DraggableScrollableSheet needs the scrollController.
+                          // If ProductsTilesList doesn't accept scrollController, we might have an issue.
+                          // Let's assume for now we build a simple list here to avoid complexity, or check ProductsTilesList source.
+                          // Actually, let's just use a simple custom tile here to ensure it works with DraggableScrollableSheet.
+
+                          return Container(
+                            margin: EdgeInsets.only(bottom: 12.h),
+                            padding: EdgeInsets.all(8.w),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.r),
+                              border: Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  child: Image.network(
+                                    product.pics.isNotEmpty
+                                        ? product.pics.first
+                                        : '',
+                                    width: 60.w,
+                                    height: 60.w,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      width: 60.w,
+                                      height: 60.w,
+                                      color: Colors.grey[200],
+                                      child: Icon(Icons.image_not_supported,
+                                          size: 20.w, color: Colors.grey),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(width: 12.w),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        product.name,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14.sp,
+                                        ),
+                                      ),
+                                      SizedBox(height: 4.h),
+                                      Text(
+                                        '${product.price.toStringAsFixed(2)} DZD',
+                                        style: TextStyle(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14.sp,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                      horizontal: 8.w, vertical: 4.h),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[100],
+                                    borderRadius: BorderRadius.circular(8.r),
+                                  ),
+                                  child: Text(
+                                    'x${product.quantity}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _productThumb(String? url) {
     return Container(
-      width: 60,
-      height: 60,
+      width: 60.w,
+      height: 60.w,
       decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8), color: Colors.grey[100]),
+          borderRadius: BorderRadius.circular(8.r), color: Colors.grey[100]),
       child: url == null || url.isEmpty
-          ? const Icon(Icons.image, color: Colors.grey)
+          ? Icon(Icons.image, color: Colors.grey, size: 24.w)
           : ClipRRect(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.r),
               child: Image.network(
                 url,
                 fit: BoxFit.cover,
@@ -518,14 +729,14 @@ class _PaiementScreenState extends State<PaiementScreen> {
                           ? loadingProgress.cumulativeBytesLoaded /
                               loadingProgress.expectedTotalBytes!
                           : null,
-                      strokeWidth: 2,
+                      strokeWidth: 2.w,
                     ),
                   );
                 },
                 errorBuilder: (context, error, stackTrace) {
                   // Silently handle error and show placeholder
-                  return const Icon(Icons.broken_image,
-                      color: Colors.grey, size: 24);
+                  return Icon(Icons.broken_image,
+                      color: Colors.grey, size: 24.w);
                 },
               ),
             ),
@@ -540,15 +751,15 @@ class _PaiementScreenState extends State<PaiementScreen> {
         [street, district, city].where((s) => s.isNotEmpty).join(', ');
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(16.r),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+            blurRadius: 6.r,
+            offset: Offset(0, 3.h),
           ),
         ],
       ),
@@ -558,21 +769,21 @@ class _PaiementScreenState extends State<PaiementScreen> {
             child: Text(
               fullAddress.isNotEmpty
                   ? fullAddress
-                  : AppLanguage.incompleteAddress,
-              style: const TextStyle(fontSize: 14, color: Color(0xFF333333)),
+                  : AppLanguage.addressSelected,
+              style: TextStyle(fontSize: 14.sp, color: const Color(0xFF333333)),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8.w),
           Container(
-            width: 28,
-            height: 28,
+            width: 28.w,
+            height: 28.w,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(color: Theme.of(context).colorScheme.primary),
             ),
             child: Icon(
               Icons.check,
-              size: 16,
+              size: 16.w,
               color: Theme.of(context).colorScheme.primary,
             ),
           )
@@ -585,29 +796,29 @@ class _PaiementScreenState extends State<PaiementScreen> {
     return GestureDetector(
       onTap: _openAddressSelection,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300, width: 1.5),
+          borderRadius: BorderRadius.circular(16.r),
+          border: Border.all(color: Colors.grey.shade300, width: 1.5.w),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              blurRadius: 4.r,
+              offset: Offset(0, 2.h),
             ),
           ],
         ),
         child: Row(
           children: [
             Icon(Icons.add_location_alt,
-                color: Theme.of(context).colorScheme.primary),
-            const SizedBox(width: 12),
+                color: Theme.of(context).colorScheme.primary, size: 24.w),
+            SizedBox(width: 12.w),
             Expanded(
               child: Text(
                 AppLanguage.tapToAddDeliveryAddress,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 14.sp,
                   color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.w500,
                 ),
@@ -629,7 +840,7 @@ class _PaiementScreenState extends State<PaiementScreen> {
           title: AppLanguage.cashPayment,
           description: AppLanguage.payOnDelivery,
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8.h),
         // Online payment option
         _paymentMethodOption(
           method: PaymentMethod.epayment,
@@ -656,46 +867,46 @@ class _PaiementScreenState extends State<PaiementScreen> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(12.w),
         decoration: BoxDecoration(
           color: isSelected
               ? Theme.of(context).colorScheme.primary.withOpacity(0.05)
               : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(12.r),
           border: Border.all(
             color: isSelected
                 ? Theme.of(context).colorScheme.primary
                 : Colors.grey.shade300,
-            width: isSelected ? 2 : 1.5,
+            width: isSelected ? 2.w : 1.5.w,
           ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
-              blurRadius: 6,
-              offset: const Offset(0, 3),
+              blurRadius: 6.r,
+              offset: Offset(0, 3.h),
             ),
           ],
         ),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 40.w,
+              height: 40.w,
               decoration: BoxDecoration(
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
                     : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(10.r),
               ),
               child: Icon(
                 icon,
-                size: 20,
+                size: 20.w,
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
                     : Colors.grey.shade600,
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12.w),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -703,44 +914,44 @@ class _PaiementScreenState extends State<PaiementScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 14.sp,
                       fontWeight: FontWeight.w600,
                       color: isSelected
                           ? Theme.of(context).colorScheme.primary
                           : const Color(0xFF1A1A1A),
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2.h),
                   Text(
                     description,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: 12.sp,
                       color: Colors.grey.shade600,
                     ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: 8.w),
             Container(
-              width: 24,
-              height: 24,
+              width: 24.w,
+              height: 24.w,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected
                       ? Theme.of(context).colorScheme.primary
                       : Colors.grey.shade400,
-                  width: 2,
+                  width: 2.w,
                 ),
                 color: isSelected
                     ? Theme.of(context).colorScheme.primary
                     : Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(
+                  ? Icon(
                       Icons.check,
-                      size: 16,
+                      size: 16.w,
                       color: Colors.white,
                     )
                   : null,
@@ -776,6 +987,7 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay>
   late final Animation<double> _textFadeAnim;
   late final Animation<double> _box2Opacity;
   late final Animation<double> _box1Opacity;
+  bool _showLoading = false;
 
   @override
   void initState() {
@@ -815,7 +1027,12 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay>
       if (s == AnimationStatus.completed) {
         // small pause then trigger completion
         await Future.delayed(const Duration(milliseconds: 350));
-        if (mounted) widget.onComplete();
+        if (mounted) {
+          setState(() {
+            _showLoading = true;
+          });
+          widget.onComplete();
+        }
       }
     });
 
@@ -836,17 +1053,43 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay>
     final double h = widget
         .height; // container height (keeps space for original BottomCartSummary)
     // We'll render the animated pill centered vertically inside this container.
-    final double pillHeight = 56.0; // visual button height
-    final double pillPadding = 12.0; // inner padding inside pill
-    final double truckW = 42.0;
-    final double truckH = pillHeight - 16.0; // fit with padding inside pill
-    final double boxW = 36.0;
-    final double boxH = pillHeight - 20.0;
+    final double pillHeight = 56.h; // visual button height
+    final double pillPadding = 12.w; // inner padding inside pill
+    final double truckW = 42.w;
+    final double truckH = pillHeight - 16.h; // fit with padding inside pill
+    final double boxW = 36.w;
+    final double boxH = pillHeight - 20.h;
 
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
         final color = _colorAnim.value ?? const Color(0xFF04272D);
+
+        if (_showLoading) {
+          return SizedBox(
+            width: w,
+            height: h,
+            child: Center(
+              child: Container(
+                width: w,
+                height: pillHeight,
+                decoration: BoxDecoration(
+                    color: color, borderRadius: BorderRadius.circular(28.r)),
+                child: Center(
+                  child: SizedBox(
+                    width: 24.w,
+                    height: 24.w,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2.5.w,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }
+
         final textOpacity = _textFadeAnim.value;
         final mov = _movementAnim.value;
 
@@ -878,7 +1121,7 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay>
               height: pillHeight,
               // look like the original button: pill shaped
               decoration: BoxDecoration(
-                  color: color, borderRadius: BorderRadius.circular(28.0)),
+                  color: color, borderRadius: BorderRadius.circular(28.r)),
               child: Stack(
                 clipBehavior: Clip.none,
                 children: <Widget>[
@@ -897,11 +1140,11 @@ class _PaymentAnimationOverlayState extends State<PaymentAnimationOverlay>
                   Center(
                     child: Opacity(
                       opacity: textOpacity,
-                      child: const Text('Payer ma commande',
+                      child: Text('Payer ma commande',
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w700,
-                              fontSize: 16)),
+                              fontSize: 16.sp)),
                     ),
                   ),
 

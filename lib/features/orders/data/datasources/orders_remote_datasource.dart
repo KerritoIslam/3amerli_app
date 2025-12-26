@@ -1,5 +1,6 @@
 import 'package:amerli_app/core/dio/api_service.dart';
 import 'package:amerli_app/core/network/api_exception.dart';
+import 'package:amerli_app/core/network/error_message_extractor.dart';
 import '../models/order_model.dart';
 import '../models/create_order_result.dart';
 import 'package:dio/dio.dart';
@@ -10,26 +11,47 @@ class OrdersRemoteDataSource {
 
   OrdersRemoteDataSource({required this.apiService});
 
-  bool _isSuccess(int? status) => status != null && status >= 200 && status < 300;
+  bool _isSuccess(int? status) =>
+      status != null && status >= 200 && status < 300;
 
   /// GET /order/all
-  Future<List<OrderModel>> fetchOrders({int page = 1, int pageSize = 10}) async {
+  Future<Map<String, dynamic>> fetchOrders(
+      {int page = 1, int pageSize = 10, String? status}) async {
     try {
-      final resp = await apiService.get('/order/all', queryParameters: {'page': page, 'limit': pageSize});
+      final queryParams = <String, dynamic>{'page': page, 'limit': pageSize};
+      if (status != null) {
+        queryParams['status'] = status;
+      }
+      final resp =
+          await apiService.get('/order/all', queryParameters: queryParams);
       if (_isSuccess(resp.statusCode) && resp.data != null) {
         final data = resp.data as Map<String, dynamic>;
+        // The response body has a 'data' field which is a list of orders
         final items = (data['data'] as List<dynamic>?) ?? [];
-        return items.map((e) => OrderModel.fromJson(e as Map<String, dynamic>)).toList();
+        final models = items
+            .map((e) => OrderModel.fromJson(e as Map<String, dynamic>))
+            .toList();
+        return {
+          'items': models,
+          'meta': data['meta'],
+        };
       }
-      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to fetch orders';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      final errorMsg = extractErrorMessage(resp.data);
+      throw ApiException(errorMsg,
+          statusCode: resp.statusCode, serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while fetching orders';
-      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
-      developer.log('Dio error fetchOrders - status: $status, serverResponse: $serverResp', name: 'OrdersRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+
+      developer.log(
+          'Dio error fetchOrders - status: $status, serverResponse: $serverResp',
+          name: 'OrdersRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
+      final errorMsg = extractErrorMessage(serverResp);
+      throw ApiException(errorMsg,
+          statusCode: status, isNetworkError: true, serverResponse: serverResp);
     }
   }
 
@@ -38,19 +60,28 @@ class OrdersRemoteDataSource {
     try {
       final resp = await apiService.post('/order', data: payload);
       if (_isSuccess(resp.statusCode) && resp.data != null) {
-        final result = CreateOrderResult.fromJson(Map<String, dynamic>.from(resp.data as Map));
-        developer.log('createOrder: checkoutUrl=${result.checkoutUrl}', name: 'OrdersRemoteDataSource');
+        final result = CreateOrderResult.fromJson(
+            Map<String, dynamic>.from(resp.data as Map));
+        developer.log('createOrder: checkoutUrl=${result.checkoutUrl}',
+            name: 'OrdersRemoteDataSource');
         return result;
       }
-      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to create order';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      final errorMsg = extractErrorMessage(resp.data);
+      throw ApiException(errorMsg,
+          statusCode: resp.statusCode, serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while creating order';
-      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
-      developer.log('Dio error createOrder - status: $status, serverResponse: $serverResp', name: 'OrdersRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+
+      developer.log(
+          'Dio error createOrder - status: $status, serverResponse: $serverResp',
+          name: 'OrdersRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
+      final errorMsg = extractErrorMessage(serverResp);
+      throw ApiException(errorMsg,
+          statusCode: status, isNetworkError: true, serverResponse: serverResp);
     }
   }
 
@@ -62,15 +93,49 @@ class OrdersRemoteDataSource {
         final list = resp.data as List<dynamic>;
         return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
       }
-      final msg = resp.data is Map && resp.data['message'] != null ? resp.data['message'].toString() : 'Failed to fetch order products';
-      throw ApiException(msg, statusCode: resp.statusCode);
+      final errorMsg = extractErrorMessage(resp.data);
+      throw ApiException(errorMsg,
+          statusCode: resp.statusCode, serverResponse: resp.data);
     } on DioException catch (e) {
       final status = e.response?.statusCode;
       final serverResp = e.response?.data;
-      final baseMsg = e.message ?? 'Network error while fetching order products';
-      final detailed = 'status: ${status ?? 'unknown'} | $baseMsg | serverResponse: ${serverResp ?? 'null'}';
-      developer.log('Dio error getOrderProducts - status: $status, serverResponse: $serverResp', name: 'OrdersRemoteDataSource', error: e, stackTrace: StackTrace.current, level: 1000);
-      throw ApiException(detailed, statusCode: status, isNetworkError: true);
+
+      developer.log(
+          'Dio error getOrderProducts - status: $status, serverResponse: $serverResp',
+          name: 'OrdersRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
+      final errorMsg = extractErrorMessage(serverResp);
+      throw ApiException(errorMsg,
+          statusCode: status, isNetworkError: true, serverResponse: serverResp);
+    }
+  }
+
+  /// GET /api/v1/tracking/{orderId}
+  Future<List<Map<String, dynamic>>> fetchTracking(String orderId) async {
+    try {
+      final resp = await apiService.get('/tracking/$orderId');
+      if (_isSuccess(resp.statusCode) && resp.data != null) {
+        final list = resp.data as List<dynamic>;
+        return list.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      final errorMsg = extractErrorMessage(resp.data);
+      throw ApiException(errorMsg,
+          statusCode: resp.statusCode, serverResponse: resp.data);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      final serverResp = e.response?.data;
+
+      developer.log(
+          'Dio error fetchTracking - status: $status, serverResponse: $serverResp',
+          name: 'OrdersRemoteDataSource',
+          error: e,
+          stackTrace: StackTrace.current,
+          level: 1000);
+      final errorMsg = extractErrorMessage(serverResp);
+      throw ApiException(errorMsg,
+          statusCode: status, isNetworkError: true, serverResponse: serverResp);
     }
   }
 }

@@ -7,7 +7,10 @@ import 'package:amerli_app/features/catalog/app/bloc/favorites_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/favorites_event.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_bloc.dart';
 import 'package:amerli_app/features/catalog/app/bloc/catalog_event.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 typedef ProductItemBuilder = Widget Function(
     BuildContext context, Product product, int index);
@@ -58,13 +61,12 @@ class _ProductsListState extends State<ProductsList> {
   }
 
   void _onScroll() {
-    if (widget.onLoadMore == null) return;
-    if (_isRequestingMore) return;
+    if (!widget.hasMore) return;
 
-    final totalItems = widget.products.length;
-    final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
+    // final totalItems = widget.products.length;
+    // final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
 
-    if (totalItems <= thresholdIndex) return;
+    // if (totalItems <= thresholdIndex) return;
 
     final maxScroll = _scrollController.position.maxScrollExtent;
     final current = _scrollController.position.pixels;
@@ -98,13 +100,13 @@ class _ProductsListState extends State<ProductsList> {
     if (products.isEmpty) {
       if (widget.isLoading) {
         return GridView.builder(
-          controller: _scrollController,
+          // No controller, uses PrimaryScrollController if available
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: widget.columns,
             crossAxisSpacing: 12,
             mainAxisSpacing: 12,
-            childAspectRatio: 0.52, // Changed from 0.6 to 0.52 for taller cards
+            childAspectRatio: 0.64,
           ),
           itemCount: widget.columns * 2,
           itemBuilder: (context, index) => Container(
@@ -117,15 +119,25 @@ class _ProductsListState extends State<ProductsList> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 SkeletonBox(
-                    width: double.infinity,
-                    height: 120,
-                    borderRadius: BorderRadius.all(Radius.circular(10))),
-                SizedBox(height: 8),
-                SkeletonBox(width: 200, height: 14),
-                SizedBox(height: 4),
-                SkeletonBox(width: 150, height: 12),
-                SizedBox(height: 6),
-                SkeletonBox(width: 100, height: 16),
+                  height: 120.h,
+                  width: double.infinity,
+                  borderRadius: BorderRadius.circular(22.r),
+                ),
+                SizedBox(height: 8.h),
+                SkeletonBox(
+                  height: 14.h,
+                  width: 100.w,
+                ),
+                SizedBox(height: 4.h),
+                SkeletonBox(
+                  height: 12.h,
+                  width: 60.w,
+                ),
+                const Spacer(),
+                SkeletonBox(
+                  height: 16.h,
+                  width: 80.w,
+                ),
               ],
             ),
           ),
@@ -135,128 +147,185 @@ class _ProductsListState extends State<ProductsList> {
       return const Center(child: Text('No products'));
     }
 
-    return GridView.builder(
-      controller: _scrollController,
-      padding: EdgeInsets.only(
-        left: 12,
-        right: 12,
-        top: 8,
-        bottom: widget.hasMore
-            ? 8
-            : 100, // Add extra space when no more items to prevent bottom nav covering
-      ),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: widget.columns,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio:
-            0.58, // Changed from 0.6 to 0.5  - this gives cards more height
-      ),
-      itemCount: products.length +
-          ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
-      itemBuilder: (context, index) {
-        if (index >= products.length) {
-          return Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            padding: const EdgeInsets.all(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                SkeletonBox(
-                    width: double.infinity,
-                    height: 120,
-                    borderRadius: BorderRadius.all(Radius.circular(10))),
-                SizedBox(height: 8),
-                SkeletonBox(width: 200, height: 14),
-                SizedBox(height: 4),
-                SkeletonBox(width: 150, height: 12),
-                SizedBox(height: 6),
-                SkeletonBox(width: 100, height: 16),
-              ],
-            ),
-          );
-        }
+    return NotificationListener<ScrollNotification>(
+      onNotification: (ScrollNotification scrollInfo) {
+        if (!widget.hasMore) return false;
+        if (scrollInfo.metrics.axis != Axis.vertical) return false;
 
-        final product = products[index];
+        final maxScroll = scrollInfo.metrics.maxScrollExtent;
+        final current = scrollInfo.metrics.pixels;
 
-        final thresholdIndex = (widget.rowsToTrigger - 1) * widget.columns;
-        if (!_isRequestingMore &&
-            widget.onLoadMore != null &&
-            index == thresholdIndex) {
-          _isRequestingMore = true;
-          final future = widget.onLoadMore!.call();
-          future.whenComplete(() {
-            _isRequestingMore = false;
-          });
-          debugPrint(
-              'ProductsList: load more triggered by builder at index $index (row ${widget.rowsToTrigger})');
-        }
-
-        if (widget.itemBuilder != null) {
-          return widget.itemBuilder!(context, product, index);
-        }
-
-        // Render ProductCard; CartBloc is provided by parent pages
-        final card = ProductCard(
-          imageUrl: product.pics.isNotEmpty ? product.pics.first : null,
-          isFavorite: product.isFavorit,
-          onFavoriteToggle: () {
-            // Toggle favorite in backend
-            try {
-              final favoritesBloc = sl<FavoritesBloc>();
-              if (product.isFavorit) {
-                // Remove from favorites - pass productId as id
-                favoritesBloc.add(FavoritesRemoveEvent(id: product.id));
-              } else {
-                // Add to favorites - userId will be fetched from auth service in the repository
-                favoritesBloc
-                    .add(FavoritesAddEvent(userId: 0, productId: product.id));
-              }
-
-              // Refresh catalog to reflect changes after a short delay
-              Future.delayed(const Duration(milliseconds: 500), () {
-                final catalogBloc = sl<CatalogBloc>();
-                catalogBloc.add(CatalogLoadEvent(loadMore: false));
+        if (current >= maxScroll * 0.6 || (maxScroll - current) <= 300) {
+          if (!_isRequestingMore) {
+            _isRequestingMore = true;
+            final future = widget.onLoadMore?.call();
+            if (future != null) {
+              future.whenComplete(() {
+                if (mounted) {
+                  setState(() {
+                    _isRequestingMore = false;
+                  });
+                }
               });
-
-              // Show toast
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(product.isFavorit
-                      ? 'Retiré des favoris'
-                      : 'Ajouté aux favoris'),
-                  duration: const Duration(seconds: 1),
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                ),
-              );
-            } catch (e) {
-              debugPrint('Error toggling favorite: $e');
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Erreur lors de la mise à jour des favoris'),
-                  duration: Duration(seconds: 2),
-                  backgroundColor: Colors.red,
-                ),
-              );
+            } else {
+              _isRequestingMore = false;
             }
-          },
-          title: product.name,
-          subtitle: product.description,
-          price: product.price,
-          soldBy: product.soldBy,
-          sellerName: product.sellerName,
-          brand: product.brand,
-          productId: product.id,
-          onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
-                builder: (ctx) => ProductDetailsPage(product: product)));
-          },
-        );
-        return card;
+            debugPrint(
+                'ProductsList: load more triggered by scroll (threshold row ${widget.rowsToTrigger})');
+          }
+        }
+        return false;
       },
+      child: GridView.builder(
+        // No controller, uses PrimaryScrollController if available
+        padding: EdgeInsets.only(
+          left: 12,
+          right: 12,
+          top: 8,
+          bottom: widget.hasMore
+              ? 8
+              : 100, // Add extra space when no more items to prevent bottom nav covering
+        ),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: widget.columns,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.64,
+        ),
+        physics: const AlwaysScrollableScrollPhysics(),
+        itemCount: products.length +
+            ((widget.isLoading && products.isNotEmpty) ? widget.columns : 0),
+        itemBuilder: (context, index) {
+          if (index >= products.length) {
+            return Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SkeletonBox(
+                    height: 120.h,
+                    width: double.infinity,
+                    borderRadius: BorderRadius.circular(22.r),
+                  ),
+                  SizedBox(height: 8.h),
+                  SkeletonBox(
+                    height: 14.h,
+                    width: 100.w,
+                  ),
+                  SizedBox(height: 4.h),
+                  SkeletonBox(
+                    height: 12.h,
+                    width: 60.w,
+                  ),
+                  const Spacer(),
+                  SkeletonBox(
+                    height: 16.h,
+                    width: 80.w,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final product = products[index];
+
+          // Keep the builder-based trigger as a backup or alternative
+          final itemsFromEnd = widget.rowsToTrigger * widget.columns;
+          final thresholdIndex =
+              (products.length - itemsFromEnd).clamp(0, products.length);
+
+          if (!_isRequestingMore &&
+              widget.hasMore &&
+              widget.onLoadMore != null &&
+              index >= thresholdIndex) {
+            // Debounce/throttle is handled by _isRequestingMore, but we need to reset it eventually
+            // The scroll listener handles the main logic, but this is good for initial loads
+            // where scroll might not happen yet.
+            // However, to avoid double triggers, we can rely on _isRequestingMore flag.
+            // We'll leave this here but it shares the flag.
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (!_isRequestingMore && mounted) {
+                _isRequestingMore = true;
+                final future = widget.onLoadMore!.call();
+                future.whenComplete(() {
+                  if (mounted) {
+                    setState(() {
+                      _isRequestingMore = false;
+                    });
+                  }
+                });
+              }
+            });
+          }
+
+          if (widget.itemBuilder != null) {
+            return widget.itemBuilder!(context, product, index);
+          }
+
+          // Render ProductCard; CartBloc is provided by parent pages
+          final card = ProductCard(
+            imageUrl: product.pics.isNotEmpty ? product.pics.first : null,
+            isFavorite: product.isFavorit,
+            onFavoriteToggle: () {
+              // Toggle favorite in backend
+              try {
+                final favoritesBloc = sl<FavoritesBloc>();
+                if (product.isFavorit) {
+                  // Remove from favorites - pass productId as id
+                  favoritesBloc.add(FavoritesRemoveEvent(id: product.id));
+                } else {
+                  // Add to favorites - userId will be fetched from auth service in the repository
+                  favoritesBloc
+                      .add(FavoritesAddEvent(userId: 0, productId: product.id));
+                }
+
+                // Refresh catalog to reflect changes after a short delay
+                Future.delayed(const Duration(milliseconds: 500), () {
+                  final catalogBloc = sl<CatalogBloc>();
+                  catalogBloc.add(CatalogLoadEvent(
+                      loadMore: false, timestamp: DateTime.now()));
+                });
+
+                // Show toast
+                TopToast.show(
+                  context,
+                  product.isFavorit
+                      ? '${product.name} ${AppLanguage.removedFromFavorites}'
+                      : '${product.name} ${AppLanguage.addedToFavorites}',
+                );
+              } catch (e) {
+                debugPrint('Error toggling favorite: $e');
+                TopToast.show(
+                  context,
+                  AppLanguage.error,
+                  isError: true,
+                );
+              }
+            },
+            title: product.name,
+            subtitle: product.description,
+            price: product.price,
+            soldBy: product.soldBy,
+            sellerName: product.sellerName,
+            brand: product.brand,
+            productId: product.id,
+            stock: product.stock,
+            quantityPerBatch: product.quantityPerBatch,
+            onTap: () async {
+              await Navigator.of(context).push(MaterialPageRoute(
+                  builder: (ctx) => ProductDetailsPage(product: product)));
+              if (context.mounted) {
+                sl<CatalogBloc>().add(CatalogLoadEvent());
+              }
+            },
+          );
+          return card;
+        },
+      ),
     );
   }
 }

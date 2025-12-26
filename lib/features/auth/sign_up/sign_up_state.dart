@@ -1,6 +1,13 @@
 import 'package:equatable/equatable.dart';
 
-enum VerificationStatus { noNumberEntered, pending, loading, enteringOtp, verified }
+enum VerificationStatus {
+  noNumberEntered,
+  pending,
+  loading,
+  enteringOtp,
+  verifyingOtp,
+  verified
+}
 
 enum AuthResult { none, existingUser, newUser, completingProfileForSignUp }
 
@@ -10,6 +17,8 @@ class SignUpState extends Equatable {
   final String countryCode;
   final AuthResult result;
   final String? errorMessage;
+  final bool isForbidden;
+  final String? otp;
 
   const SignUpState({
     this.status = VerificationStatus.noNumberEntered,
@@ -17,6 +26,8 @@ class SignUpState extends Equatable {
     this.countryCode = '+213',
     this.result = AuthResult.none,
     this.errorMessage,
+    this.isForbidden = false,
+    this.otp,
   });
 
   SignUpState copyWith({
@@ -25,16 +36,28 @@ class SignUpState extends Equatable {
     String? countryCode,
     AuthResult? result,
     String? errorMessage,
+    bool? isForbidden,
+    String? otp,
   }) {
     return SignUpState(
       status: status ?? this.status,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       countryCode: countryCode ?? this.countryCode,
       result: result ?? this.result,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: errorMessage,
+      isForbidden: isForbidden ?? this.isForbidden,
+      otp: otp ?? this.otp,
     );
   }
 
   @override
-  List<Object?> get props => [status, phoneNumber, countryCode, result, errorMessage];
+  List<Object?> get props => [
+        status,
+        phoneNumber,
+        countryCode,
+        result,
+        errorMessage,
+        isForbidden,
+        otp
+      ];
 }

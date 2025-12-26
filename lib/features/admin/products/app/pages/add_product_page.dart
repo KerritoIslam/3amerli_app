@@ -15,6 +15,8 @@ import 'package:amerli_app/features/admin/brands/domain/repositories/admin_brand
 import 'package:amerli_app/features/admin/brands/domain/entities/brand.dart';
 import '../../domain/repositories/admin_products_repository.dart';
 // import 'package:amerli_app/utils/constants/app_colors.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class AddProductPage extends StatefulWidget {
   final String? productId; // null for add, non-null for edit
@@ -30,10 +32,14 @@ class _AddProductPageState extends State<AddProductPage> {
   final _formKey1 = GlobalKey<FormState>();
   final _formKey2 = GlobalKey<FormState>();
   // keys for individual form fields so we can read/show their errorText
-  final GlobalKey<FormFieldState<String>> _nameFieldKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _quantityFieldKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _priceFieldKey = GlobalKey<FormFieldState<String>>();
-  final GlobalKey<FormFieldState<String>> _availableQuantityFieldKey = GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _nameFieldKey =
+      GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _quantityFieldKey =
+      GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _priceFieldKey =
+      GlobalKey<FormFieldState<String>>();
+  final GlobalKey<FormFieldState<String>> _availableQuantityFieldKey =
+      GlobalKey<FormFieldState<String>>();
   // key to measure the form content height so the stepper can match it
   final GlobalKey _formContentKey = GlobalKey();
   double _formContentHeight = 0.0;
@@ -44,6 +50,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
   // Step 1 fields
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   String? _selectedBrandId; // Store brand ID
   final TextEditingController _quantityController = TextEditingController();
   String? _selectedCategoryId; // Store category ID
@@ -65,6 +72,10 @@ class _AddProductPageState extends State<AddProductPage> {
   final TextEditingController _availableQuantityController =
       TextEditingController();
   final List<String> _images = [];
+  // Map to store image URL -> ID for existing images
+  final Map<String, int> _imageIds = {};
+  // List to store deleted images for restoration UI: (url, id)
+  final List<Map<String, dynamic>> _deletedImages = [];
   int _mainImageIndex = 0;
 
   @override
@@ -89,67 +100,98 @@ class _AddProductPageState extends State<AddProductPage> {
     setState(() => _isLoadingData = true);
     try {
       final categories = await _categoriesRepository.getCategories();
+      final subCategories = await _categoriesRepository.getSubCategories();
       final brands = await _brandsRepository.getAllBrands();
+
+      // Convert subcategories to Category objects
+      final subCategoriesAsCategories = subCategories.map((sub) => Category(
+            id: sub.id,
+            name: sub.name,
+            description: '',
+            imageUrl: sub.imageUrl,
+            productCount: sub.productCount,
+            createdAt: sub.createdAt,
+            updatedAt: sub.updatedAt,
+            parentId: sub.categoryId,
+          ));
+
       setState(() {
-        _categories = categories;
+        _categories = [...categories, ...subCategoriesAsCategories];
         _brands = brands;
         _isLoadingData = false;
       });
     } catch (e) {
       setState(() => _isLoadingData = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de chargement: $e')),
-        );
+        TopToast.show(context, '${AppLanguage.loadingError}: $e',
+            isError: true);
       }
     }
   }
 
   Future<void> _loadProductData() async {
     if (widget.productId == null) return;
-    
+
     setState(() => _isLoadingProduct = true);
     try {
-      final product = await _productsRepository.getProductById(widget.productId!);
+      final product =
+          await _productsRepository.getProductById(widget.productId!);
       setState(() {
         _existingProduct = product;
         // Pre-fill form fields
         _nameController.text = product.name;
+        _descriptionController.text = product.description ?? '';
         // Find brand ID by name
         final brand = _brands.firstWhere(
           (b) => b.name == product.brand,
           orElse: () => Brand(id: '', name: ''),
         );
         if (brand.id.isNotEmpty) _selectedBrandId = brand.id;
-        
+
         _quantityController.text = product.quantityPerLot.toString();
-        
+
         // Find category ID by name
         final category = _categories.firstWhere(
           (c) => c.name == product.category,
-          orElse: () => Category(id: '', name: '', description: '', imageUrl: null, productCount: 0, createdAt: DateTime.now(), updatedAt: DateTime.now()),
+          orElse: () => Category(
+              id: '',
+              name: '',
+              description: '',
+              imageUrl: null,
+              productCount: 0,
+              createdAt: DateTime.now(),
+              updatedAt: DateTime.now()),
         );
         if (category.id.isNotEmpty) _selectedCategoryId = category.id;
-        
+
         _specifications.clear();
         _specifications.addAll(product.specifications);
         _expirationDate = product.expirationDate;
         _priceController.text = product.pricePerLot.toString();
-        _availableQuantityController.text = product.availableQuantity.toString();
-        
+        _availableQuantityController.text =
+            product.availableQuantity.toString();
+
         // Add existing product images (URLs) to the images list
         _images.clear();
         _images.addAll(product.images);
         _mainImageIndex = product.mainImageIndex;
-        
+
+        // Map URLs to IDs if available
+        _imageIds.clear();
+        if (product.pictureIds != null &&
+            product.pictureIds!.length == product.images.length) {
+          for (int i = 0; i < product.images.length; i++) {
+            _imageIds[product.images[i]] = product.pictureIds![i];
+          }
+        }
+
         _isLoadingProduct = false;
       });
     } catch (e) {
       setState(() => _isLoadingProduct = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de chargement du produit: $e')),
-        );
+        TopToast.show(context, '${AppLanguage.loadingError}: $e',
+            isError: true);
       }
     }
   }
@@ -157,6 +199,7 @@ class _AddProductPageState extends State<AddProductPage> {
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
     _quantityController.dispose();
     _specController.dispose();
     _priceController.dispose();
@@ -189,12 +232,32 @@ class _AddProductPageState extends State<AddProductPage> {
 
   void _removeImage(int index) {
     setState(() {
+      final image = _images[index];
+      // If it's an existing image (has an ID), move to deleted list
+      if (_imageIds.containsKey(image)) {
+        _deletedImages.add({
+          'url': image,
+          'id': _imageIds[image],
+        });
+      }
+
       if (_mainImageIndex == index) {
         _mainImageIndex = 0;
       } else if (_mainImageIndex > index) {
         _mainImageIndex--;
       }
       _images.removeAt(index);
+    });
+  }
+
+  void _restoreImage(int index) {
+    setState(() {
+      final deleted = _deletedImages[index];
+      final url = deleted['url'] as String;
+      // Add back to images
+      _images.add(url);
+      // Remove from deleted list
+      _deletedImages.removeAt(index);
     });
   }
 
@@ -222,19 +285,16 @@ class _AddProductPageState extends State<AddProductPage> {
   void _saveProduct() {
     if (_formKey2.currentState!.validate()) {
       final bool isEditing = widget.productId != null;
-      
+
       // For new products, validate that category and brand are selected
       if (!isEditing) {
         if (_selectedCategoryId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Veuillez sélectionner une catégorie')),
-          );
+          TopToast.show(context, AppLanguage.pleaseSelectCategory,
+              isError: true);
           return;
         }
         if (_selectedBrandId == null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Veuillez sélectionner une marque')),
-          );
+          TopToast.show(context, AppLanguage.pleaseSelectBrand, isError: true);
           return;
         }
       }
@@ -255,28 +315,46 @@ class _AddProductPageState extends State<AddProductPage> {
           'PRD${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
 
       // Get brand and category NAMES from selected IDs
-      final String brandName = _brands.firstWhere(
-        (b) => b.id == _selectedBrandId,
-        orElse: () => Brand(id: '', name: ''),
-      ).name;
-      final String categoryName = _categories.firstWhere(
-        (c) => c.id == _selectedCategoryId,
-        orElse: () => Category(id: '', name: '', description: '', imageUrl: null, productCount: 0, createdAt: DateTime.now(), updatedAt: DateTime.now()),
-      ).name;
+      final String brandName = _brands
+          .firstWhere(
+            (b) => b.id == _selectedBrandId,
+            orElse: () => Brand(id: '', name: ''),
+          )
+          .name;
+      final String categoryName = _categories
+          .firstWhere(
+            (c) => c.id == _selectedCategoryId,
+            orElse: () => Category(
+                id: '',
+                name: '',
+                description: '',
+                imageUrl: null,
+                productCount: 0,
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now()),
+          )
+          .name;
 
       final product = Product(
         id: productId,
         name: _nameController.text,
+        description: _descriptionController.text,
         category: categoryName, // Use category NAME
         brand: brandName, // Use brand NAME
+        categoryId: _selectedCategoryId,
+        brandId: _selectedBrandId,
         quantityPerLot: int.tryParse(_quantityController.text) ?? 0,
         specifications: _specifications,
         expirationDate: _expirationDate,
         pricePerLot: double.tryParse(_priceController.text) ?? 0.0,
-        stockStatus: (int.tryParse(_availableQuantityController.text) ?? 0) > 0 ? 'En stock' : 'Rupture',
+        stockStatus: (int.tryParse(_availableQuantityController.text) ?? 0) > 0
+            ? AppLanguage.inStock
+            : AppLanguage.outOfStock,
         availableQuantity: int.tryParse(_availableQuantityController.text) ?? 0,
         images: reorderedImages, // Use reordered images with main image first
         mainImageIndex: 0, // Main image is now always at index 0
+        picturesToDelete:
+            _deletedImages.map((e) => e['id'] as int).toList(), // Explicit list
       );
 
       if (widget.productId == null) {
@@ -323,6 +401,7 @@ class _AddProductPageState extends State<AddProductPage> {
                         'assets/icons/back_arrow.svg',
                         width: 16,
                         height: 16,
+                        matchTextDirection: true,
                         color: Theme.of(context).colorScheme.onPrimary,
                         placeholderBuilder: (context) => Icon(
                           Icons.arrow_back,
@@ -339,7 +418,9 @@ class _AddProductPageState extends State<AddProductPage> {
                   Expanded(
                     child: Center(
                       child: Text(
-                        widget.productId == null ? 'Ajouter' : 'Modifier',
+                        widget.productId == null
+                            ? AppLanguage.add
+                            : AppLanguage.edit,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -359,7 +440,8 @@ class _AddProductPageState extends State<AddProductPage> {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   // bottom padding so focused fields are visible above the keyboard
-                  final bottomInset = MediaQuery.of(context).viewInsets.bottom + 24.0;
+                  final bottomInset =
+                      MediaQuery.of(context).viewInsets.bottom + 24.0;
                   // Schedule a post-frame measurement of the form content height
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     _measureFormHeight();
@@ -382,7 +464,8 @@ class _AddProductPageState extends State<AddProductPage> {
                         // Vertical Step Indicator on the left — fixed width
                         Container(
                           width: 40,
-                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 24, horizontal: 8),
                           // build a column where the connector height matches the
                           // measured form content height (so it visually aligns)
                           child: _MeasuredStepper(
@@ -397,10 +480,15 @@ class _AddProductPageState extends State<AddProductPage> {
 
                         // Form Content container — give it the remaining width
                         SizedBox(
-                          width: constraints.maxWidth - 40 - 6 - 28, // account for paddings
+                          width: constraints.maxWidth -
+                              40 -
+                              6 -
+                              28, // account for paddings
                           child: Container(
                             key: _formContentKey,
-                            child: _currentStep == 0 ? _buildStep1() : _buildStep2(),
+                            child: _currentStep == 0
+                                ? _buildStep1()
+                                : _buildStep2(),
                           ),
                         ),
                       ],
@@ -430,7 +518,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        _currentStep == 0 ? 'Suivant' : 'Enregistrer',
+                        _currentStep == 0 ? AppLanguage.next : AppLanguage.save,
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -490,12 +578,14 @@ class _AddProductPageState extends State<AddProductPage> {
     // Prefer label-measured center distance when available: connector is
     // centerDistance minus one circle diameter (distance between circle edges).
     if (_labelCenterDistance > 0.5) {
-      final h = (_labelCenterDistance - circleDiameter).clamp(0.0, double.infinity);
+      final h =
+          (_labelCenterDistance - circleDiameter).clamp(0.0, double.infinity);
       return h;
     }
 
     // fallback: use form height based heuristic
-    final subtract = circleDiameter + 6.0 + 6.0 + circleDiameter; // circles + spacings
+    final subtract =
+        circleDiameter + 6.0 + 6.0 + circleDiameter; // circles + spacings
     final h = (_formContentHeight - subtract).clamp(0.0, double.infinity);
     return h;
   }
@@ -511,7 +601,7 @@ class _AddProductPageState extends State<AddProductPage> {
           Container(
             key: _step1LabelKey,
             child: Text(
-              'etap 1',
+              '${AppLanguage.step} 1',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w700,
@@ -520,9 +610,9 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            widget.productId != null 
-              ? 'Informations générales (optionnel)'
-              : 'Informations générales',
+            widget.productId != null
+                ? AppLanguage.generalInfoOptional
+                : AppLanguage.generalInfo,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -532,7 +622,7 @@ class _AddProductPageState extends State<AddProductPage> {
           if (widget.productId != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Modifiez uniquement les champs que vous souhaitez mettre à jour',
+              AppLanguage.editFieldsHint,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,
@@ -544,7 +634,7 @@ class _AddProductPageState extends State<AddProductPage> {
 
           // Product Name
           _buildTextField(
-            label: 'Nom du produit',
+            label: AppLanguage.productName,
             required: true,
             controller: _nameController,
             keyboardType: TextInputType.text,
@@ -553,8 +643,19 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 16),
 
+          // Description
+          _buildTextField(
+            label: AppLanguage.description,
+            required: false,
+            controller: _descriptionController,
+            keyboardType: TextInputType.multiline,
+            maxLines: 3,
+            inputFormatters: null,
+          ),
+          const SizedBox(height: 16),
+
           // Category Dropdown
-          _buildLabel('Catégorie', required: true),
+          _buildLabel(AppLanguage.category, required: true),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -573,14 +674,16 @@ class _AddProductPageState extends State<AddProductPage> {
                   horizontal: 16,
                   vertical: 12,
                 ),
-                hintText: _isLoadingData ? 'Chargement...' : 'Sélectionner une catégorie',
+                hintText: _isLoadingData
+                    ? AppLanguage.loading
+                    : AppLanguage.selectCategory,
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
               validator: (value) {
                 // Only validate as required for new products
                 final bool isEditing = widget.productId != null;
                 if (!isEditing && value == null) {
-                  return 'Catégorie requise';
+                  return AppLanguage.categoryRequired;
                 }
                 return null;
               },
@@ -590,17 +693,19 @@ class _AddProductPageState extends State<AddProductPage> {
                         child: Text(cat.name),
                       ))
                   .toList(),
-              onChanged: _isLoadingData ? null : (value) {
-                setState(() {
-                  _selectedCategoryId = value;
-                });
-              },
+              onChanged: _isLoadingData
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _selectedCategoryId = value;
+                      });
+                    },
             ),
           ),
           const SizedBox(height: 16),
 
           // Brand (selection)
-          _buildLabel('Marque', required: true),
+          _buildLabel(AppLanguage.brand, required: true),
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -619,14 +724,16 @@ class _AddProductPageState extends State<AddProductPage> {
                   horizontal: 16,
                   vertical: 12,
                 ),
-                hintText: _isLoadingData ? 'Chargement...' : 'Sélectionner une marque',
+                hintText: _isLoadingData
+                    ? AppLanguage.loading
+                    : AppLanguage.selectBrand,
                 hintStyle: TextStyle(color: Colors.grey.shade500),
               ),
               validator: (value) {
                 // Only validate as required for new products
                 final bool isEditing = widget.productId != null;
                 if (!isEditing && value == null) {
-                  return 'Marque requise';
+                  return AppLanguage.brandRequired;
                 }
                 return null;
               },
@@ -636,18 +743,20 @@ class _AddProductPageState extends State<AddProductPage> {
                         child: Text(b.name),
                       ))
                   .toList(),
-              onChanged: _isLoadingData ? null : (value) {
-                setState(() {
-                  _selectedBrandId = value;
-                });
-              },
+              onChanged: _isLoadingData
+                  ? null
+                  : (value) {
+                      setState(() {
+                        _selectedBrandId = value;
+                      });
+                    },
             ),
           ),
           const SizedBox(height: 16),
 
           // Quantity per lot
           _buildTextField(
-            label: 'Quantité par lot',
+            label: AppLanguage.quantityPerBatch,
             required: true,
             controller: _quantityController,
             keyboardType: TextInputType.number,
@@ -657,13 +766,13 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 16),
 
           // Specifications
-          _buildLabel('Spécifications'),
+          _buildLabel(AppLanguage.specifications),
           const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    height: 40,
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 40,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -676,8 +785,8 @@ class _AddProductPageState extends State<AddProductPage> {
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
+                        horizontal: 12,
+                        vertical: 8,
                       ),
                       isDense: true,
                     ),
@@ -699,7 +808,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     vertical: 12,
                   ),
                 ),
-                child: const Text('+ Ajouter'),
+                child: Text('+ ${AppLanguage.add}'),
               ),
             ],
           ),
@@ -715,17 +824,16 @@ class _AddProductPageState extends State<AddProductPage> {
                   label: Text(entry.value),
                   deleteIcon: const Icon(Icons.close, size: 18),
                   onDeleted: () => _removeSpecification(entry.key),
-                  backgroundColor: Theme.of(context)
-                      .colorScheme
-                      .primary
-                      .withOpacity(0.1),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 );
               }).toList(),
             ),
           const SizedBox(height: 16),
 
           // Expiration Date
-          _buildLabel('Date d\'expiration', hint: 'JJ/MM/YYYY'),
+          _buildLabel(AppLanguage.expirationDate,
+              hint: AppLanguage.dateFormatHint),
           const SizedBox(height: 8),
           InkWell(
             onTap: () async {
@@ -756,7 +864,7 @@ class _AddProductPageState extends State<AddProductPage> {
                 children: [
                   Text(
                     _expirationDate == null
-                        ? 'JJ/MM/YYYY'
+                        ? AppLanguage.dateFormatHint
                         : '${_expirationDate!.day}/${_expirationDate!.month}/${_expirationDate!.year}',
                     style: TextStyle(
                       color: _expirationDate == null
@@ -787,7 +895,7 @@ class _AddProductPageState extends State<AddProductPage> {
           Container(
             key: _step2LabelKey,
             child: Text(
-              'etap 2',
+              '${AppLanguage.step} 2',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.primary,
                 fontWeight: FontWeight.w700,
@@ -797,8 +905,8 @@ class _AddProductPageState extends State<AddProductPage> {
           const SizedBox(height: 8),
           Text(
             widget.productId != null
-              ? 'Détails du prix (optionnel)'
-              : 'Détails du prix',
+                ? AppLanguage.priceDetailsOptional
+                : AppLanguage.priceDetails,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -808,7 +916,7 @@ class _AddProductPageState extends State<AddProductPage> {
           if (widget.productId != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Modifiez uniquement les champs que vous souhaitez mettre à jour',
+              AppLanguage.editFieldsHint,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.grey.shade600,
@@ -820,17 +928,30 @@ class _AddProductPageState extends State<AddProductPage> {
 
           // Price per lot
           _buildTextField(
-            label: 'Prix par lot',
+            label: AppLanguage.pricePerBatch,
             required: true,
             controller: _priceController,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             suffix: ' DZD',
             fieldKey: _priceFieldKey,
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return AppLanguage.fieldRequired;
+              }
+              final price = double.tryParse(value);
+              if (price == null) {
+                return AppLanguage.invalidNumber;
+              }
+              if (price < 50) {
+                return AppLanguage.minPriceRestriction;
+              }
+              return null;
+            },
           ),
           const SizedBox(height: 24),
 
-          const Text(
-            'Stock et disponibilité',
+          Text(
+            AppLanguage.stockAndAvailability,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -839,11 +960,9 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 20),
 
-          // Stock status removed; derived from available quantity
-
           // Available Quantity
           _buildTextField(
-            label: 'Quantité disponible',
+            label: AppLanguage.availableQuantity,
             required: true,
             controller: _availableQuantityController,
             keyboardType: TextInputType.number,
@@ -852,9 +971,12 @@ class _AddProductPageState extends State<AddProductPage> {
           ),
           const SizedBox(height: 24),
 
+          // Deleted Images Section
+          _buildDeletedImagesSection(),
+
           // Images Section
-          const Text(
-            'Images du produit',
+          Text(
+            AppLanguage.productImages,
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -877,26 +999,7 @@ class _AddProductPageState extends State<AddProductPage> {
                     onTap: () => _showImagePreview(index),
                     child: Stack(
                       children: [
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isMain
-                                  ? Theme.of(context).colorScheme.primary
-                                  : Colors.grey.shade300,
-                              width: isMain ? 3 : 1,
-                            ),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              File(_images[index]),
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
+                        _buildImagePreview(index),
                         if (isMain)
                           Positioned(
                             top: 4,
@@ -910,8 +1013,8 @@ class _AddProductPageState extends State<AddProductPage> {
                                 color: Theme.of(context).colorScheme.primary,
                                 borderRadius: BorderRadius.circular(4),
                               ),
-                              child: const Text(
-                                'Principale',
+                              child: Text(
+                                AppLanguage.mainImage,
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 10,
@@ -955,7 +1058,7 @@ class _AddProductPageState extends State<AddProductPage> {
             child: OutlinedButton.icon(
               onPressed: _pickImages,
               icon: const Icon(Icons.upload_file),
-              label: const Text('Choisir un fichier'),
+              label: Text(AppLanguage.chooseFile),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 side: BorderSide(
@@ -974,7 +1077,47 @@ class _AddProductPageState extends State<AddProductPage> {
     );
   }
 
+  Widget _buildImagePreview(int index) {
+    final imagePath = _images[index];
+    final isMain = index == _mainImageIndex;
+    final isRemote = imagePath.startsWith('http');
+
+    return Container(
+      width: 100,
+      height: 100,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: isMain
+            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+            : Border.all(color: Colors.grey.shade300),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: isRemote
+            ? Image.network(
+                imagePath,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                      child: Icon(Icons.broken_image, size: 30));
+                },
+              )
+            : Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const Center(
+                      child: Icon(Icons.broken_image, size: 30));
+                },
+              ),
+      ),
+    );
+  }
+
   void _showImagePreview(int index) {
+    final imagePath = _images[index];
+    final isRemote = imagePath.startsWith('http');
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -1002,7 +1145,21 @@ class _AddProductPageState extends State<AddProductPage> {
             // Image
             Expanded(
               child: Center(
-                child: Image.file(File(_images[index])),
+                child: isRemote
+                    ? Image.network(
+                        imagePath,
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.broken_image,
+                              color: Colors.white, size: 50);
+                        },
+                      )
+                    : Image.file(
+                        File(imagePath),
+                        errorBuilder: (context, error, stackTrace) {
+                          return const Icon(Icons.broken_image,
+                              color: Colors.white, size: 50);
+                        },
+                      ),
               ),
             ),
 
@@ -1017,15 +1174,15 @@ class _AddProductPageState extends State<AddProductPage> {
                       _setMainImage(index);
                       Navigator.pop(context);
                     },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const Text('Définir comme image principale'),
+                    ),
+                    child: Text(AppLanguage.setAsMainImage),
                   ),
                 ),
               ),
@@ -1044,6 +1201,8 @@ class _AddProductPageState extends State<AddProductPage> {
     List<TextInputFormatter>? inputFormatters,
     String? suffix,
     GlobalKey<FormFieldState<String>>? fieldKey,
+    int maxLines = 1,
+    String? Function(String?)? validator,
   }) {
     // If a FormField key was provided, prefer showing its error text in the
     // hint area above the input (so the input box doesn't change size).
@@ -1052,23 +1211,29 @@ class _AddProductPageState extends State<AddProductPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // show hint or error in the label area
-        _buildLabel(label, required: required, hint: fieldError ?? hint, hintIsError: fieldError != null),
+        _buildLabel(label,
+            required: required,
+            hint: fieldError ?? hint,
+            hintIsError: fieldError != null),
         const SizedBox(height: 6),
         SizedBox(
-          height: 40,
+          height: maxLines > 1 ? null : 40,
           child: TextFormField(
             key: fieldKey,
             controller: controller,
             keyboardType: keyboardType,
             inputFormatters: inputFormatters,
+            maxLines: maxLines,
             autovalidateMode: AutovalidateMode.onUserInteraction,
+            validator: validator,
             onChanged: (_) {
               // rebuild parent so the label/hint can update when validation changes
               if (fieldKey != null) setState(() {});
             },
             decoration: InputDecoration(
               // hide the default error text (we render it in the hint area)
-              errorStyle: const TextStyle(height: 0, fontSize: 0, color: Colors.transparent),
+              errorStyle: const TextStyle(
+                  height: 0, fontSize: 0, color: Colors.transparent),
               suffixText: suffix,
               isDense: true,
               border: OutlineInputBorder(
@@ -1089,53 +1254,96 @@ class _AddProductPageState extends State<AddProductPage> {
               ),
             ),
             style: const TextStyle(fontSize: 14),
-            validator: required
-                ? (value) {
-                    // Only validate as required for new products
-                    final bool isEditing = widget.productId != null;
-                    if (!isEditing && (value == null || value.isEmpty)) {
-                      return 'Ce champ est requis';
-                    }
-                    return null;
-                  }
-                : null,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildLabel(String label, {bool required = false, String? hint, bool hintIsError = false}) {
+  Widget _buildDeletedImagesSection() {
+    if (_deletedImages.isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.black,
-              ),
-            ),
-            if (required)
-              const Text(
-                ' *',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontSize: 14,
-                ),
-              ),
-          ],
+        const SizedBox(height: 16),
+        Text(
+          AppLanguage.deletedImagesRestoreNote,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.red.shade700,
+          ),
         ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 80,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: _deletedImages.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final url = _deletedImages[index]['url'] as String;
+              return Stack(
+                children: [
+                  InkWell(
+                    onTap: () => _restoreImage(index),
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade200),
+                        image: DecorationImage(
+                          image: NetworkImage(url),
+                          fit: BoxFit.cover,
+                          colorFilter: ColorFilter.mode(
+                            Colors.white.withOpacity(0.6),
+                            BlendMode.lighten,
+                          ),
+                        ),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.restore, color: Colors.red),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildLabel(String text,
+      {bool required = false, String? hint, bool hintIsError = false}) {
+    return Row(
+      children: [
+        Text(
+          text,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black,
+          ),
+        ),
+        if (required)
+          const Text(
+            ' *',
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
         if (hint != null) ...[
-          const SizedBox(height: 6),
+          const Spacer(),
           Text(
             hint,
-            style: hintIsError
-                ? const TextStyle(color: Colors.red, fontSize: 12)
-                : TextStyle(color: Colors.grey.shade500, fontSize: 12),
+            style: TextStyle(
+              fontSize: 12,
+              color: hintIsError ? Colors.red : Colors.grey.shade500,
+              fontStyle: FontStyle.italic,
+            ),
           ),
         ],
       ],
@@ -1148,83 +1356,45 @@ class _MeasuredStepper extends StatelessWidget {
   final int totalSteps;
   final double connectorHeight;
 
-  const _MeasuredStepper({required this.currentStep, required this.totalSteps, required this.connectorHeight});
+  const _MeasuredStepper({
+    required this.currentStep,
+    required this.totalSteps,
+    required this.connectorHeight,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    final isCompleted = currentStep >= 1;
-    final lineColor = isCompleted ? primary : Colors.grey.shade300;
-
-    Widget circle(int index) {
-      final isActive = index == currentStep;
-      final isDone = index < currentStep;
-      final color = isActive || isDone ? primary : Colors.grey.shade300;
-      return TweenAnimationBuilder<double>(
-        duration: const Duration(milliseconds: 250),
-        tween: Tween<double>(begin: isActive || isDone ? 0.85 : 1.0, end: 1.0),
-        builder: (context, scale, child) {
-          return Transform.scale(
-            scale: scale,
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isActive || isDone ? color : Colors.white,
-                border: Border.all(color: color, width: 2),
-              ),
-            ),
-          );
-        },
-      );
-    }
-
-  // If the user is on the second step (currentStep == 1) we set the desired
-  // center-to-center distance between the two circles to 50 pixels so the
-  // second circle rises. Convert that to the connector height (center
-  // distance minus circle diameter). Otherwise use the measured connector
-  // height passed in.
-  const double desiredCenterDistanceOnStep2 = 50.0;
-  final double circleDiameter = 12.0; // must match circle() size
-  final double totalConnector = (currentStep == 1)
-    ? (desiredCenterDistanceOnStep2 - circleDiameter).clamp(0.0, double.infinity)
-    : connectorHeight.clamp(0.0, double.infinity);
-
-  // We'll render the full connector (no artificial spare gaps) so the circles
-  // move to satisfy the totalConnector height. AnimatedContainer will smooth
-  // the transition when the step changes.
-  final double displayedConnector = totalConnector;
-  final double spareAbove = 0.0;
-  final double spareBelow = 0.0;
-
     return Column(
-      mainAxisSize: MainAxisSize.min,
       children: [
-        Center(child: circle(0)),
-        // spacer above the visible connector (animated for smoothness)
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
-          height: spareAbove,
-        ),
-        // visible connector segment — directly adjacent to the circles
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
+        _buildStepCircle(context, 0, currentStep >= 0),
+        Container(
           width: 2,
-          height: displayedConnector,
-          color: lineColor,
+          height: connectorHeight,
+          color: currentStep >= 1
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade300,
         ),
-        // spacer below the visible connector
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut,
-          height: spareBelow,
-        ),
-        Center(child: circle(1)),
+        _buildStepCircle(context, 1, currentStep >= 1),
       ],
     );
   }
-}
 
+  Widget _buildStepCircle(BuildContext context, int stepIndex, bool isActive) {
+    return Container(
+      width: 12,
+      height: 12,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isActive
+            ? Theme.of(context).colorScheme.primary
+            : Colors.transparent,
+        border: Border.all(
+          color: isActive
+              ? Theme.of(context).colorScheme.primary
+              : Colors.grey.shade300,
+          width: 2,
+        ),
+      ),
+    );
+  }
+}

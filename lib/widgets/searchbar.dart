@@ -6,8 +6,17 @@ import 'package:go_router/go_router.dart';
 class AppSearchbar extends StatefulWidget {
   final ValueChanged<String>? onChanged;
   final VoidCallback? onFilterTap;
-  
-  const AppSearchbar({super.key, this.onChanged, this.onFilterTap});
+  final TextEditingController? controller;
+
+  final bool showFilter;
+
+  const AppSearchbar({
+    super.key,
+    this.onChanged,
+    this.onFilterTap,
+    this.controller,
+    this.showFilter = true,
+  });
 
   @override
   State<AppSearchbar> createState() => _AppSearchbarState();
@@ -35,11 +44,19 @@ class _AppSearchbarState extends State<AppSearchbar>
     return Directionality(
       textDirection: TextDirection.ltr,
       child: AppTextField(
-        trailing: InkWell(
-          onTap: widget.onFilterTap ?? () => context.push('/filters'),
-          child: SvgPicture.asset("assets/icons/filter_icon.svg", colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.primary, BlendMode.srcIn)),
-        ),
-        prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg", colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.primary, BlendMode.srcIn)),
+        controller: widget.controller,
+        trailing: widget.showFilter
+            ? InkWell(
+                onTap: widget.onFilterTap ?? () => context.push('/filters'),
+                child: SvgPicture.asset("assets/icons/filter_icon.svg",
+                    colorFilter: ColorFilter.mode(
+                        Theme.of(context).colorScheme.primary,
+                        BlendMode.srcIn)),
+              )
+            : null,
+        prefixIcon: SvgPicture.asset("assets/icons/search_icon.svg",
+            colorFilter: ColorFilter.mode(
+                Theme.of(context).colorScheme.primary, BlendMode.srcIn)),
         onChanged: widget.onChanged,
       ),
     );

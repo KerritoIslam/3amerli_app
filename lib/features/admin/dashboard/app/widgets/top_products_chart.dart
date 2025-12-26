@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import '../../domain/entities/dashboard_stats.dart';
 
 class TopProductsChart extends StatefulWidget {
@@ -10,7 +11,8 @@ class TopProductsChart extends StatefulWidget {
   State<TopProductsChart> createState() => _TopProductsChartState();
 }
 
-class _TopProductsChartState extends State<TopProductsChart> with SingleTickerProviderStateMixin {
+class _TopProductsChartState extends State<TopProductsChart>
+    with SingleTickerProviderStateMixin {
   int _selectedIndex = 0;
   late AnimationController _animationController;
   late List<Animation<double>> _heightAnimations;
@@ -30,14 +32,16 @@ class _TopProductsChartState extends State<TopProductsChart> with SingleTickerPr
     final input = widget.products;
     _products = input.isNotEmpty
         ? input
-            .map((p) => ProductData(name: p.name, soldCount: p.soldCount, imageUrl: p.imageUrl))
+            .map((p) => ProductData(
+                name: p.name, soldCount: p.soldCount, imageUrl: p.imageUrl))
             .toList()
         : [
             ProductData(name: '—', soldCount: 0, imageUrl: ''),
           ];
 
     // Calculate relative heights (0.0 to 1.0)
-    final maxSold = _products.map((p) => p.soldCount).reduce((a, b) => a > b ? a : b);
+    final maxSold =
+        _products.map((p) => p.soldCount).reduce((a, b) => a > b ? a : b);
     _heightAnimations = _products.map((product) {
       return Tween<double>(
         begin: 0.0,
@@ -85,8 +89,8 @@ class _TopProductsChartState extends State<TopProductsChart> with SingleTickerPr
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Title
-          const Text(
-            'Top produits',
+          Text(
+            AppLanguage.topProducts,
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -223,7 +227,7 @@ class _TopProductsChartState extends State<TopProductsChart> with SingleTickerPr
 
   Widget _buildProductImage(int index) {
     final product = _products[index];
-    
+
     return Container(
       width: 40,
       height: 40,

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart'
     show kDebugMode, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -6,6 +7,8 @@ import 'auth_state.dart';
 import '../../../../core/notifications/notification_service.dart';
 import '../../../../features/notifications/domain/repositories/notifications_repository.dart';
 import '../../../../core/config/injection.dart';
+import '../../../../core/auth/auth_service.dart';
+import '../../../../utils/constants/app_language.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   // Logging methods
@@ -26,7 +29,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     print('[ERROR] $message');
   }
 
-  AuthBloc() : super(AuthInitial()) {
+  final AuthService authService;
+  StreamSubscription<void>? _logoutSubscription;
+
+  AuthBloc({required this.authService}) : super(AuthInitial()) {
+    _logoutSubscription = authService.onLoggedOut.listen((_) {
+      add(LogOutEvent());
+    });
+
     on<LogInEvent>((event, emit) async {
       logInfo(
           '[AuthBloc] LogInEvent received for user: ${event.user.phoneNumber}');
@@ -50,11 +60,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     });
   }
 
+  @override
+  Future<void> close() {
+    _logoutSubscription?.cancel();
+    return super.close();
+  }
+
   // Register FCM token with backend
   Future<void> _registerFcmToken() async {
     try {
       final notificationService = NotificationService();
-      final notificationsRepository = sl<NotificationsRepository>();
 
       // Get FCM token
       final fcmToken = await notificationService.getFcmToken();
@@ -83,7 +98,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         final notificationsRepository = sl<NotificationsRepository>();
         final os =
             defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';
-        await notificationsRepository.registerFcmToken(newToken, os);
+        await notificationsRepository.registerFcmToken(
+            newToken, os, AppLanguage.current.name);
         logInfo('[AuthBloc] FCM token refresh registered successfully');
       }
     } catch (e) {

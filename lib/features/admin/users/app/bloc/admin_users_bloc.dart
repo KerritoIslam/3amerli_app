@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+import 'package:amerli_app/core/error/error_handler.dart';
 
 import '../../domain/repositories/admin_users_repository.dart';
 import 'admin_users_event.dart';
@@ -26,19 +28,49 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
     AdminUsersLoadEvent event,
     Emitter<AdminUsersState> emit,
   ) async {
+    if (event.page > 1 && state is AdminUsersLoaded) {
+      final currentState = state as AdminUsersLoaded;
+      if (currentState.isLoadingMore || !currentState.hasMore) return;
+
+      emit(currentState.copyWith(isLoadingMore: true));
+
+      try {
+        final newUsers = await _repository.getAllUsers(
+          query: event.query,
+          statusFilter: event.statusFilter,
+          page: event.page,
+          limit: event.limit,
+        );
+
+        emit(currentState.copyWith(
+          users: currentState.users + newUsers,
+          currentPage: event.page,
+          hasMore: newUsers.length >= event.limit,
+          isLoadingMore: false,
+        ));
+      } catch (e) {
+        emit(currentState.copyWith(isLoadingMore: false));
+      }
+      return;
+    }
+
     emit(AdminUsersLoading());
     try {
       final users = await _repository.getAllUsers(
         query: event.query,
         statusFilter: event.statusFilter,
+        page: event.page,
+        limit: event.limit,
       );
       emit(AdminUsersLoaded(
         users: users,
         currentQuery: event.query,
         currentStatusFilter: event.statusFilter,
+        hasMore: users.length >= event.limit,
+        currentPage: event.page,
       ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -51,7 +83,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       final user = await _repository.getUserById(event.userId);
       emit(AdminUserDetailLoaded(user: user));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -61,13 +93,13 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.updateUserRole(event.userId, event.newRole);
-      emit(const AdminUsersOperationSuccess(
-        message: 'Rôle mis à jour avec succès',
+      emit(AdminUsersOperationSuccess(
+        message: AppLanguage.roleUpdated,
       ));
       // Reload detail to show updated user
       add(AdminUsersLoadDetailEvent(userId: event.userId));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -77,13 +109,13 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.updateUserStatus(event.userId, event.newStatus);
-      emit(const AdminUsersOperationSuccess(
-        message: 'Statut mis à jour avec succès',
+      emit(AdminUsersOperationSuccess(
+        message: AppLanguage.statusUpdated,
       ));
       // Reload detail to show updated user
       add(AdminUsersLoadDetailEvent(userId: event.userId));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -93,11 +125,11 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.deleteUser(event.userId);
-      emit(const AdminUsersOperationSuccess(
-        message: 'Utilisateur supprimé avec succès',
+      emit(AdminUsersOperationSuccess(
+        message: AppLanguage.userDeleted,
       ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -108,10 +140,10 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
     try {
       await _repository.deleteMultipleUsers(event.userIds);
       emit(AdminUsersOperationSuccess(
-        message: '${event.userIds.length} utilisateur(s) supprimé(s) avec succès',
+        message: AppLanguage.usersDeleted(event.userIds.length),
       ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -124,7 +156,7 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
       final roles = await _repository.getRoles();
       emit(AdminUsersRolesLoaded(roles: roles));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -132,12 +164,39 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
     AdminUsersLoadBlacklistEvent event,
     Emitter<AdminUsersState> emit,
   ) async {
+    if (event.page > 1 && state is AdminUsersBlacklistLoaded) {
+      final currentState = state as AdminUsersBlacklistLoaded;
+      if (currentState.isLoadingMore || !currentState.hasMore) return;
+
+      emit(currentState.copyWith(isLoadingMore: true));
+
+      try {
+        final newUsers = await _repository.getBlacklistedUsers(
+            page: event.page, limit: event.limit);
+
+        emit(currentState.copyWith(
+          blacklistedUsers: currentState.blacklistedUsers + newUsers,
+          currentPage: event.page,
+          hasMore: newUsers.length >= event.limit,
+          isLoadingMore: false,
+        ));
+      } catch (e) {
+        emit(currentState.copyWith(isLoadingMore: false));
+      }
+      return;
+    }
+
     emit(AdminUsersLoading());
     try {
-      final users = await _repository.getBlacklistedUsers(page: event.page, limit: event.limit);
-      emit(AdminUsersBlacklistLoaded(blacklistedUsers: users));
+      final users = await _repository.getBlacklistedUsers(
+          page: event.page, limit: event.limit);
+      emit(AdminUsersBlacklistLoaded(
+        blacklistedUsers: users,
+        hasMore: users.length >= event.limit,
+        currentPage: event.page,
+      ));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -147,9 +206,9 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.addToBlacklist(event.userId);
-      emit(const AdminUsersOperationSuccess(message: 'Utilisateur suspendu avec succès'));
+      emit(AdminUsersOperationSuccess(message: AppLanguage.userSuspended));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 
@@ -159,9 +218,9 @@ class AdminUsersBloc extends Bloc<AdminUsersEvent, AdminUsersState> {
   ) async {
     try {
       await _repository.restoreFromBlacklist(event.userId);
-      emit(const AdminUsersOperationSuccess(message: 'Utilisateur restauré avec succès'));
+      emit(AdminUsersOperationSuccess(message: AppLanguage.userRestored));
     } catch (e) {
-      emit(AdminUsersError(message: e.toString()));
+      emit(AdminUsersError(message: ErrorHandler.getErrorMessage(e)));
     }
   }
 }

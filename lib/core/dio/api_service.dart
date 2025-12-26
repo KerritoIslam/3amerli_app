@@ -1,15 +1,18 @@
 import 'package:dio/dio.dart';
 import 'package:amerli_app/core/auth/auth_service.dart';
 import 'package:amerli_app/core/dio/auth_interceptor.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class ApiService {
   final Dio _dio;
 
   ApiService({Dio? dio, String? baseUrl, AuthService? authService})
-      : _dio = dio ?? Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 10),
-          validateStatus: (status) => status != null && status < 500, // Don't throw on 4xx errors
-        )) {
+      : _dio = dio ??
+            Dio(BaseOptions(
+              connectTimeout: const Duration(seconds: 10),
+              validateStatus: (status) =>
+                  status != null && status < 500, // Don't throw on 4xx errors
+            )) {
     if (baseUrl != null) {
       _dio.options.baseUrl = baseUrl;
     }
@@ -18,7 +21,8 @@ class ApiService {
 
     // Register auth interceptor first (must be before logging to ensure token is available)
     if (authService != null) {
-      _dio.interceptors.add(AuthInterceptor(authService: authService, dio: _dio));
+      _dio.interceptors
+          .add(AuthInterceptor(authService: authService, dio: _dio));
     } else {
       // default headers
       _dio.interceptors.add(InterceptorsWrapper(onRequest: (options, handler) {
@@ -26,6 +30,14 @@ class ApiService {
         return handler.next(options);
       }));
     }
+
+    // Add language parameter to every request
+    _dio.interceptors.add(InterceptorsWrapper(
+      onRequest: (options, handler) {
+        options.queryParameters['lang'] = AppLanguage.current.name;
+        return handler.next(options);
+      },
+    ));
 
     // Add concise and colorized status logger for every request/response/error
     // Added after auth interceptor so authorization header is available
@@ -38,30 +50,59 @@ class ApiService {
             const reset = '\x1B[0m';
             final method = options.method;
             final path = options.path;
-            final qp = options.queryParameters.isNotEmpty ? options.queryParameters : null;
-            final data = options.data;
+            final qp = options.queryParameters.isNotEmpty
+                ? options.queryParameters
+                : null;
+            dynamic data = options.data;
+            if (data is FormData) {
+              final fields =
+                  data.fields.map((e) => '${e.key}:${e.value}').toList();
+              final files = data.files
+                  .map((e) => '${e.key}:File(${e.value.filename})')
+                  .toList();
+              data = 'FormData(fields: $fields, files: $files)';
+            }
             final authHeader = options.headers['Authorization'];
             // ignore: avoid_print
-            print('$yellow[HTTP REQUEST] $method $path | query:$qp | data:$data | auth:${authHeader ?? 'none'}$reset');
+            print(
+                '$yellow[HTTP REQUEST] $method $path | query:$qp | data:$data | auth:${authHeader ?? 'none'}$reset');
           } catch (_) {}
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          final started = response.requestOptions.extra['startTime'] as DateTime?;
-          final elapsedMs = started != null ? DateTime.now().difference(started).inMilliseconds : null;
+          final started =
+              response.requestOptions.extra['startTime'] as DateTime?;
+          final elapsedMs = started != null
+              ? DateTime.now().difference(started).inMilliseconds
+              : null;
           final method = response.requestOptions.method;
           final path = response.requestOptions.path;
           final status = response.statusCode;
           const green = '\x1B[32m';
+          const red = '\x1B[31m';
           const reset = '\x1B[0m';
-          final bodyPreview = response.data is Map || response.data is List ? response.data : response.data?.toString();
-          // ignore: avoid_print
-          print('$green[HTTP RESPONSE] $method $path -> $status${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: $bodyPreview');
+          final bodyPreview = response.data is Map || response.data is List
+              ? response.data
+              : response.data?.toString();
+
+          // Log based on status
+          if (status != null && status >= 400) {
+            // ignore: avoid_print
+            print(
+                '$red[HTTP RESPONSE ERROR] $method $path -> $status${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: $bodyPreview');
+          } else {
+            // ignore: avoid_print
+            print(
+                '$green[HTTP RESPONSE] $method $path -> $status${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: $bodyPreview');
+          }
+
           return handler.next(response);
         },
         onError: (error, handler) {
           final started = error.requestOptions.extra['startTime'] as DateTime?;
-          final elapsedMs = started != null ? DateTime.now().difference(started).inMilliseconds : null;
+          final elapsedMs = started != null
+              ? DateTime.now().difference(started).inMilliseconds
+              : null;
           final method = error.requestOptions.method;
           final path = error.requestOptions.path;
           final status = error.response?.statusCode;
@@ -73,17 +114,29 @@ class ApiService {
 
           // Request info (yellow)
           try {
-            final qp = error.requestOptions.queryParameters.isNotEmpty ? error.requestOptions.queryParameters : null;
-            final reqData = error.requestOptions.data;
+            final qp = error.requestOptions.queryParameters.isNotEmpty
+                ? error.requestOptions.queryParameters
+                : null;
+            dynamic reqData = error.requestOptions.data;
+            if (reqData is FormData) {
+              final fields =
+                  reqData.fields.map((e) => '${e.key}:${e.value}').toList();
+              final files = reqData.files
+                  .map((e) => '${e.key}:File(${e.value.filename})')
+                  .toList();
+              reqData = 'FormData(fields: $fields, files: $files)';
+            }
             final authHeader = error.requestOptions.headers['Authorization'];
             // ignore: avoid_print
-            print('$yellow[HTTP ERROR - REQUEST] $method $path | query:$qp | data:$reqData | auth:${authHeader ?? 'none'}$reset');
+            print(
+                '$yellow[HTTP ERROR - REQUEST] $method $path | query:$qp | data:$reqData | auth:${authHeader ?? 'none'}$reset');
           } catch (_) {}
 
           // Response info (green)
           try {
             // ignore: avoid_print
-            print('$green[HTTP ERROR - RESPONSE] status:${status ?? 'unknown'}${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: ${serverBody ?? 'null'}');
+            print(
+                '$green[HTTP ERROR - RESPONSE] status:${status ?? 'unknown'}${elapsedMs != null ? ' (${elapsedMs}ms)' : ''}$reset | body: ${serverBody ?? 'null'}');
           } catch (_) {}
 
           // Exception message (red)
@@ -98,12 +151,17 @@ class ApiService {
     );
 
     // Optional: verbose Dio logging (kept for deeper debugging)
-    _dio.interceptors.add(LogInterceptor(request: true, requestBody: true, responseBody: false, responseHeader: false));
+    _dio.interceptors.add(LogInterceptor(
+        request: true,
+        requestBody: true,
+        responseBody: false,
+        responseHeader: false));
   }
 
   Dio get client => _dio;
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(String path,
+      {Map<String, dynamic>? queryParameters}) async {
     return _dio.get(path, queryParameters: queryParameters);
   }
 
@@ -115,7 +173,8 @@ class ApiService {
     return _dio.put(path, data: data);
   }
 
-  Future<Response> delete(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> delete(String path,
+      {Map<String, dynamic>? queryParameters}) async {
     return _dio.delete(path, queryParameters: queryParameters);
   }
 

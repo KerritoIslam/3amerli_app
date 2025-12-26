@@ -17,11 +17,11 @@ class CategoryGrid extends StatefulWidget {
   // crossAxisCount and itemHeight are kept for API compatibility but are
   // ignored in the wrap-based layout (chips size themselves).
   const CategoryGrid({
-    super.key, 
-    required this.categories, 
-    this.onTap, 
-    this.onSelectionChanged, 
-    this.crossAxisCount = 3, 
+    super.key,
+    required this.categories,
+    this.onTap,
+    this.onSelectionChanged,
+    this.crossAxisCount = 3,
     this.itemHeight = 90,
     this.showMoreIndicator = false,
   });
@@ -43,7 +43,7 @@ class _CategoryGridState extends State<CategoryGrid> {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Align(
-        alignment: Alignment.centerLeft,
+        alignment: AlignmentDirectional.centerStart,
         child: Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -57,14 +57,23 @@ class _CategoryGridState extends State<CategoryGrid> {
                   setState(() {
                     if (_selectedIds.contains(cat.id)) {
                       _selectedIds.remove(cat.id);
+                      // Deselect children if any
+                      for (var sub in cat.subcategories) {
+                        _selectedIds.remove(sub.id);
+                      }
                     } else {
                       _selectedIds.add(cat.id);
+                      // Select children if any
+                      for (var sub in cat.subcategories) {
+                        _selectedIds.add(sub.id);
+                      }
                     }
                   });
                   // Notify parent with the updated selection array
                   if (widget.onSelectionChanged != null) {
                     // ignore: avoid_print
-                    print('[CategoryGrid] Selection changed: ${_selectedIds.toList()}');
+                    print(
+                        '[CategoryGrid] Selection changed: ${_selectedIds.toList()}');
                     widget.onSelectionChanged!(_selectedIds.toList());
                   }
                   // Keep backward compatibility with single-tap callback
@@ -76,7 +85,8 @@ class _CategoryGridState extends State<CategoryGrid> {
                         width: 24,
                         height: 24,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stack) => Container(color: Colors.grey.shade200),
+                        errorBuilder: (context, error, stack) =>
+                            Container(color: Colors.grey.shade200),
                       )
                     : null,
               );
@@ -105,22 +115,23 @@ class _CategoryGridState extends State<CategoryGrid> {
 // inside a Wrap. Keeps the image clipped and provides a stable tappable
 // area.
 
-
 // Simple skeleton grid helper (used by pages during loading)
-Widget categoriesSkeletonGrid({int count = 6, int crossAxisCount = 3, double itemHeight = 90}) {
+Widget categoriesSkeletonGrid(
+    {int count = 6, int crossAxisCount = 3, double itemHeight = 90}) {
   // Use a wrap-based skeleton to match the new chip layout and avoid
   // introducing a scrollable grid inside pages that already manage scrolling.
   final widths = [80.0, 100.0, 120.0, 90.0, 70.0];
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8.0),
     child: Align(
-      alignment: Alignment.centerLeft,
+      alignment: AlignmentDirectional.centerStart,
       child: Wrap(
         spacing: 12,
         runSpacing: 12,
         children: List.generate(count, (i) {
           final w = widths[i % widths.length];
-          return SkeletonBox(height: 36, width: w, borderRadius: BorderRadius.circular(100));
+          return SkeletonBox(
+              height: 36, width: w, borderRadius: BorderRadius.circular(100));
         }),
       ),
     ),

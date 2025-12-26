@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../bloc/admin_orders_bloc.dart';
 import '../bloc/admin_orders_event.dart';
 import '../bloc/admin_orders_state.dart';
 import '../../domain/entities/admin_order.dart';
 import 'package:amerli_app/core/error/error_handler.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class OrderDetailPage extends StatefulWidget {
   final String orderId;
@@ -20,323 +24,347 @@ class OrderDetailPage extends StatefulWidget {
 }
 
 class _OrderDetailPageState extends State<OrderDetailPage> {
-  String? _selectedStatus;
-  bool _isEditing = false;
-
   @override
   void initState() {
     super.initState();
-    context.read<AdminOrdersBloc>().add(AdminOrdersLoadDetailEvent(widget.orderId));
+    context
+        .read<AdminOrdersBloc>()
+        .add(AdminOrdersLoadDetailEvent(widget.orderId));
   }
 
   Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'en attente':
-        return Colors.orange;
-      case 'en cours':
-      case 'en préparation':
-        return Colors.blue;
-      case 'livrée':
-      case 'livré':
-        return Colors.green;
-      case 'annulée':
-      case 'annulé':
-        return Colors.red;
-      default:
-        return Colors.grey;
+    final s = status.toLowerCase();
+
+    // Cancelled (Red)
+    if (s.contains('annul') ||
+        s.contains('cancel') ||
+        s.contains('إلغاء') ||
+        s.contains('ملغ')) {
+      return const Color(0xFFF34141);
     }
+
+    // Delivered / Delivering (Green)
+    if (s.contains('livré') ||
+        s.contains('livree') ||
+        s.contains('deliv') ||
+        s.contains('delivered') ||
+        s.contains('توصيل') ||
+        s.contains('مستلم') ||
+        s.contains('تم التسليم')) {
+      return const Color(0xFF4AA785);
+    }
+
+    // Preparing (Blue)
+    if (s.contains('préparation') ||
+        s.contains('preparation') ||
+        s.contains('preparing') ||
+        s.contains('تحضير') ||
+        s.contains('تجهيز')) {
+      return const Color(0xFF59A8D4);
+    }
+
+    // Pending (Yellow)
+    if (s.contains('en attente') ||
+        s.contains('pending') ||
+        s.contains('confirmation') ||
+        s.contains('confirm') ||
+        s.contains('انتظار') ||
+        s.contains('معلق')) {
+      return const Color(0xFFFFC555);
+    }
+
+    return Colors.grey;
   }
 
-  void _onStatusChanged(String newStatus, AdminOrder order) {
-    setState(() {
-      _selectedStatus = newStatus;
-    });
-  }
-
-  void _onSaveStatus(AdminOrder order) {
-    if (_selectedStatus != null && _selectedStatus != order.status) {
-      context.read<AdminOrdersBloc>().add(
-            AdminOrdersUpdateStatusEvent(order.id, _selectedStatus!),
-          );
-      setState(() {
-        _isEditing = false;
-      });
-    }
+  void _onIncrementStatus(AdminOrder order) {
+    context.read<AdminOrdersBloc>().add(
+          AdminOrdersIncrementStatusEvent(order.id),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<AdminOrdersBloc, AdminOrdersState>(
-      listener: (context, state) {
-        if (state is AdminOrdersError) {
-          ErrorHandler.showError(context, state.message);
-        }
-        if (state is AdminOrdersOperationSuccess) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.message),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-            ),
-          );
-        }
-      },
-      child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: BlocBuilder<AdminOrdersBloc, AdminOrdersState>(
-            builder: (context, state) {
-              if (state is AdminOrderDetailLoading) {
-                return const Center(child: CircularProgressIndicator());
-              }
+    return ValueListenableBuilder<AppLocale>(
+      valueListenable: AppLanguage.localeNotifier,
+      builder: (context, locale, _) =>
+          BlocListener<AdminOrdersBloc, AdminOrdersState>(
+        listener: (context, state) {
+          if (state is AdminOrdersError) {
+            ErrorHandler.showError(context, state.message);
+          }
+          if (state is AdminOrderDetailLoaded) {
+            if (state.message != null) {
+              TopToast.show(context, state.message!, isError: false);
+            }
+            if (state.errorMessage != null) {
+              TopToast.show(context, state.errorMessage!, isError: true);
+            }
+          }
+          if (state is AdminOrdersOperationSuccess) {
+            TopToast.show(context, state.message, isError: false);
+          }
+        },
+        child: Scaffold(
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: BlocBuilder<AdminOrdersBloc, AdminOrdersState>(
+              builder: (context, state) {
+                if (state is AdminOrderDetailLoading) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-              if (state is AdminOrderDetailLoaded) {
-                final order = state.order;
-                _selectedStatus ??= order.status;
+                if (state is AdminOrderDetailLoaded) {
+                  final order = state.order;
 
-                return Column(
-                  children: [
-                    // Header
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Row(
-                        children: [
-                          InkWell(
-                            onTap: () => context.pop(),
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          const Expanded(
-                            child: Text(
-                              'Détails',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 40), // Balance the back button
-                        ],
-                      ),
-                    ),
-
-                    // Content
-                    Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                  return Column(
+                    children: [
+                      // Header
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Row(
                           children: [
-                            // Articles commandés
-                            if (order.products.isNotEmpty) ...[
-                              const Text(
-                                'Articles commandés',
-                                style: TextStyle(
+                            InkWell(
+                              onTap: () => context.pop(),
+                              child: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.arrow_back,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                AppLanguage.orderDetails,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(
+                                width: 40), // Balance the back button
+                          ],
+                        ),
+                      ),
+
+                      // Content
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Articles commandés
+                              if (order.products.isNotEmpty) ...[
+                                Text(
+                                  AppLanguage.orderedItems,
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                ...order.products.map(
+                                    (product) => _ProductRow(product: product)),
+                                const SizedBox(height: 8),
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        '${AppLanguage.total} :',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${order.totalAmount.toStringAsFixed(2)} DZD',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+
+                              // Informations du client
+                              Text(
+                                AppLanguage.clientInfo,
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              ...order.products.map((product) => _ProductRow(product: product)),
-                              const SizedBox(height: 8),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text(
-                                      'Total :',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Text(
-                                      '${order.totalAmount.toStringAsFixed(2)} DZD',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ],
+                              _InfoRow(
+                                label: AppLanguage.storeName,
+                                value: order.storeName,
+                              ),
+                              const SizedBox(height: 12),
+                              _InfoRow(
+                                label: AppLanguage.representativeName,
+                                value: order.representativeName,
+                              ),
+                              const SizedBox(height: 12),
+                              _InfoRow(
+                                label: AppLanguage.phone,
+                                value: order.customerPhone,
+                                onTap: () async {
+                                  final Uri launchUri = Uri(
+                                    scheme: 'tel',
+                                    path:
+                                        order.customerPhone.replaceAll(' ', ''),
+                                  );
+                                  if (await canLaunchUrl(launchUri)) {
+                                    await launchUrl(launchUri);
+                                  }
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              _InfoRow(
+                                label: AppLanguage.fullAddress,
+                                value: order.deliveryAddress ?? 'N/A',
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Informations du paiement
+                              Text(
+                                AppLanguage.paymentInfo,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
+                              ),
+                              const SizedBox(height: 16),
+                              _InfoRow(
+                                label: AppLanguage.paymentInfo,
+                                value: order.paymentMethod,
+                              ),
+                              const SizedBox(height: 12),
+                              _InfoRow(
+                                label: AppLanguage.total,
+                                value:
+                                    '${order.totalAmount.toStringAsFixed(2)} DZD',
+                              ),
+                              const SizedBox(height: 12),
+                              _InfoRow(
+                                label: AppLanguage.dateTime,
+                                value:
+                                    '${order.orderDate.day}/${order.orderDate.month}/${order.orderDate.year}  ${order.orderDate.hour.toString().padLeft(2, '0')}:${order.orderDate.minute.toString().padLeft(2, '0')}',
+                              ),
+                              const SizedBox(height: 24),
+
+                              // Statut actuel
+                              Text(
+                                AppLanguage.currentStatus,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+
+                              // Status display and increment button
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 12),
+                                      decoration: BoxDecoration(
+                                        color: _getStatusColor(order.status)
+                                            .withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        order.status,
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: _getStatusColor(order.status),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  if (state.isIncrementing)
+                                    const Padding(
+                                      padding:
+                                          EdgeInsets.symmetric(horizontal: 16),
+                                      child: SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2),
+                                      ),
+                                    )
+                                  else if (!order.status
+                                          .toLowerCase()
+                                          .contains('livré') &&
+                                      !order.status
+                                          .toLowerCase()
+                                          .contains('delivered'))
+                                    InkWell(
+                                      onTap: () => _onIncrementStatus(order),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Text(
+                                              AppLanguage.nextStep,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            const Icon(
+                                              Icons.arrow_forward,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
                               const SizedBox(height: 24),
                             ],
-
-                            // Informations du client
-                            const Text(
-                              'Informations du client',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _InfoRow(
-                              label: 'Nom de la supérette',
-                              value: order.storeName,
-                            ),
-                            const SizedBox(height: 12),
-                            _InfoRow(
-                              label: 'Nom et prénom du réprésentant',
-                              value: order.representativeName,
-                            ),
-                            const SizedBox(height: 12),
-                            _InfoRow(
-                              label: 'Numéro de téléphone',
-                              value: order.customerPhone,
-                            ),
-                            const SizedBox(height: 12),
-                            _InfoRow(
-                              label: 'Adresse complète',
-                              value: order.deliveryAddress ?? 'N/A',
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Informations du paiement
-                            const Text(
-                              'Informations du paiement',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _InfoRow(
-                              label: 'Mode de paiement',
-                              value: order.paymentMethod,
-                            ),
-                            const SizedBox(height: 12),
-                            _InfoRow(
-                              label: 'Montant',
-                              value: '${order.totalAmount.toStringAsFixed(2)} DZD',
-                            ),
-                            const SizedBox(height: 12),
-                            _InfoRow(
-                              label: 'Date et heure',
-                              value: '${order.orderDate.day}/${order.orderDate.month}/${order.orderDate.year}  ${order.orderDate.hour.toString().padLeft(2, '0')}:${order.orderDate.minute.toString().padLeft(2, '0')}',
-                            ),
-                            const SizedBox(height: 24),
-
-                            // Statut actuel
-                            const Text(
-                              'Statut actuel',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Status selector with edit icon
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _isEditing
-                                      ? Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                                          decoration: BoxDecoration(
-                                            border: Border.all(color: Colors.grey.shade300),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: DropdownButtonHideUnderline(
-                                            child: DropdownButton<String>(
-                                              value: _selectedStatus,
-                                              isExpanded: true,
-                                              icon: const Icon(Icons.keyboard_arrow_down),
-                                              items: [
-                                                'En attente',
-                                                'En Préparation',
-                                                'En cours',
-                                                'Livrée',
-                                                'Annulée',
-                                              ].map((String value) {
-                                                return DropdownMenuItem<String>(
-                                                  value: value,
-                                                  child: Text(value),
-                                                );
-                                              }).toList(),
-                                              onChanged: (String? newValue) {
-                                                if (newValue != null) {
-                                                  _onStatusChanged(newValue, order);
-                                                }
-                                              },
-                                            ),
-                                          ),
-                                        )
-                                      : Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                          decoration: BoxDecoration(
-                                            color: _getStatusColor(_selectedStatus!).withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(
-                                            _selectedStatus!,
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: _getStatusColor(_selectedStatus!),
-                                            ),
-                                          ),
-                                        ),
-                                ),
-                                const SizedBox(width: 12),
-                                if (!_isEditing)
-                                  InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        _isEditing = true;
-                                      });
-                                    },
-                                    child: Icon(
-                                      Icons.edit_outlined,
-                                      color: Theme.of(context).colorScheme.primary,
-                                      size: 24,
-                                    ),
-                                  ),
-                                if (_isEditing)
-                                  InkWell(
-                                    onTap: () => _onSaveStatus(order),
-                                    child: Container(
-                                      width: 32,
-                                      height: 32,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primary,
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 24),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              }
+                    ],
+                  );
+                }
 
-              return const Center(child: Text('Commande non trouvée'));
-            },
+                return Center(child: Text(AppLanguage.orderNotFound));
+              },
+            ),
           ),
         ),
       ),
@@ -412,7 +440,7 @@ class _ProductRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                'Qté: ${product.quantity}',
+                '${AppLanguage.quantityAbbr}: ${product.quantity}',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -445,33 +473,40 @@ class _ProductRow extends StatelessWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
+  final VoidCallback? onTap;
 
   const _InfoRow({
     required this.label,
     required this.value,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: onTap != null ? Colors.blue : null,
+              decoration: onTap != null ? TextDecoration.underline : null,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

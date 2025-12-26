@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../utils/constants/app_language.dart';
+import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/features/notifications/domain/repositories/notifications_repository.dart';
+import 'package:amerli_app/core/notifications/notification_service.dart';
 
 /// App settings stored in SharedPreferences.
 ///
@@ -48,7 +51,8 @@ class Settings {
       // Try to read from platform locale. WidgetsBinding should be
       // initialized by the caller (main) before creating injection.
       try {
-        final code = WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+        final code =
+            WidgetsBinding.instance.platformDispatcher.locale.languageCode;
         if (code == 'fr' || code == 'ar' || code == 'en') {
           language = code;
         } else {
@@ -82,7 +86,7 @@ class Settings {
   Future<void> setLanguage(String code) async {
     languageNotifier.value = code;
     await _prefs.setString(_kLanguage, code);
-    
+
     // Update AppLanguage.current when language changes
     if (code == 'fr') {
       AppLanguage.current = AppLocale.fr;
@@ -90,6 +94,19 @@ class Settings {
       AppLanguage.current = AppLocale.ar;
     } else {
       AppLanguage.current = AppLocale.en;
+    }
+
+    // Update language on server
+    try {
+      final notificationService = NotificationService();
+      final fcmToken = await notificationService.getFcmToken();
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        final notificationsRepository = sl<NotificationsRepository>();
+        await notificationsRepository.updateLanguage(fcmToken, code);
+      }
+    } catch (e) {
+      // ignore: avoid_print
+      print('Failed to update language on server: $e');
     }
   }
 

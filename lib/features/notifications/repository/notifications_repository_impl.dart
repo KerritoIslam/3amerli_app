@@ -8,8 +8,10 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   NotificationsRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<AppNotification>> getNotifications({int page = 1, int pageSize = 50}) async {
-    final models = await remoteDataSource.fetchNotifications(page: page, pageSize: pageSize);
+  Future<List<AppNotification>> getNotifications(
+      {int page = 1, int pageSize = 50}) async {
+    final models = await remoteDataSource.fetchNotifications(
+        page: page, pageSize: pageSize);
     return models.map((m) => m.toEntity()).toList();
   }
 
@@ -29,7 +31,12 @@ class NotificationsRepositoryImpl implements NotificationsRepository {
   }
 
   @override
-  Future<void> registerFcmToken(String token, String os) async {
-    await remoteDataSource.registerFcmToken(token, os);
+  Future<void> registerFcmToken(String token, String os, String lang) async {
+    await remoteDataSource.registerFcmToken(token, os, lang);
+  }
+
+  @override
+  Future<void> updateLanguage(String fcmToken, String language) async {
+    await remoteDataSource.updateLanguage(fcmToken, language);
   }
 }

@@ -30,6 +30,7 @@ import '../../features/admin/orders/app/pages/order_detail_page.dart';
 import '../../features/admin/orders/app/bloc/admin_orders_bloc.dart';
 import '../../features/admin/users/app/pages/user_detail_page.dart';
 import '../../features/admin/users/app/bloc/admin_users_bloc.dart';
+import '../../features/admin/categories/domain/entities/category.dart';
 import 'package:amerli_app/features/favorits/app/pages/favorits_page.dart';
 import '../../features/catalog/app/pages/filters_page.dart';
 import '../../features/catalog/app/pages/categories_page.dart';
@@ -44,6 +45,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/features/favorits/app/bloc/favorits_bloc.dart'
     as fav_feature;
 import 'package:amerli_app/features/auth/sign_up/sign_up_cubit.dart';
+import '../../features/splash/splash_screen.dart';
+import '../../features/profile/app/pages/user_information_page.dart';
+import '../../features/profile/app/pages/edit_user_information_page.dart';
+import 'package:amerli_app/features/auth/domain/entities/user.dart';
+import '../../features/cart/app/pages/cart.dart';
 
 // Use GoRouter's built-in GoRouterRefreshStream helper which converts a Stream
 // into a ChangeNotifier that GoRouter can listen to.
@@ -86,10 +92,12 @@ class _CombinedChangeNotifier extends ChangeNotifier {
 }
 
 GoRouter createRouter(
-    {required AuthBloc authBloc, required LocalStorage localStorage}) {
+    {required AuthBloc authBloc,
+    required LocalStorage localStorage,
+    GlobalKey<NavigatorState>? navigatorKey}) {
   // Convert the authBloc stream into a ChangeNotifier GoRouter can listen to
   final authRefresh = _StreamChangeNotifier(authBloc.stream);
-  
+
   // Also listen to language changes to refresh routes when language changes
   // Create a combined notifier that listens to both auth and language changes
   final combinedRefresh = _CombinedChangeNotifier([
@@ -98,11 +106,9 @@ GoRouter createRouter(
   ]);
 
   return GoRouter(
-    // Start the app at the authentication entrypoint. The previous root
-    // (`/`) returned a `SizedBox.shrink()` which produced a black/empty
-    // screen until a redirect happened; using '/auth' makes the initial
-    // visible page explicit and avoids a blank frame on startup.
-    initialLocation: '/auth',
+    navigatorKey: navigatorKey,
+    // Start the app at the splash screen
+    initialLocation: '/splash',
     refreshListenable: combinedRefresh,
     redirect: (context, state) {
       final loc = state.uri.path;
@@ -124,6 +130,7 @@ GoRouter createRouter(
       // Define which paths are non-protected (allowed when unauthenticated).
       final nonProtected = <String>{
         '/',
+        '/splash',
         '/auth',
         '/complete-profile',
         '/payment/success', // Allow deep link access
@@ -200,6 +207,18 @@ GoRouter createRouter(
       return null;
     },
     routes: [
+      // Splash screen route
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) {
+          return SplashScreen(
+            onAnimationComplete: () {
+              // Navigate to auth after animation completes
+              context.go('/auth');
+            },
+          );
+        },
+      ),
       // Special handler for root path "/" - handles custom scheme deep links
       GoRoute(
         path: '/',
@@ -249,7 +268,11 @@ GoRouter createRouter(
       ),
       GoRoute(
         path: '/home',
-        builder: (context, state) => const HomePage(),
+        builder: (context, state) {
+          final tabStr = state.uri.queryParameters['tab'];
+          final tabIndex = int.tryParse(tabStr ?? '0') ?? 0;
+          return HomePage(initialIndex: tabIndex);
+        },
       ),
       GoRoute(
         path: '/complete-profile',
@@ -326,6 +349,20 @@ GoRouter createRouter(
           builder: (context, state) => const NotificationsPage()),
       GoRoute(
           path: '/profile', builder: (context, state) => const ProfilePage()),
+      GoRoute(
+        path: '/profile/info',
+        builder: (context, state) {
+          final user = state.extra as User?;
+          return UserInformationPage(user: user);
+        },
+      ),
+      GoRoute(
+        path: '/profile/edit',
+        builder: (context, state) {
+          final user = state.extra as User?;
+          return EditUserInformationPage(user: user);
+        },
+      ),
       GoRoute(path: '/admin', builder: (context, state) => const AdminPage()),
       GoRoute(
         path: '/admin/products/add',
@@ -368,9 +405,21 @@ GoRouter createRouter(
         path: '/admin/categories/edit/:id',
         builder: (context, state) {
           final id = state.pathParameters['id'];
+          final category = state.extra as Category?;
           return BlocProvider(
             create: (_) => sl<AdminCategoriesBloc>(),
-            child: AddCategoryPage(categoryId: id),
+            child: AddCategoryPage(categoryId: id, category: category),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/admin/subcategories/edit/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'];
+          final category = state.extra as Category?;
+          return BlocProvider(
+            create: (_) => sl<AdminCategoriesBloc>(),
+            child: AddCategoryPage(categoryId: id, category: category),
           );
         },
       ),
@@ -401,6 +450,10 @@ GoRouter createRouter(
       GoRoute(
         path: '/admin/users/filters/brands',
         builder: (context, state) => const AdminUsersFiltersBrandsPage(),
+      ),
+      GoRoute(
+        path: '/cart',
+        builder: (context, state) => const CartPage(),
       ),
 
       // Deep link routes for payment success/failure (HTTPS format)

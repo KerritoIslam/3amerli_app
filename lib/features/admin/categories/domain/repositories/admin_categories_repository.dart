@@ -1,7 +1,8 @@
 import '../entities/category.dart';
 
 abstract class AdminCategoriesRepository {
-  Future<List<Category>> getCategories({String? query});
+  Future<List<Category>> getCategories(
+      {String? query, int page = 1, int limit = 20});
   Future<List<SubCategory>> getSubCategories({String? categoryId});
   Future<Category> getCategory(String id);
   Future<void> addCategory(Category category);

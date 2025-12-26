@@ -40,7 +40,8 @@ String resolveImageUrl(String input) {
     try {
       final origin = Uri.parse(AppConstants.apiBaseUrl).origin;
       // ignore: avoid_print
-      print('[image_resolver] received filename "$s"; not building fallback $origin/files/$s to avoid 404; returning empty string');
+      print(
+          '[image_resolver] received filename "$s"; not building fallback $origin/files/$s to avoid 404; returning empty string');
     } catch (_) {}
   }
   return '';

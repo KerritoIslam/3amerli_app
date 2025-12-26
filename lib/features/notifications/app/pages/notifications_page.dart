@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:amerli_app/utils/constants/app_colors.dart';
 import 'package:amerli_app/features/notifications/app/bloc/notifications_bloc.dart';
 import 'package:amerli_app/features/notifications/app/bloc/notifications_event.dart';
 import 'package:amerli_app/features/notifications/app/bloc/notifications_state.dart';
-import 'package:amerli_app/features/notifications/domain/entities/notification.dart' as ent;
+import 'package:amerli_app/features/notifications/domain/entities/notification.dart'
+    as ent;
 import 'package:amerli_app/features/notifications/app/widgets/notification_card.dart';
 import 'package:amerli_app/core/config/injection.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -53,7 +56,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     children: [
                       // Left-aligned back button
                       Align(
-                        alignment: Alignment.centerLeft,
+                        alignment: AlignmentDirectional.centerStart,
                         child: InkWell(
                           onTap: () => Navigator.of(context).pop(),
                           borderRadius: BorderRadius.circular(24),
@@ -61,19 +64,38 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.tertiaryContainer,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .tertiaryContainer,
                               shape: BoxShape.circle,
                             ),
                             alignment: Alignment.center,
-                            child: SvgPicture.asset('assets/icons/back_arrow.svg', width: 16, height: 16, colorFilter: ColorFilter.mode(Theme.of(context).colorScheme.onPrimary, BlendMode.srcIn),
-                                placeholderBuilder: (context) => Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onPrimary)),
+                            child: SvgPicture.asset(
+                                'assets/icons/back_arrow.svg',
+                                width: 16,
+                                height: 16,
+                                matchTextDirection: true,
+                                colorFilter: ColorFilter.mode(
+                                    Theme.of(context).colorScheme.onPrimary,
+                                    BlendMode.srcIn),
+                                placeholderBuilder: (context) => Icon(
+                                    Icons.arrow_back,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onPrimary)),
                           ),
                         ),
                       ),
 
                       // Centered title
                       Center(
-                        child: Text('Notifications', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 20)),
+                        child: Text(AppLanguage.notificationsTitle,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineLarge
+                                ?.copyWith(
+                                    fontWeight: FontWeight.bold, fontSize: 20)),
                       ),
                     ],
                   ),
@@ -83,70 +105,99 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
                 // Body
                 Expanded(
-                  child: BlocBuilder<NotificationsBloc, NotificationsState>(
-                    bloc: _bloc,
-                    builder: (context, state) {
-                      if (state is NotificationsLoading) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-
-                      if (state is NotificationsError) {
-                        return Center(child: Text('Erreur: ${state.message}'));
-                      }
-
-                      if (state is NotificationsLoaded) {
-                        final today = <ent.AppNotification>[];
-                        final yesterday = <ent.AppNotification>[];
-                        final last7 = <ent.AppNotification>[];
-
-                        final now = DateTime.now();
-                        for (final n in state.items) {
-                          final d = n.createdAt;
-                          final diff = now.difference(d).inDays;
-                          if (isSameDate(d, now)) {
-                            today.add(n);
-                          } else if (diff == 1) {
-                            yesterday.add(n);
-                          } else {
-                            last7.add(n);
-                          }
+                  child: RefreshIndicator(
+                    onRefresh: () async {
+                      _bloc.add(NotificationsLoadEvent());
+                      // Wait for state change or timeout
+                      await Future.delayed(const Duration(seconds: 1));
+                    },
+                    child: BlocBuilder<NotificationsBloc, NotificationsState>(
+                      bloc: _bloc,
+                      builder: (context, state) {
+                        if (state is NotificationsLoading) {
+                          return const Center(
+                              child: CircularProgressIndicator());
                         }
 
-                        // Determine which section is shown first so we can place the
-                        // "Marquer tout comme lu" action next to that section header
-                        String? firstSection;
-                        if (today.isNotEmpty) {
-                          firstSection = 'today';
-                        } else if (yesterday.isNotEmpty) firstSection = 'yesterday';
-                        else if (last7.isNotEmpty) firstSection = 'last7';
-
-                        return SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        if (state is NotificationsError) {
+                          // Wrap in ListView to allow pull-to-refresh even on error
+                          return ListView(
                             children: [
-                              if (today.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                sectionHeaderWithAction('Aujourd\'hui', showAction: firstSection == 'today'),
-                                ...today.map((n) => _buildDismissibleNotification(n)),
-                              ],
-                              if (yesterday.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                sectionHeaderWithAction('Hier', showAction: firstSection == 'yesterday'),
-                                ...yesterday.map((n) => _buildDismissibleNotification(n)),
-                              ],
-                              if (last7.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                sectionHeaderWithAction('Les 7 derniers jours', showAction: firstSection == 'last7'),
-                                ...last7.map((n) => _buildDismissibleNotification(n)),
-                              ],
-                              const SizedBox(height: 40),
+                              SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.height * 0.7,
+                                child: Center(
+                                    child: Text(
+                                        '${AppLanguage.error}: ${state.message}')),
+                              ),
                             ],
-                          ),
-                        );
-                      }
+                          );
+                        }
 
-                      return const SizedBox.shrink();
-                    },
+                        if (state is NotificationsLoaded) {
+                          final today = <ent.AppNotification>[];
+                          final yesterday = <ent.AppNotification>[];
+                          final last7 = <ent.AppNotification>[];
+
+                          final now = DateTime.now();
+                          for (final n in state.items) {
+                            final d = n.createdAt;
+                            final diff = now.difference(d).inDays;
+                            if (isSameDate(d, now)) {
+                              today.add(n);
+                            } else if (diff == 1) {
+                              yesterday.add(n);
+                            } else {
+                              last7.add(n);
+                            }
+                          }
+
+                          // Determine which section is shown first so we can place the
+                          // "Marquer tout comme lu" action next to that section header
+                          String? firstSection;
+                          if (today.isNotEmpty) {
+                            firstSection = 'today';
+                          } else if (yesterday.isNotEmpty) {
+                            firstSection = 'yesterday';
+                          } else if (last7.isNotEmpty) {
+                            firstSection = 'last7';
+                          }
+
+                          return SingleChildScrollView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (today.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  sectionHeaderWithAction(AppLanguage.today,
+                                      showAction: firstSection == 'today'),
+                                  ...today.map(
+                                      (n) => _buildDismissibleNotification(n)),
+                                ],
+                                if (yesterday.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  sectionHeaderWithAction(AppLanguage.yesterday,
+                                      showAction: firstSection == 'yesterday'),
+                                  ...yesterday.map(
+                                      (n) => _buildDismissibleNotification(n)),
+                                ],
+                                if (last7.isNotEmpty) ...[
+                                  const SizedBox(height: 12),
+                                  sectionHeaderWithAction(AppLanguage.last7Days,
+                                      showAction: firstSection == 'last7'),
+                                  ...last7.map(
+                                      (n) => _buildDismissibleNotification(n)),
+                                ],
+                                const SizedBox(height: 40),
+                              ],
+                            ),
+                          );
+                        }
+
+                        return const SizedBox.shrink();
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -173,12 +224,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       ),
       onDismissed: (direction) {
         _bloc.add(NotificationsDeleteEvent(notification.id));
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Notification supprimée'),
-            duration: const Duration(seconds: 2),
-          ),
-        );
+        TopToast.show(context, AppLanguage.notificationDeleted);
       },
       child: NotificationListCard(
         notification: notification,
@@ -190,7 +236,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
   Widget sectionHeader(String text) {
     return Padding(
       padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
-      child: Text(text, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+      child: Text(text,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(fontWeight: FontWeight.w600)),
     );
   }
 
@@ -199,22 +249,31 @@ class _NotificationsPageState extends State<NotificationsPage> {
       padding: const EdgeInsets.only(top: 12.0, bottom: 8.0),
       child: Row(
         children: [
-          Expanded(child: Text(text, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
+          Expanded(
+              child: Text(text,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w600))),
           if (showAction)
             TextButton(
               onPressed: () => _bloc.add(NotificationsMarkAllReadEvent()),
-              child: Text('Marquer tout comme lu', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Theme.of(context).colorScheme.primary , decoration: TextDecoration.underline , decorationColor: Theme.of(context).colorScheme.primary)),
+              child: Text(AppLanguage.markAllAsRead,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: Theme.of(context).colorScheme.primary,
+                      decoration: TextDecoration.underline,
+                      decorationColor: Theme.of(context).colorScheme.primary)),
             ),
         ],
       ),
     );
   }
 
-  bool isSameDate(DateTime a, DateTime b) => a.year == b.year && a.month == b.month && a.day == b.day;
-
   void onTapNotification(ent.AppNotification n) {
-    // For now navigate to orders page or show details - we simply mark read and show snackbar
     _bloc.add(NotificationsToggleReadEvent(n));
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ouvrir la commande liée à la notification')));
+    TopToast.show(context, AppLanguage.openOrderLinkedToNotification);
   }
+
+  bool isSameDate(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month && a.day == b.day;
 }

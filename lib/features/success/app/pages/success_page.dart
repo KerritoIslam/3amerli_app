@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:amerli_app/utils/constants/app_language.dart';
 import 'package:amerli_app/features/orders/presentation/pages/order_tracking_page.dart';
 import 'package:amerli_app/features/orders/domain/entities/order.dart';
+import 'package:amerli_app/core/utils/top_toast.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_bloc.dart';
+import 'package:amerli_app/features/cart/app/bloc/cart_event.dart';
+import 'package:amerli_app/features/orders/app/bloc/orders_bloc.dart';
+import 'package:amerli_app/core/config/injection.dart';
 
 /// Minimal, clean SuccessPage implementation.
 class SuccessPage extends StatefulWidget {
@@ -55,7 +61,17 @@ class _SuccessPageState extends State<SuccessPage>
       if (s == AnimationStatus.completed) {
         // after arc+check finish, move the circle up, then reveal content
         setState(() => _moved = true);
-        Future.delayed(_moveDuration, () => setState(() => _done = true));
+        Future.delayed(_moveDuration, () {
+          if (mounted) {
+            setState(() => _done = true);
+            // Clear cart only after animation is done and content is revealed
+            try {
+              context.read<CartBloc>().add(CartClearEvent());
+            } catch (e) {
+              debugPrint('Could not clear cart: $e');
+            }
+          }
+        });
       }
     });
     _controller.forward();
@@ -79,8 +95,7 @@ class _SuccessPageState extends State<SuccessPage>
         centerTitle: true,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
-              '/cart', (route) => route.settings.name == '/'),
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(AppLanguage.success,
             style: Theme.of(context)
@@ -152,9 +167,10 @@ class _SuccessPageState extends State<SuccessPage>
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () {
-                            // Navigate to home page (catalog is at index 0)
                             Navigator.of(context).pushNamedAndRemoveUntil(
-                                '/home', (route) => false);
+                              '/home',
+                              (route) => false,
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
@@ -178,16 +194,16 @@ class _SuccessPageState extends State<SuccessPage>
                             if (widget.order != null) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) =>
-                                      OrderTrackingPage(order: widget.order!),
+                                  builder: (_) => BlocProvider.value(
+                                    value: sl<OrdersBloc>(),
+                                    child:
+                                        OrderTrackingPage(order: widget.order!),
+                                  ),
                                 ),
                               );
                             } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text(AppLanguage.orderNotAvailable)),
-                              );
+                              TopToast.show(
+                                  context, AppLanguage.orderNotAvailable);
                             }
                           },
                           style: OutlinedButton.styleFrom(
@@ -263,11 +279,10 @@ class _SuccessPageState extends State<SuccessPage>
                           return widget.onInvoiceTap!.call();
                         }
                         if (widget.invoiceUrl != null) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(AppLanguage.openingInvoice)));
+                          TopToast.show(context, AppLanguage.openingInvoice);
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(AppLanguage.invoiceNotAvailable)));
+                          TopToast.show(
+                              context, AppLanguage.invoiceNotAvailable);
                         }
                       },
                       child: Text(AppLanguage.downloadOrViewInvoice,

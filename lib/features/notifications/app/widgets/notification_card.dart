@@ -5,13 +5,14 @@ import 'package:amerli_app/features/notifications/domain/entities/notification.d
 class NotificationListCard extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback? onTap;
-  const NotificationListCard({super.key, required this.notification, this.onTap});
+  const NotificationListCard(
+      {super.key, required this.notification, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final timeText = _formatTime(notification.createdAt);
     return InkWell(
-      onTap: onTap,
+      onTap: null, // Clickability disabled as requested
       borderRadius: BorderRadius.circular(12),
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6.0),
@@ -19,7 +20,12 @@ class NotificationListCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), offset: const Offset(0, 2), blurRadius: 4)],
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                offset: const Offset(0, 2),
+                blurRadius: 4)
+          ],
         ),
         child: Row(
           children: [
@@ -31,7 +37,13 @@ class NotificationListCard extends StatelessWidget {
                 height: 64,
                 color: Colors.grey.shade200,
                 alignment: Alignment.center,
-                child: SvgPicture.asset('assets/icons/notifications.svg', width: 36, height: 36, color: Colors.grey.shade600, placeholderBuilder: (context) => Icon(Icons.notifications, color: Colors.grey.shade600, size: 36)),
+                child: SvgPicture.asset('assets/icons/notifications.svg',
+                    width: 36,
+                    height: 36,
+                    colorFilter:
+                        ColorFilter.mode(Colors.grey.shade600, BlendMode.srcIn),
+                    placeholderBuilder: (context) => Icon(Icons.notifications,
+                        color: Colors.grey.shade600, size: 36)),
               ),
             ),
             const SizedBox(width: 12),
@@ -42,13 +54,25 @@ class NotificationListCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: Text(notification.title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF333333)))),
+                      Expanded(
+                          child: Text(notification.title,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(color: const Color(0xFF333333)))),
                       const SizedBox(width: 8),
-                      Text(timeText, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF888888))),
+                      Text(timeText,
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: const Color(0xFF888888))),
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(notification.body, style: Theme.of(context).textTheme.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  Text(notification.body,
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),
@@ -59,8 +83,8 @@ class NotificationListCard extends StatelessWidget {
   }
 
   String _formatTime(DateTime dt) {
-    final hm = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    final hm =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     return hm;
   }
 }
-

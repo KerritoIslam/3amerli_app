@@ -8,9 +8,19 @@ class Category extends Equatable {
   final String? image;
   final List<Product> products;
   final List<Category> subcategories;
+  final int? parentId;
 
-  const Category({required this.id, required this.name, this.description, this.image, this.products = const [], this.subcategories = const []});
+  const Category({
+    required this.id,
+    required this.name,
+    this.description,
+    this.image,
+    this.products = const [],
+    this.subcategories = const [],
+    this.parentId,
+  });
 
   @override
-  List<Object?> get props => [id, name, description, image, products, subcategories];
+  List<Object?> get props =>
+      [id, name, description, image, products, subcategories, parentId];
 }

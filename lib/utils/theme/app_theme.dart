@@ -30,6 +30,14 @@ class AppTheme {
       labelSmall: AppTextStyles.small,
     ),
     iconTheme: IconThemeData(color: AppColors.lightScheme.onSurface),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
     extensions: const [BrandColors.light],
   );
 
@@ -58,6 +66,14 @@ class AppTheme {
       labelSmall: AppTextStyles.small,
     ),
     iconTheme: IconThemeData(color: AppColors.darkScheme.onSurface),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.windows: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+      },
+    ),
     extensions: const [BrandColors.dark],
   );
 }

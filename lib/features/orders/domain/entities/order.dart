@@ -6,12 +6,14 @@ class OrderProduct {
   final String name;
   final int quantity;
   final double price;
+  final String? imageUrl;
 
   OrderProduct({
     required this.productId,
     required this.name,
     required this.quantity,
     required this.price,
+    this.imageUrl,
   });
 }
 
@@ -21,9 +23,11 @@ class Order {
   final String buyerId;
   final String address;
   final String paymentMethod;
+  final double totalAmount;
   final List<OrderProduct> products;
   final OrderStatus status;
   final DateTime createdAt;
+  final int productCount;
 
   Order({
     required this.id,
@@ -31,8 +35,10 @@ class Order {
     required this.buyerId,
     required this.address,
     required this.paymentMethod,
+    required this.totalAmount,
     required this.products,
     required this.status,
     required this.createdAt,
+    this.productCount = 0,
   });
 }

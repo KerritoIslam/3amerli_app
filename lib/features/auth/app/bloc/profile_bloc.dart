@@ -35,6 +35,7 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
           addressId: currentUser.addressId,
           role: currentUser.role,
           profilePic: event.imageUrl,
+          addresses: currentUser.addresses,
         );
         emit(ProfileLoaded(user: updatedUser));
       } else {
@@ -50,11 +51,22 @@ class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
             addressId: user.addressId,
             role: user.role,
             profilePic: event.imageUrl,
+            addresses: user.addresses,
           );
           emit(ProfileLoaded(user: updatedUser));
         } catch (e) {
           emit(ProfileError(message: e.toString()));
         }
+      }
+    });
+
+    on<UpdateUserInfoEvent>((event, emit) async {
+      emit(ProfileLoading());
+      try {
+        final user = await repository.updateProfile(event.data);
+        emit(ProfileLoaded(user: user));
+      } catch (e) {
+        emit(ProfileError(message: e.toString()));
       }
     });
   }

@@ -7,17 +7,25 @@ class OrdersInitial extends OrdersState {}
 class OrdersLoading extends OrdersState {}
 
 class OrdersLoaded extends OrdersState {
-	final List<Order> items;
-	OrdersLoaded(this.items);
+  final List<Order> items;
+  final bool hasNextPage;
+  final int total;
+
+  OrdersLoaded(this.items, {this.hasNextPage = false, this.total = 0});
 }
 
 class OrdersError extends OrdersState {
-	final String message;
-	OrdersError(this.message);
+  final String message;
+  OrdersError(this.message);
+}
+
+class OrderCreationError extends OrdersState {
+  final String message;
+  OrderCreationError(this.message);
 }
 
 class OrderCreated extends OrdersState {
-	final Order order;
-	final String? checkoutUrl;
-	OrderCreated(this.order, {this.checkoutUrl});
+  final Order order;
+  final String? checkoutUrl;
+  OrderCreated(this.order, {this.checkoutUrl});
 }

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:amerli_app/core/dio/api_service.dart';
 import '../../domain/entities/brand.dart';
 import '../../domain/repositories/admin_brands_repository.dart';
@@ -7,10 +8,23 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
 
   AdminBrandsRepositoryImpl({required this.apiService});
 
+  Never _handleError(dynamic e) {
+    if (e is DioException && e.response?.data != null) {
+      final data = e.response!.data;
+      if (data is Map && data['message'] != null) {
+        final msg = data['message'];
+        if (msg is List) throw Exception(msg.join('\n'));
+        throw Exception(msg.toString());
+      }
+    }
+    throw e;
+  }
+
   @override
-  Future<List<Brand>> getAllBrands() async {
+  Future<List<Brand>> getAllBrands({int page = 1, int limit = 20}) async {
     try {
-      final resp = await apiService.get('/brands');
+      final resp = await apiService
+          .get('/brands', queryParameters: {'page': page, 'limit': limit});
       if (resp.data is List) {
         return (resp.data as List)
             .map((e) => Brand(
@@ -23,7 +37,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Get all brands error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -42,7 +56,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Get brand by id error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -53,7 +67,8 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
       if (resp.data is Map) {
         final data = resp.data as Map;
         return Brand(
-          id: data['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+          id: data['id']?.toString() ??
+              DateTime.now().millisecondsSinceEpoch.toString(),
           name: data['label']?.toString() ?? data['name']?.toString() ?? name,
         );
       }
@@ -65,7 +80,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Create brand error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -85,7 +100,7 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Update brand error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 
@@ -93,13 +108,15 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
   Future<void> deleteBrand(String id) async {
     try {
       final resp = await apiService.delete('/brands/$id');
-      if (resp.statusCode == null || resp.statusCode! < 200 || resp.statusCode! >= 300) {
+      if (resp.statusCode == null ||
+          resp.statusCode! < 200 ||
+          resp.statusCode! >= 300) {
         throw Exception('Failed to delete brand: ${resp.statusCode}');
       }
     } catch (e) {
       // ignore: avoid_print
       print('[ADMIN BRANDS] Delete brand error: $e');
-      rethrow;
+      _handleError(e);
     }
   }
 }

@@ -9,7 +9,8 @@ class OrdersState {
 
   OrdersState({this.loading = false, this.orders = const [], this.error});
 
-  OrdersState copyWith({bool? loading, List<Order>? orders, String? error}) => OrdersState(
+  OrdersState copyWith({bool? loading, List<Order>? orders, String? error}) =>
+      OrdersState(
         loading: loading ?? this.loading,
         orders: orders ?? this.orders,
         error: error,
@@ -24,8 +25,8 @@ class OrdersCubit extends Cubit<OrdersState> {
   Future<void> loadOrders() async {
     emit(state.copyWith(loading: true, error: null));
     try {
-      final orders = await repository.fetchOrders();
-      emit(state.copyWith(loading: false, orders: orders));
+      final result = await repository.fetchOrders();
+      emit(state.copyWith(loading: false, orders: result.orders));
     } catch (e) {
       emit(state.copyWith(loading: false, error: e.toString()));
     }

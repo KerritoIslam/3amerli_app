@@ -26,7 +26,7 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
       ..setUserAgent(
-        'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36',
+        'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
       )
       ..enableZoom(true)
       ..setNavigationDelegate(
@@ -84,6 +84,10 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
           },
         );
     }
+
+    // Clear cache and local storage to ensure clean state for reCAPTCHA
+    _controller.clearCache();
+    _controller.clearLocalStorage();
 
     // Load request after configuration
     _controller.loadRequest(Uri.parse(widget.checkoutUrl));
@@ -181,7 +185,10 @@ class _PaymentWebViewPageState extends State<PaymentWebViewPage> {
       ),
       body: Stack(
         children: [
-          WebViewWidget(controller: _controller),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 100.0),
+            child: WebViewWidget(controller: _controller),
+          ),
           if (_isLoading)
             const Center(
               child: CircularProgressIndicator(),

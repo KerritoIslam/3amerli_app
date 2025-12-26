@@ -6,6 +6,8 @@ abstract class AdminProductsRepository {
     String? category,
     List<int>? categoryIds,
     List<int>? brandIds,
+    int page = 1,
+    int limit = 20,
   });
   Future<Product> getProductById(String id);
   Future<void> addProduct(Product product);

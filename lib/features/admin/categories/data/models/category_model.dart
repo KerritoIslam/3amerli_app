@@ -20,14 +20,23 @@ class CategoryModel {
   });
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    // API returns full URLs, no need to resolve them
+    final pictureUrl = json['pictureUrl'] as String? ??
+        json['imageUrl'] as String? ??
+        json['picture'] as String?;
+
     return CategoryModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      description: json['description'] as String,
-      imageUrl: json['imageUrl'] as String?,
-      productCount: json['productCount'] as int,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      id: json['id']?.toString() ?? '',
+      name: json['label'] as String? ?? json['name'] as String? ?? '',
+      description: json['description'] as String? ?? '',
+      imageUrl: pictureUrl,
+      productCount: (json['productCount'] as num?)?.toInt() ?? 0,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -71,31 +80,59 @@ class CategoryModel {
 class SubCategoryModel {
   final String id;
   final String name;
+  final String? imageUrl;
   final String categoryId;
   final String categoryName;
   final int productCount;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final String? parentImageUrl;
 
   SubCategoryModel({
     required this.id,
     required this.name,
+    this.imageUrl,
     required this.categoryId,
     required this.categoryName,
     required this.productCount,
     required this.createdAt,
     required this.updatedAt,
+    this.parentImageUrl,
   });
 
   factory SubCategoryModel.fromJson(Map<String, dynamic> json) {
+    // API returns full URLs, no need to resolve them
+    final pictureUrl = json['pictureUrl'] as String? ??
+        json['imageUrl'] as String? ??
+        json['picture'] as String?;
+
     return SubCategoryModel(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      categoryId: json['categoryId'] as String,
-      categoryName: json['categoryName'] as String,
-      productCount: json['productCount'] as int,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      id: json['id']?.toString() ?? '',
+      name: json['label'] as String? ?? json['name'] as String? ?? '',
+      imageUrl: pictureUrl,
+      categoryId: json['parentCategory'] is Map
+          ? (json['parentCategory']['id']?.toString() ?? '')
+          : (json['categoryId']?.toString() ??
+              json['parentId']?.toString() ??
+              ''),
+      categoryName: json['parentCategory'] is Map
+          ? (json['parentCategory']['label'] as String? ??
+              json['parentCategory']['name'] as String? ??
+              '')
+          : (json['categoryName'] as String? ??
+              json['parentLabel'] as String? ??
+              ''),
+      productCount: (json['productCount'] as num?)?.toInt() ?? 0,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : DateTime.now(),
+      parentImageUrl: json['parentCategory'] is Map
+          ? (json['parentCategory']['pictureUrl'] as String? ??
+              json['parentCategory']['imageUrl'] as String?)
+          : null,
     );
   }
 
@@ -103,11 +140,13 @@ class SubCategoryModel {
     return {
       'id': id,
       'name': name,
+      'imageUrl': imageUrl,
       'categoryId': categoryId,
       'categoryName': categoryName,
       'productCount': productCount,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'parentImageUrl': parentImageUrl,
     };
   }
 
@@ -115,11 +154,13 @@ class SubCategoryModel {
     return SubCategory(
       id: id,
       name: name,
+      imageUrl: imageUrl,
       categoryId: categoryId,
       categoryName: categoryName,
       productCount: productCount,
       createdAt: createdAt,
       updatedAt: updatedAt,
+      parentImageUrl: parentImageUrl,
     );
   }
 
@@ -127,11 +168,13 @@ class SubCategoryModel {
     return SubCategoryModel(
       id: subCategory.id,
       name: subCategory.name,
+      imageUrl: subCategory.imageUrl,
       categoryId: subCategory.categoryId,
       categoryName: subCategory.categoryName,
       productCount: subCategory.productCount,
       createdAt: subCategory.createdAt,
       updatedAt: subCategory.updatedAt,
+      parentImageUrl: subCategory.parentImageUrl,
     );
   }
 }

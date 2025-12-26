@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 /// Failure page with animated X mark, similar to SuccessPage
 class FailurePage extends StatefulWidget {
@@ -25,7 +26,8 @@ class FailurePage extends StatefulWidget {
   State<FailurePage> createState() => _FailurePageState();
 }
 
-class _FailurePageState extends State<FailurePage> with SingleTickerProviderStateMixin {
+class _FailurePageState extends State<FailurePage>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _arc;
   late final Animation<double> _xMark;
@@ -37,9 +39,14 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
   void initState() {
     super.initState();
     // make the arc draw a bit longer and then run a shorter elastic X mark scale
-    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1300));
-    _arc = CurvedAnimation(parent: _controller, curve: const Interval(0.0, 0.8, curve: Curves.easeInOut));
-    _xMark = CurvedAnimation(parent: _controller, curve: const Interval(0.82, 1.0, curve: Curves.elasticOut));
+    _controller = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1300));
+    _arc = CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.8, curve: Curves.easeInOut));
+    _xMark = CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.82, 1.0, curve: Curves.elasticOut));
     _controller.addStatusListener((s) {
       if (s == AnimationStatus.completed) {
         // after arc+X mark finish, move the circle up, then reveal content
@@ -58,20 +65,26 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
 
   @override
   Widget build(BuildContext context) {
-    const errorColor = Color(0xFFE53935); // Red color for error
+    final errorColor = Theme.of(context).colorScheme.error;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/cart', (route) => route.settings.name == '/'),
+          icon: Icon(Icons.arrow_back,
+              color: Theme.of(context).colorScheme.onSurface),
+          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil(
+              '/cart', (route) => route.settings.name == '/'),
         ),
-        title: Text('Échec du paiement', style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, color: Colors.black)),
-        iconTheme: const IconThemeData(color: Colors.black),
+        title: Text(AppLanguage.paymentFailed,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurface)),
+        iconTheme:
+            IconThemeData(color: Theme.of(context).colorScheme.onSurface),
       ),
       body: SafeArea(
         child: Stack(
@@ -84,11 +97,18 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                 top: MediaQuery.of(context).size.height * 0.40,
                 child: Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 18.0, vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18.0, vertical: 16.0),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surface,
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(40),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 8, offset: const Offset(0, 4))],
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4))
+                    ],
                   ),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -101,22 +121,29 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                           width: 112,
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.3),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant
+                                .withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
                       ),
 
                       // Summary rows
-                      _summaryRow('Date', widget.date ?? '-'),
+                      _summaryRow(AppLanguage.date, widget.date ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Méthode de paiement', widget.paymentMethod ?? '-'),
+                      _summaryRow(AppLanguage.paymentMethod,
+                          widget.paymentMethod ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Commande', widget.orderId ?? '-'),
+                      _summaryRow(AppLanguage.order, widget.orderId ?? '-'),
                       const SizedBox(height: 8),
-                      _summaryRow('Montant', widget.amount ?? '-', emphasize: true),
+                      _summaryRow(AppLanguage.amount, widget.amount ?? '-',
+                          emphasize: true),
                       const SizedBox(height: 8),
-                      _summaryRow('Raison', widget.failureReason ?? 'Erreur inconnue', emphasize: true, isError: true),
+                      _summaryRow(AppLanguage.reason,
+                          widget.failureReason ?? AppLanguage.unknownError,
+                          emphasize: true, isError: true),
 
                       const SizedBox(height: 12),
 
@@ -125,12 +152,19 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
-                          onPressed: widget.onRetryTap ?? () => Navigator.of(context).pushNamedAndRemoveUntil('/cart', (route) => route.settings.name == '/'),
+                          onPressed: widget.onRetryTap ??
+                              () => Navigator.of(context)
+                                  .pushNamedAndRemoveUntil('/cart',
+                                      (route) => route.settings.name == '/'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: errorColor,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onError,
                             shape: const StadiumBorder(),
                           ),
-                          child: const Text('Réessayer le paiement', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                          child: Text(AppLanguage.retryPayment,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w700)),
                         ),
                       ),
 
@@ -140,13 +174,18 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                         width: double.infinity,
                         height: 44,
                         child: OutlinedButton(
-                          onPressed: () => Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false),
+                          onPressed: () => Navigator.of(context)
+                              .pushNamedAndRemoveUntil('/', (route) => false),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: errorColor),
+                            side: BorderSide(color: errorColor),
                             shape: const StadiumBorder(),
                             backgroundColor: Colors.transparent,
+                            foregroundColor:
+                                Theme.of(context).colorScheme.onSurface,
                           ),
-                          child: const Text('Retour à l\'accueil', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w600)),
+                          child: Text(AppLanguage.backToHome,
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                     ],
@@ -180,7 +219,8 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                           scale: (_xMark.value).clamp(0.0, 1.0) * 1.25,
                           child: Opacity(
                             opacity: _xMark.value.clamp(0.0, 1.0),
-                            child: const Icon(Icons.close, size: 64, color: errorColor),
+                            child:
+                                Icon(Icons.close, size: 64, color: errorColor),
                           ),
                         ),
                       ],
@@ -199,9 +239,11 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
                 child: Column(
                   children: [
                     Text(
-                      'Désolé, votre paiement n\'a pas pu être traité.\nVeuillez vérifier vos informations de paiement et réessayer.',
+                      AppLanguage.paymentFailedMessage,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
                     ),
                   ],
                 ),
@@ -212,14 +254,29 @@ class _FailurePageState extends State<FailurePage> with SingleTickerProviderStat
     );
   }
 
-  Widget _summaryRow(String label, String value, {bool emphasize = false, bool isError = false}) {
-    final labelStyle = emphasize ? const TextStyle(fontWeight: FontWeight.w700) : const TextStyle(color: Colors.black54);
-    final valueStyle = emphasize 
-        ? TextStyle(fontWeight: FontWeight.w800, color: isError ? const Color(0xFFE53935) : null)
-        : const TextStyle(fontWeight: FontWeight.w600);
+  Widget _summaryRow(String label, String value,
+      {bool emphasize = false, bool isError = false}) {
+    final labelStyle = emphasize
+        ? TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).colorScheme.onSurface)
+        : TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant);
+    final valueStyle = emphasize
+        ? TextStyle(
+            fontWeight: FontWeight.w800,
+            color: isError
+                ? Theme.of(context).colorScheme.error
+                : Theme.of(context).colorScheme.onSurface)
+        : TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [Text(label, style: labelStyle), Flexible(child: Text(value, style: valueStyle, textAlign: TextAlign.end))],
+      children: [
+        Text(label, style: labelStyle),
+        Flexible(
+            child: Text(value, style: valueStyle, textAlign: TextAlign.end))
+      ],
     );
   }
 }
@@ -229,7 +286,10 @@ class _CircleArcPainter extends CustomPainter {
   final Color strokeColor;
   final double strokeWidth;
 
-  _CircleArcPainter({required this.progress, required this.strokeColor, this.strokeWidth = 4});
+  _CircleArcPainter(
+      {required this.progress,
+      required this.strokeColor,
+      this.strokeWidth = 4});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -239,7 +299,7 @@ class _CircleArcPainter extends CustomPainter {
     final base = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
-      ..color = strokeColor.withOpacity(0.12)
+      ..color = strokeColor.withValues(alpha: 0.12)
       ..strokeCap = StrokeCap.round;
 
     canvas.drawCircle(center, radius, base);
@@ -252,9 +312,13 @@ class _CircleArcPainter extends CustomPainter {
 
     final start = -pi / 2;
     final sweep = 2 * pi * progress;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start, sweep, false, arc);
+    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start,
+        sweep, false, arc);
   }
 
   @override
-  bool shouldRepaint(covariant _CircleArcPainter oldDelegate) => oldDelegate.progress != progress || oldDelegate.strokeColor != strokeColor || oldDelegate.strokeWidth != strokeWidth;
+  bool shouldRepaint(covariant _CircleArcPainter oldDelegate) =>
+      oldDelegate.progress != progress ||
+      oldDelegate.strokeColor != strokeColor ||
+      oldDelegate.strokeWidth != strokeWidth;
 }

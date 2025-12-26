@@ -7,7 +7,9 @@ import '../../../orders/app/bloc/orders_event.dart';
 import '../../../orders/app/bloc/orders_state.dart';
 import '../../../../core/config/injection.dart';
 import 'order_tracking_page.dart';
-import '../../../../core/error/error_handler.dart';
+import 'user_order_details_page.dart';
+
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class MesCommandesPage extends StatefulWidget {
   const MesCommandesPage({super.key});
@@ -24,47 +26,77 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
         AppLanguage.ordersTabCanceled,
       ];
   int selected = 0;
-  late final PageController _pageController;
+  final ScrollController _scrollController = ScrollController();
+  final Color _primary = const Color(0xFFA7C957);
+  final Color _dark = const Color(0xFF083B2E);
+  late OrdersBloc _ordersBloc;
 
   @override
   void initState() {
     super.initState();
-    sl<OrdersBloc>().add(OrdersLoadEvent());
-    _pageController = PageController(initialPage: selected);
+    _ordersBloc = sl<OrdersBloc>();
+    _loadOrders();
+    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  List<Order> _filterForIndex(List<Order> items, int tabIndex) {
-    if (tabIndex == 0) return items;
-    if (tabIndex == 1)
-      return items
-          .where((o) =>
-              o.status == OrderStatus.preparing ||
-              o.status == OrderStatus.delivering)
-          .toList();
-    if (tabIndex == 2)
-      return items.where((o) => o.status == OrderStatus.delivered).toList();
-    return items.where((o) => o.status == OrderStatus.canceled).toList();
+  void _onScroll() {
+    if (_isBottom) {
+      final state = _ordersBloc.state;
+      if (state is OrdersLoaded && state.hasNextPage) {
+        final currentCount = state.items.length;
+        final nextPage = (currentCount / 20).ceil() + 1;
+
+        _ordersBloc.add(OrdersLoadEvent(
+          page: nextPage,
+          status: _getStatusForTab(selected),
+        ));
+      }
+    }
   }
 
-  // Old single-index filter removed; use _filterForIndex instead
+  bool get _isBottom {
+    if (!_scrollController.hasClients) return false;
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.offset;
+    return currentScroll >= (maxScroll * 0.9);
+  }
 
-  final Color _primary = const Color(0xFFA7C957);
-  final Color _dark = const Color(0xFF083B2E);
+  void _loadOrders() {
+    _ordersBloc.add(OrdersLoadEvent(
+      page: 1,
+      status: _getStatusForTab(selected),
+    ));
+  }
+
+  String? _getStatusForTab(int index) {
+    switch (index) {
+      case 0:
+        return null; // All
+      case 1:
+        return 'IN_PROGRESS'; // In Progress
+      case 2:
+        return 'DELIVERED';
+      case 3:
+        return 'CANCELED';
+      default:
+        return null;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider.value(
-      value: sl<OrdersBloc>(),
+      value: _ordersBloc,
       child: BlocListener<OrdersBloc, OrdersState>(
         listener: (context, state) {
           if (state is OrdersError) {
-            ErrorHandler.showError(context, state.message);
+            TopToast.show(context, state.message, isError: true);
           }
         },
         child: Scaffold(
@@ -83,7 +115,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                               color: _dark))),
                   const SizedBox(height: 16),
 
-                  // Tabs with sliding indicator and swipe-to-change via PageView
+                  // Tabs
                   LayoutBuilder(builder: (context, constraints) {
                     final tabWidth = constraints.maxWidth / tabs.length;
                     return Directionality(
@@ -98,13 +130,8 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                   return Expanded(
                                     child: GestureDetector(
                                       onTap: () {
-                                        _pageController.animateToPage(
-                                          i,
-                                          duration:
-                                              const Duration(milliseconds: 300),
-                                          curve: Curves.easeInOut,
-                                        );
                                         setState(() => selected = i);
+                                        _loadOrders();
                                       },
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
@@ -113,7 +140,7 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                         child: Text(
                                           tabs[i],
                                           style: TextStyle(
-                                            fontSize: 16,
+                                            fontSize: 13,
                                             fontWeight: FontWeight.w600,
                                             color: active
                                                 ? _primary
@@ -126,22 +153,13 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                                 }),
                               ),
                               // Sliding indicator
-                              AnimatedBuilder(
-                                animation: _pageController,
-                                builder: (context, child) {
-                                  final page = (_pageController.hasClients &&
-                                          _pageController.page != null)
-                                      ? _pageController.page!
-                                      : selected.toDouble();
-                                  final left = page * tabWidth;
-                                  return Positioned(
-                                    left: left,
-                                    bottom: 0,
-                                    width: tabWidth,
-                                    child:
-                                        Container(height: 2, color: _primary),
-                                  );
-                                },
+                              AnimatedPositioned(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                left: selected * tabWidth,
+                                bottom: 0,
+                                width: tabWidth,
+                                child: Container(height: 2, color: _primary),
                               ),
                             ],
                           ),
@@ -156,49 +174,75 @@ class _MesCommandesPageState extends State<MesCommandesPage> {
                   Expanded(
                     child: BlocBuilder<OrdersBloc, OrdersState>(
                         builder: (context, state) {
-                      if (state is OrdersLoading)
+                      if (state is OrdersLoading) {
                         return const Center(child: CircularProgressIndicator());
-                      if (state is OrdersError) {
-                        // Error handled by BlocListener
-                        return Center(child: Text(AppLanguage.noOrdersFound));
                       }
-
-                      // Use PageView so users can swipe between tabs
-                      return PageView.builder(
-                        controller: _pageController,
-                        itemCount: tabs.length,
-                        onPageChanged: (idx) => setState(() => selected = idx),
-                        itemBuilder: (context, pageIndex) {
-                          final items = state is OrdersLoaded
-                              ? _filterForIndex(state.items, pageIndex)
-                              : const <Order>[];
-                          return RefreshIndicator(
-                            onRefresh: () async {
-                              sl<OrdersBloc>().add(OrdersLoadEvent());
-                              await sl<OrdersBloc>()
-                                  .stream
-                                  .firstWhere((s) => s is! OrdersLoading);
-                            },
-                            child: ListView.builder(
-                              padding:
-                                  const EdgeInsets.only(top: 8, bottom: 20),
-                              itemCount: items.length,
-                              itemBuilder: (context, index) {
-                                final o = items[index];
-                                return Padding(
-                                  padding: const EdgeInsets.only(bottom: 16.0),
-                                  child: _OrderCard(
-                                      order: o,
-                                      onFollow: () => Navigator.of(context)
-                                          .push(MaterialPageRoute(
-                                              builder: (_) => OrderTrackingPage(
-                                                  order: o)))),
+                      if (state is OrdersError) {
+                        return Center(child: Text(state.message));
+                      }
+                      if (state is OrderCreationError) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _loadOrders();
+                        });
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (state is OrdersLoaded) {
+                        if (state.items.isEmpty) {
+                          return Center(child: Text(AppLanguage.noOrdersFound));
+                        }
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            _loadOrders();
+                          },
+                          child: ListView.separated(
+                            controller: _scrollController,
+                            padding: const EdgeInsets.only(bottom: 100),
+                            itemCount: state.items.length +
+                                (state.hasNextPage ? 1 : 0),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              if (index >= state.items.length) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(16.0),
+                                    child: CircularProgressIndicator(),
+                                  ),
                                 );
-                              },
-                            ),
-                          );
-                        },
-                      );
+                              }
+                              final order = state.items[index];
+                              return GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          UserOrderDetailsPage(order: order),
+                                    ),
+                                  );
+                                },
+                                child: _OrderCard(
+                                  order: order,
+                                  onFollow: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            BlocProvider.value(
+                                          value: _ordersBloc,
+                                          child:
+                                              OrderTrackingPage(order: order),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      }
+                      return const SizedBox.shrink();
                     }),
                   )
                 ],
@@ -239,8 +283,6 @@ class _OrderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final total =
-        order.products.fold<double>(0, (p, e) => p + e.price * e.quantity);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -287,23 +329,39 @@ class _OrderCard extends StatelessWidget {
           Row(
             children: [
               // image placeholder
+              // image placeholder
               Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                      color: Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(8)),
-                  child: const Icon(Icons.image, color: Colors.grey)),
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(8),
+                  image: (order.products.isNotEmpty &&
+                          order.products.first.imageUrl != null &&
+                          order.products.first.imageUrl!.isNotEmpty)
+                      ? DecorationImage(
+                          image: NetworkImage(order.products.first.imageUrl!),
+                          fit: BoxFit.cover,
+                        )
+                      : null,
+                ),
+                child: (order.products.isEmpty ||
+                        order.products.first.imageUrl == null ||
+                        order.products.first.imageUrl!.isEmpty)
+                    ? const Icon(Icons.image, color: Colors.grey)
+                    : null,
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('${order.products.length} ${AppLanguage.items}',
+                      Text('${order.productCount} ${AppLanguage.items}',
                           style: const TextStyle(
                               fontSize: 15, fontWeight: FontWeight.w500)),
                       const SizedBox(height: 6),
-                      Text('Total : ${total.toStringAsFixed(0)} DZD',
+                      Text(
+                          'Total : ${order.totalAmount.toStringAsFixed(0)} DZD',
                           style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:amerli_app/core/utils/top_toast.dart';
+
 class SupportAndAidePage extends StatefulWidget {
   const SupportAndAidePage({super.key});
 
@@ -22,8 +24,7 @@ class _SupportAndAidePageState extends State<SupportAndAidePage> {
       return;
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(AppLanguage.cannotOpenDialer)));
+    TopToast.show(context, AppLanguage.cannotOpenDialer);
   }
 
   Future<void> _launchEmail(String email) async {
@@ -34,8 +35,7 @@ class _SupportAndAidePageState extends State<SupportAndAidePage> {
       return;
     }
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLanguage.cannotOpenMailClient)));
+    TopToast.show(context, AppLanguage.cannotOpenMailClient);
   }
 
   @override
@@ -49,41 +49,46 @@ class _SupportAndAidePageState extends State<SupportAndAidePage> {
               // Header
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
-                child: Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Row(
-                    children: [
-                      InkWell(
-                        onTap: () => Navigator.of(context).maybePop(),
-                        borderRadius: BorderRadius.circular(24),
-                        child: Container(
-                          width: 40,
-                          height: 40,
-                          alignment: Alignment.center,
-                          child: SvgPicture.asset('assets/icons/back_arrow.svg',
-                              width: 18,
-                              height: 18,
-                              colorFilter: ColorFilter.mode(_darkGreen, BlendMode.srcIn),
-                              placeholderBuilder: (_) => const Icon(
-                                  Icons.arrow_back,
-                                  color: _darkGreen)),
+                child: Row(
+                  children: [
+                    InkWell(
+                      onTap: () => Navigator.of(context).maybePop(),
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).colorScheme.tertiaryContainer,
+                          shape: BoxShape.circle,
                         ),
+                        child: SvgPicture.asset('assets/icons/back_arrow.svg',
+                            width: 16,
+                            height: 16,
+                            matchTextDirection: true,
+                            colorFilter: ColorFilter.mode(
+                                Theme.of(context).colorScheme.onPrimary,
+                                BlendMode.srcIn),
+                            placeholderBuilder: (_) => Icon(Icons.arrow_back,
+                                color:
+                                    Theme.of(context).colorScheme.onPrimary)),
                       ),
-                      const Spacer(),
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(AppLanguage.supportAndHelp,
-                              style: const TextStyle(
-                                  fontFamily: 'Geist',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 20,
-                                  color: _darkGreen)),
-                        ),
+                    ),
+                    const Spacer(),
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Text(AppLanguage.supportAndHelp,
+                            style: const TextStyle(
+                                fontFamily: 'Geist',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 20,
+                                color: _darkGreen)),
                       ),
-                      const Spacer(flex: 2),
-                    ],
-                  ),
+                    ),
+                    const Spacer(flex: 2),
+                  ],
                 ),
               ),
 

@@ -1,3 +1,5 @@
+import 'address.dart';
+
 class User {
   final int id;
   final String phoneNumber;
@@ -8,6 +10,8 @@ class User {
   final String? profilePic;
   final String role;
 
+  final List<Address>? addresses;
+
   User({
     required this.id,
     required this.phoneNumber,
@@ -17,5 +21,14 @@ class User {
     this.supermarketName,
     required this.profilePic,
     required this.role,
+    this.addresses,
   });
+
+  String get address {
+    if (addresses != null && addresses!.isNotEmpty) {
+      return addresses!.first.toString();
+    }
+    return locationUrl ?? '';
+  }
 }
+

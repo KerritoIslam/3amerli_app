@@ -8,23 +8,42 @@ class CategoryModel {
   final String? image;
   final List<ProductModel> products;
   final List<CategoryModel> subcategories;
-  
-  CategoryModel({required this.id, required this.name, this.description, this.image, this.products = const [], this.subcategories = const []});
+
+  CategoryModel(
+      {required this.id,
+      required this.name,
+      this.description,
+      this.image,
+      this.products = const [],
+      this.subcategories = const [],
+      this.parentId});
+
+  final int? parentId;
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) => CategoryModel(
-    id: (json['id'] is num) ? (json['id'] as num).toInt() : int.tryParse(json['id']?.toString() ?? '') ?? 0,
-    // API may return 'label' and 'pictureUrl' instead of 'name'/'image'.
-    // Keep fallbacks for backward compatibility.
-    name: json['label']?.toString() ?? json['name']?.toString() ?? '',
-    description: json['description']?.toString(),
-    image: json['pictureUrl']?.toString() ?? json['image']?.toString(),
-    products: (json['products'] is List) ? (json['products'] as List<dynamic>).map((e) => ProductModel.fromJson(e as Map<String, dynamic>)).toList() : [],
-    subcategories: (json['subcategories'] is List)
-      ? (json['subcategories'] as List<dynamic>)
-        .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
-        .toList()
-      : [],
-    );
+        id: (json['id'] is num)
+            ? (json['id'] as num).toInt()
+            : int.tryParse(json['id']?.toString() ?? '') ?? 0,
+        // API may return 'label' and 'pictureUrl' instead of 'name'/'image'.
+        // Keep fallbacks for backward compatibility.
+        name: json['label']?.toString() ?? json['name']?.toString() ?? '',
+        description: json['description']?.toString(),
+        image: json['pictureUrl']?.toString() ?? json['image']?.toString(),
+        products: (json['products'] is List)
+            ? (json['products'] as List<dynamic>)
+                .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+                .toList()
+            : [],
+        subcategories: (json['subcategories'] is List)
+            ? (json['subcategories'] as List<dynamic>)
+                .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
+                .toList()
+            : [],
+        parentId: (json['parentCategory'] != null &&
+                json['parentCategory']['id'] != null)
+            ? (json['parentCategory']['id'] as num).toInt()
+            : (json['parentId'] as num?)?.toInt(),
+      );
 
   // Serialize using API field names when producing payloads (label / pictureUrl).
   Map<String, dynamic> toJson() => {
@@ -41,6 +60,7 @@ class CategoryModel {
         'pictureUrl': image,
         'products': products.map((p) => p.toJson()).toList(),
         'subcategories': subcategories.map((c) => c.toJsonFull()).toList(),
+        'parentId': parentId,
       };
 
   Category toEntity() => Category(
@@ -50,5 +70,6 @@ class CategoryModel {
         image: image,
         products: products.map((p) => p.toEntity()).toList(),
         subcategories: subcategories.map((c) => c.toEntity()).toList(),
+        parentId: parentId,
       );
 }

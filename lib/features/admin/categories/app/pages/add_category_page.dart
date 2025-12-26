@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:amerli_app/widgets/app_text_feild.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../domain/entities/category.dart';
@@ -9,11 +10,16 @@ import '../bloc/admin_categories_bloc.dart';
 import '../bloc/admin_categories_event.dart';
 import '../../domain/repositories/admin_categories_repository.dart';
 import 'package:amerli_app/core/config/injection.dart' as di;
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
+
+import 'package:amerli_app/core/utils/top_toast.dart';
 
 class AddCategoryPage extends StatefulWidget {
   final String? categoryId;
+  final Category? category;
 
-  const AddCategoryPage({super.key, this.categoryId});
+  const AddCategoryPage({super.key, this.categoryId, this.category});
 
   @override
   State<AddCategoryPage> createState() => _AddCategoryPageState();
@@ -22,13 +28,14 @@ class AddCategoryPage extends StatefulWidget {
 class _AddCategoryPageState extends State<AddCategoryPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
-  final List<TextEditingController> _subCategoryControllers = [
-    TextEditingController(),
-  ];
+  List<Category> _mainCategories = [];
+  String? _selectedParentId;
+
   String? _imagePath;
   late final AdminCategoriesRepository _categoriesRepository;
   bool _isLoadingCategory = false;
   Category? _existingCategory;
+  bool _hasChildren = false;
 
   @override
   void initState() {
@@ -36,42 +43,79 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
     _categoriesRepository = di.sl<AdminCategoriesRepository>();
     if (widget.categoryId != null) {
       _loadCategoryData();
+    } else {
+      _loadMainCategories();
+    }
+  }
+
+  Future<void> _loadMainCategories() async {
+    try {
+      final categories = await _categoriesRepository.getCategories();
+      setState(() {
+        _mainCategories = categories;
+      });
+    } catch (e) {
+      // Handle error silently or show toast
     }
   }
 
   Future<void> _loadCategoryData() async {
     if (widget.categoryId == null) return;
-    
+
     setState(() => _isLoadingCategory = true);
     try {
-      final category = await _categoriesRepository.getCategory(widget.categoryId!);
-      final subCategories = await _categoriesRepository.getSubCategories(categoryId: widget.categoryId!);
-      
+      Category? category = widget.category;
+
+      // If category not passed, try to fetch only if we really need to (but user says 404)
+      // We prioritize the passed object.
+      if (category == null && widget.categoryId != null) {
+        try {
+          // Try to get from repository if possible, but handle failure gracefully
+          category =
+              await _categoriesRepository.getCategory(widget.categoryId!);
+        } catch (_) {
+          // Ignore error if endpoint doesn't exist
+        }
+      }
+
+      final mainCategories = await _categoriesRepository.getCategories();
+
+      // Check if this category has children
+      bool hasChildren = false;
+      try {
+        final children = await _categoriesRepository.getSubCategories(
+            categoryId: widget.categoryId);
+        hasChildren = children.isNotEmpty;
+      } catch (_) {}
+
       setState(() {
-        _existingCategory = category;
-        // Pre-fill form fields
-        _nameController.text = category.name;
-        _imagePath = category.imageUrl;
-        
-        // Load subcategories
-        _subCategoryControllers.clear();
-        if (subCategories.isEmpty) {
-          _subCategoryControllers.add(TextEditingController());
-        } else {
-          for (var subCat in subCategories) {
-            final controller = TextEditingController(text: subCat.name);
-            _subCategoryControllers.add(controller);
+        // Filter out self from main categories to prevent selecting self as parent
+        _mainCategories =
+            mainCategories.where((c) => c.id != widget.categoryId).toList();
+        _hasChildren = hasChildren;
+
+        if (category != null) {
+          _existingCategory = category;
+          _nameController.text = category.name;
+          _imagePath = category.imageUrl;
+          // Validate parentId to prevent DropdownButton crash
+          String? pId = category.parentId;
+          if (pId != null && pId.trim().isEmpty) pId = null;
+
+          if (pId != null && _mainCategories.any((c) => c.id == pId)) {
+            _selectedParentId = pId;
+          } else {
+            _selectedParentId = null;
           }
         }
-        
+
         _isLoadingCategory = false;
       });
     } catch (e) {
       setState(() => _isLoadingCategory = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur de chargement de la catégorie: $e')),
-        );
+        TopToast.show(context, '${AppLanguage.loadingError}: $e',
+            isError: true);
       }
     }
   }
@@ -79,23 +123,7 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
   @override
   void dispose() {
     _nameController.dispose();
-    for (var controller in _subCategoryControllers) {
-      controller.dispose();
-    }
     super.dispose();
-  }
-
-  void _addSubCategoryField() {
-    setState(() {
-      _subCategoryControllers.add(TextEditingController());
-    });
-  }
-
-  void _removeSubCategoryField(int index) {
-    setState(() {
-      _subCategoryControllers[index].dispose();
-      _subCategoryControllers.removeAt(index);
-    });
   }
 
   Future<void> _pickImage() async {
@@ -122,32 +150,17 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
         productCount: 0,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
+        parentId: _selectedParentId,
       );
 
       if (widget.categoryId == null) {
-        context.read<AdminCategoriesBloc>().add(AdminCategoriesAddEvent(category));
+        context
+            .read<AdminCategoriesBloc>()
+            .add(AdminCategoriesAddEvent(category));
       } else {
-        context.read<AdminCategoriesBloc>().add(AdminCategoriesUpdateEvent(category));
-      }
-
-      // Add subcategories
-      for (var controller in _subCategoryControllers) {
-        if (controller.text.isNotEmpty) {
-          final subCategoryId =
-              'SUB${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-          final subCategory = SubCategory(
-            id: subCategoryId,
-            name: controller.text,
-            categoryId: categoryId,
-            categoryName: _nameController.text,
-            productCount: 0,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          );
-          context.read<AdminCategoriesBloc>().add(
-                AdminSubCategoriesAddEvent(subCategory),
-              );
-        }
+        context
+            .read<AdminCategoriesBloc>()
+            .add(AdminCategoriesUpdateEvent(category));
       }
 
       context.pop();
@@ -163,29 +176,38 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.0.w),
               child: Row(
                 children: [
                   InkWell(
                     onTap: () => context.pop(),
+                    borderRadius: BorderRadius.circular(24.r),
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      width: 40.w,
+                      height: 40.w,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.grey.shade200,
+                        color: Theme.of(context).colorScheme.tertiaryContainer,
                       ),
-                      child: const Icon(
-                        Icons.arrow_back,
-                        size: 20,
+                      alignment: Alignment.center,
+                      child: SvgPicture.asset(
+                        'assets/icons/back_arrow.svg',
+                        width: 16.w,
+                        height: 16.h,
+                        matchTextDirection: true,
+                        colorFilter: ColorFilter.mode(
+                            Theme.of(context).colorScheme.onPrimary,
+                            BlendMode.srcIn),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16.w),
                   Text(
-                    widget.categoryId == null ? 'Ajouter' : 'Modifier',
-                    style: const TextStyle(
-                      fontSize: 20,
+                    widget.categoryId == null
+                        ? AppLanguage.add
+                        : AppLanguage.edit,
+                    style: TextStyle(
+                      fontSize: 20.sp,
                       fontWeight: FontWeight.bold,
                       color: Colors.black,
                     ),
@@ -197,41 +219,41 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
             // Form Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: EdgeInsets.symmetric(horizontal: 16.0.w),
                 child: Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Informations générales',
+                      Text(
+                        AppLanguage.generalInfo,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
 
                       // Category Name
                       AppTextField(
                         controller: _nameController,
-                        hintText: 'Ex: Alimentation générale',
-                        labelText: 'Nom de la catégorie *',
+                        hintText: AppLanguage.categoryNameHint,
+                        labelText: AppLanguage.categoryNameLabel,
                         validator: (value) => value == null || value.isEmpty
-                            ? 'Ce champ est requis'
+                            ? AppLanguage.fieldRequired
                             : null,
                       ),
-                      const SizedBox(height: 20),
+                      SizedBox(height: 20.h),
 
                       // Image Section
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Image',
+                          Text(
+                            AppLanguage.image,
                             style: TextStyle(
-                              fontSize: 14,
+                              fontSize: 14.sp,
                               fontWeight: FontWeight.w600,
                               color: Colors.black,
                             ),
@@ -240,9 +262,9 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                             InkWell(
                               onTap: _pickImage,
                               child: Text(
-                                'Remplacer',
+                                AppLanguage.replace,
                                 style: TextStyle(
-                                  fontSize: 14,
+                                  fontSize: 14.sp,
                                   fontWeight: FontWeight.w600,
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
@@ -250,24 +272,39 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12.h),
 
                       // Image Preview
                       if (_imagePath != null)
                         Container(
                           width: double.infinity,
-                          height: 150,
-                          margin: const EdgeInsets.only(bottom: 12),
+                          height: 150.h,
+                          margin: EdgeInsets.only(bottom: 12.h),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(12.r),
                             border: Border.all(color: Colors.grey.shade300),
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.file(
-                              File(_imagePath!),
-                              fit: BoxFit.cover,
-                            ),
+                            borderRadius: BorderRadius.circular(12.r),
+                            child: _imagePath!.startsWith('http')
+                                ? Image.network(
+                                    _imagePath!,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                          child: Icon(Icons.broken_image,
+                                              size: 30.sp));
+                                    },
+                                  )
+                                : Image.file(
+                                    File(_imagePath!),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                          child: Icon(Icons.broken_image,
+                                              size: 30.sp));
+                                    },
+                                  ),
                           ),
                         ),
 
@@ -277,89 +314,79 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
                         child: OutlinedButton.icon(
                           onPressed: _pickImage,
                           icon: const Icon(Icons.upload_file),
-                          label: const Text('Choisir un fichier'),
+                          label: Text(AppLanguage.chooseFile),
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            padding: EdgeInsets.symmetric(vertical: 16.h),
                             side: BorderSide(
                               color: Theme.of(context).colorScheme.primary,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(24.r),
                             ),
                           ),
                         ),
                       ),
 
-                      const SizedBox(height: 32),
+                      SizedBox(height: 32.h),
 
-                      // Subcategories Section
-                      const Text(
-                        'Sous-catégories',
+                      // Parent Category Section
+                      Text(
+                        AppLanguage.parentCategoryOptional,
                         style: TextStyle(
-                          fontSize: 18,
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
                           color: Colors.black,
                         ),
                       ),
-                      const SizedBox(height: 20),
-
-                      // Subcategory Fields
-                      ..._subCategoryControllers.asMap().entries.map((entry) {
-                        final index = entry.key;
-                        final controller = entry.value;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: AppTextField(
-                                  controller: controller,
-                                  hintText: 'Ex: Alimentation de base',
-                                  labelText: 'Sous-catégorie ${index + 1}',
-                                ),
-                              ),
-                              if (_subCategoryControllers.length > 1) ...[
-                                const SizedBox(width: 8),
-                                InkWell(
-                                  onTap: () => _removeSubCategoryField(index),
-                                  child: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.red,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.remove,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      }),
-
-                      // Add Subcategory Button
-                      ElevatedButton(
-                        onPressed: _addSubCategoryField,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
+                      SizedBox(height: 12.h),
+                      if (_hasChildren)
+                        Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: Text(
+                            AppLanguage.categoryHasChildrenError,
+                            style:
+                                TextStyle(color: Colors.red, fontSize: 14.sp),
                           ),
                         ),
-                        child: const Text('+ Ajouter'),
+                      IgnorePointer(
+                        ignoring: _hasChildren,
+                        child: Opacity(
+                          opacity: _hasChildren ? 0.5 : 1.0,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 12.w),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.grey),
+                              borderRadius: BorderRadius.circular(8.r),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedParentId,
+                                isExpanded: true,
+                                hint: Text(AppLanguage.selectParentCategory),
+                                items: [
+                                  DropdownMenuItem<String>(
+                                    value: null,
+                                    child: Text(AppLanguage.noneMainCategory),
+                                  ),
+                                  ..._mainCategories.map((category) {
+                                    return DropdownMenuItem<String>(
+                                      value: category.id,
+                                      child: Text(category.name),
+                                    );
+                                  }),
+                                ],
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedParentId = value;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
 
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24.h),
                     ],
                   ),
                 ),
@@ -368,32 +395,32 @@ class _AddCategoryPageState extends State<AddCategoryPage> {
 
             // Save Button
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.0.w),
               child: SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 48.h,
                 child: ElevatedButton(
                   onPressed: _saveCategory,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(24.r),
                     ),
                     elevation: 0,
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Enregistrer',
+                        AppLanguage.save,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.arrow_forward, size: 20),
+                      SizedBox(width: 8.w),
+                      Icon(Icons.arrow_forward, size: 20.sp),
                     ],
                   ),
                 ),

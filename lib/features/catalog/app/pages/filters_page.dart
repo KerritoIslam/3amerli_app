@@ -108,47 +108,47 @@ class _FiltersPageState extends State<FiltersPage> {
                 const EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
             child: Column(
               children: [
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Row(
-                    children: [
-                      // Back button styled like ProductDetailsPage (smaller)
-                      InkWell(
-                        onTap: () => Navigator.of(context).pop(),
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          width: 32,
-                          height: 32,
-                          decoration: BoxDecoration(
-                            color:
-                                Theme.of(context).colorScheme.tertiaryContainer,
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: SvgPicture.asset(
-                            'assets/icons/back_arrow.svg',
-                            width: 14,
-                            height: 14,
+                Row(
+                  children: [
+                    // Back button styled like ProductDetailsPage (smaller)
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color:
+                              Theme.of(context).colorScheme.tertiaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: SvgPicture.asset(
+                          'assets/icons/back_arrow.svg',
+                          width: 14,
+                          height: 14,
+                          matchTextDirection: true,
+                          colorFilter: ColorFilter.mode(
+                              Theme.of(context).colorScheme.onPrimary,
+                              BlendMode.srcIn),
+                          placeholderBuilder: (context) => Icon(
+                            Icons.arrow_back,
+                            size: 14,
                             color: Theme.of(context).colorScheme.onPrimary,
-                            placeholderBuilder: (context) => Icon(
-                              Icons.arrow_back,
-                              size: 14,
-                              color: Theme.of(context).colorScheme.onPrimary,
-                            ),
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Center(
-                          child: Text(AppLanguage.filter,
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold)),
-                        ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Center(
+                        child: Text(AppLanguage.filter,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      const SizedBox(width: 40),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 40),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 ListTile(
@@ -166,7 +166,11 @@ class _FiltersPageState extends State<FiltersPage> {
                                   color: Theme.of(context).colorScheme.primary),
                         )
                       : null,
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Icons.chevron_left
+                        : Icons.chevron_right,
+                  ),
                   enabled: !_isApplying,
                   onTap: () async {
                     // Navigate to categories page and wait for result
@@ -177,6 +181,10 @@ class _FiltersPageState extends State<FiltersPage> {
                         _selectedCategoryIds.clear();
                         _selectedCategoryIds.addAll(result);
                       });
+                      // Auto-apply and pop if result returned (meaning Apply was clicked in sub-page)
+                      if (mounted) {
+                        _applyFilters();
+                      }
                     }
                   },
                 ),
@@ -195,7 +203,11 @@ class _FiltersPageState extends State<FiltersPage> {
                                   color: Theme.of(context).colorScheme.primary),
                         )
                       : null,
-                  trailing: const Icon(Icons.chevron_right),
+                  trailing: Icon(
+                    Directionality.of(context) == TextDirection.rtl
+                        ? Icons.chevron_left
+                        : Icons.chevron_right,
+                  ),
                   enabled: !_isApplying,
                   onTap: () async {
                     // Navigate to brands page and wait for result

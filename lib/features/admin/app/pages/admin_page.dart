@@ -10,6 +10,7 @@ import '../../products/app/bloc/admin_products_bloc.dart';
 import '../../products/app/pages/admin_products_page.dart';
 import '../../users/app/bloc/admin_users_bloc.dart';
 import '../../users/app/pages/admin_users_page.dart';
+import 'package:amerli_app/utils/constants/app_language.dart';
 
 class AdminPage extends StatefulWidget {
   const AdminPage({super.key});
@@ -33,7 +34,8 @@ class _AdminPageState extends State<AdminPage> {
       const AdminProductsPage(),
       const AdminUsersPage(),
     ];
-    _navigatorKeys = List.generate(_pages.length, (_) => GlobalKey<NavigatorState>());
+    _navigatorKeys =
+        List.generate(_pages.length, (_) => GlobalKey<NavigatorState>());
   }
 
   void _onItemSelected(int idx) {
@@ -43,10 +45,10 @@ class _AdminPageState extends State<AdminPage> {
   @override
   Widget build(BuildContext context) {
     final navItems = [
-      NavItem(asset: "assets/icons/home.svg", label: 'Dashboard'),
-      NavItem(asset: "assets/icons/orders.svg", label: 'Commandes'),
-      NavItem(asset: "assets/icons/bills.svg", label: 'Produits'),
-      NavItem(asset: "assets/icons/users.svg", label: 'Utilisateurs'),
+      NavItem(asset: "assets/icons/home.svg", label: AppLanguage.dashboard),
+      NavItem(asset: "assets/icons/orders.svg", label: AppLanguage.orders),
+      NavItem(asset: "assets/icons/bills.svg", label: AppLanguage.products),
+      NavItem(asset: "assets/icons/users.svg", label: AppLanguage.users),
     ];
 
     return MultiBlocProvider(
@@ -73,7 +75,8 @@ class _AdminPageState extends State<AdminPage> {
                     bottom: false,
                     child: Navigator(
                       key: _navigatorKeys[i],
-                      onGenerateRoute: (settings) => MaterialPageRoute(builder: (_) => _pages[i]),
+                      onGenerateRoute: (settings) =>
+                          MaterialPageRoute(builder: (_) => _pages[i]),
                     ),
                   ),
                 ),

@@ -19,30 +19,47 @@ class OrderProductModel {
   });
 
   factory OrderProductModel.fromJson(Map<String, dynamic> json) {
-    return OrderProductModel(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
-      quantity: (() {
-        final q = json['quantity'] ?? json['qty'] ?? 0;
-        if (q is int) return q;
-        if (q is num) return q.toInt();
-        if (q is String) return int.tryParse(q) ?? 0;
-        return 0;
-      })(),
-      pricePerUnit: (() {
-        final p = json['pricePerUnit'] ?? json['price'] ?? 0;
-        if (p is num) return p.toDouble();
-        if (p is String) return double.tryParse(p) ?? 0.0;
-        return 0.0;
-      })(),
-      total: (() {
-        final t = json['total'] ?? json['subtotal'] ?? 0;
-        if (t is num) return t.toDouble();
-        if (t is String) return double.tryParse(t) ?? 0.0;
-        return 0.0;
-      })(),
-    );
+    try {
+      return OrderProductModel(
+        id: (json['id'] ?? '').toString(),
+        name: json['name'] ?? '',
+        imageUrl: json['imageUrl'] ?? json['picture'] ?? '',
+        quantity: (() {
+          final q = json['quantity'] ?? json['qty'] ?? 0;
+          if (q is int) return q;
+          if (q is num) return q.toInt();
+          if (q is String) return int.tryParse(q) ?? 0;
+          return 0;
+        })(),
+        pricePerUnit: (() {
+          final p = json['pricePerUnit'] ?? json['price'] ?? 0;
+          if (p is num) return p.toDouble();
+          if (p is String) return double.tryParse(p) ?? 0.0;
+          return 0.0;
+        })(),
+        total: (() {
+          final t = json['total'] ?? json['subtotal'];
+          if (t != null) {
+            if (t is num) return t.toDouble();
+            if (t is String) return double.tryParse(t) ?? 0.0;
+          }
+          // Calculate from quantity * price if total is missing
+          final q = json['quantity'] ?? json['qty'] ?? 0;
+          final quantity =
+              (q is int) ? q : (q is String ? int.tryParse(q) ?? 0 : 0);
+
+          final p = json['pricePerUnit'] ?? json['price'] ?? 0;
+          final price = (p is num)
+              ? p.toDouble()
+              : (p is String ? double.tryParse(p) ?? 0.0 : 0.0);
+
+          return (quantity * price).toDouble();
+        })(),
+      );
+    } catch (e) {
+      print('Error parsing OrderProductModel: $e');
+      rethrow;
+    }
   }
 
   OrderProduct toEntity() {
@@ -89,27 +106,70 @@ class AdminOrderModel {
   });
 
   factory AdminOrderModel.fromJson(Map<String, dynamic> json) {
-    final idRaw = json['id'] ?? json['orderId'] ?? json['order_id'];
-    final id = idRaw != null ? idRaw.toString() : '';
-    final orderDate = json['orderDate'] ?? json['order_date'] ?? json['createdAt'] ?? json['created_at'] ?? '';
-    final productsList = json['products'] ?? json['items'] ?? json['orderProducts'];
+    try {
+      final buyerInfo = json['buyerInfo'];
+      final paymentInfo = json['paymentInfo'];
 
-    return AdminOrderModel(
-      id: id,
-      // fallback: some APIs return clientName instead of customerName
-      orderNumber: json['orderNumber'] ?? json['order_number'] ?? id,
-      customerName: json['customerName'] ?? json['customer_name'] ?? json['clientName'] ?? json['client_name'] ?? '',
-      storeName: json['storeName'] ?? json['store_name'] ?? '',
-      representativeName: json['representativeName'] ?? json['representative_name'] ?? '',
-      customerPhone: json['customerPhone'] ?? json['customer_phone'] ?? '',
-      orderDate: orderDate ?? '',
-      status: json['status'] ?? '',
-      totalAmount: (json['totalAmount'] ?? json['total'] ?? 0).toDouble(),
-      itemsCount: json['itemsCount'] ?? json['items_count'] ?? (productsList is List ? productsList.length : 0),
-      deliveryAddress: json['deliveryAddress'] ?? json['delivery_address'],
-      paymentMethod: json['paymentMethod'] ?? json['payment_method'] ?? '',
-      products: (productsList as List?)?.map((p) => OrderProductModel.fromJson(Map<String, dynamic>.from(p as Map))).toList() ?? [],
-    );
+      final idRaw = json['id'] ?? json['orderId'] ?? json['order_id'];
+      final id = idRaw != null ? idRaw.toString() : '';
+
+      final orderDate = paymentInfo != null
+          ? (paymentInfo['createdAt'] ?? paymentInfo['created_at'])
+          : (json['orderDate'] ??
+              json['order_date'] ??
+              json['createdAt'] ??
+              json['created_at'] ??
+              '');
+
+      final productsList =
+          json['products'] ?? json['items'] ?? json['orderProducts'];
+
+      return AdminOrderModel(
+        id: id,
+        // fallback: some APIs return clientName instead of customerName
+        orderNumber: json['orderNumber'] ?? json['order_number'] ?? id,
+        customerName: buyerInfo != null
+            ? (buyerInfo['clientName'] ?? '')
+            : (json['customerName'] ??
+                json['customer_name'] ??
+                json['clientName'] ??
+                json['client_name'] ??
+                ''),
+        storeName: buyerInfo != null
+            ? (buyerInfo['supermarketName'] ?? '')
+            : (json['storeName'] ?? json['store_name'] ?? ''),
+        representativeName:
+            json['representativeName'] ?? json['representative_name'] ?? '',
+        customerPhone: buyerInfo != null
+            ? (buyerInfo['phoneNumber'] ?? '')
+            : (json['customerPhone'] ?? json['customer_phone'] ?? ''),
+        orderDate: orderDate ?? '',
+        status: paymentInfo != null
+            ? (paymentInfo['trackingStatus'] ?? '')
+            : (json['status'] ?? ''),
+        totalAmount: paymentInfo != null
+            ? ((paymentInfo['totalAmount'] ?? 0).toDouble())
+            : ((json['totalAmount'] ?? json['total'] ?? 0).toDouble()),
+        itemsCount: json['itemsCount'] ??
+            json['items_count'] ??
+            (productsList is List ? productsList.length : 0),
+        deliveryAddress: buyerInfo != null
+            ? (buyerInfo['address'])
+            : (json['deliveryAddress'] ?? json['delivery_address']),
+        paymentMethod: paymentInfo != null
+            ? (paymentInfo['paymentWay'] ?? '')
+            : (json['paymentMethod'] ?? json['payment_method'] ?? ''),
+        products: (productsList as List?)
+                ?.map((p) => OrderProductModel.fromJson(
+                    Map<String, dynamic>.from(p as Map)))
+                .toList() ??
+            [],
+      );
+    } catch (e) {
+      print('Error parsing AdminOrderModel: $e');
+      print('JSON: $json');
+      rethrow;
+    }
   }
 
   AdminOrder toEntity() {
@@ -120,10 +180,11 @@ class AdminOrderModel {
       storeName: storeName,
       representativeName: representativeName,
       customerPhone: customerPhone,
-  // parse date defensively
-  orderDate: _parseDateSafe(orderDate) ?? DateTime.fromMillisecondsSinceEpoch(0),
-  // convert backend status string to a user-facing French label using OrderStatus mapping
-  status: OrderStatusX.fromString(status).displayLabel,
+      // parse date defensively
+      orderDate:
+          _parseDateSafe(orderDate) ?? DateTime.fromMillisecondsSinceEpoch(0),
+      // convert backend status string to a user-facing French label using OrderStatus mapping
+      status: OrderStatusX.fromString(status).displayLabel,
       totalAmount: totalAmount,
       itemsCount: itemsCount,
       deliveryAddress: deliveryAddress,
@@ -139,7 +200,8 @@ class AdminOrderModel {
     if (iso != null) return iso;
     final asInt = int.tryParse(raw);
     if (asInt != null) {
-      if (raw.length <= 10) return DateTime.fromMillisecondsSinceEpoch(asInt * 1000);
+      if (raw.length <= 10)
+        return DateTime.fromMillisecondsSinceEpoch(asInt * 1000);
       return DateTime.fromMillisecondsSinceEpoch(asInt);
     }
     return null;
