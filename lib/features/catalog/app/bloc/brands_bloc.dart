@@ -11,12 +11,33 @@ class BrandsBloc extends Bloc<BrandsEvent, BrandsState> {
   }
 
   Future<void> _onLoad(BrandsLoadEvent event, Emitter<BrandsState> emit) async {
-    emit(BrandsLoading());
-    try {
-      final items = await repository.getBrands();
-      emit(BrandsLoaded(items));
-    } catch (e) {
-      emit(BrandsError(e.toString()));
+    final currentState = state;
+    if (event.isLoadMore && currentState is BrandsLoaded) {
+      if (currentState.hasReachedMax) return;
+      try {
+        final nextPage = currentState.page + 1;
+        final items =
+            await repository.getBrands(page: nextPage, limit: event.limit);
+        if (items.isEmpty) {
+          emit(BrandsLoaded(currentState.items,
+              hasReachedMax: true, page: currentState.page));
+        } else {
+          emit(BrandsLoaded(currentState.items + items,
+              hasReachedMax: items.length < event.limit, page: nextPage));
+        }
+      } catch (e) {
+        emit(BrandsError(e.toString()));
+      }
+    } else {
+      emit(BrandsLoading());
+      try {
+        final items =
+            await repository.getBrands(page: event.page, limit: event.limit);
+        emit(BrandsLoaded(items,
+            hasReachedMax: items.length < event.limit, page: event.page));
+      } catch (e) {
+        emit(BrandsError(e.toString()));
+      }
     }
   }
 }

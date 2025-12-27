@@ -8,8 +8,8 @@ class BrandsRepositoryImpl implements BrandsRepository {
   BrandsRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<List<Brand>> getBrands() async {
-    final models = await remoteDataSource.fetchBrands();
+  Future<List<Brand>> getBrands({int page = 1, int limit = 50}) async {
+    final models = await remoteDataSource.fetchBrands(page: page, limit: limit);
     return models.map((m) => m.toEntity()).toList();
   }
 }

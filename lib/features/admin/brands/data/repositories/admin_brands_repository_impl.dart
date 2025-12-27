@@ -25,6 +25,16 @@ class AdminBrandsRepositoryImpl implements AdminBrandsRepository {
     try {
       final resp = await apiService
           .get('/brands', queryParameters: {'page': page, 'limit': limit});
+      if (resp.data is Map) {
+        final data = resp.data as Map;
+        final list = (data['data'] as List?) ?? [];
+        return list
+            .map((e) => Brand(
+                  id: e['id']?.toString() ?? '',
+                  name: e['label']?.toString() ?? e['name']?.toString() ?? '',
+                ))
+            .toList();
+      }
       if (resp.data is List) {
         return (resp.data as List)
             .map((e) => Brand(

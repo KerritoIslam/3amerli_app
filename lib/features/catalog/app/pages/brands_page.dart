@@ -20,10 +20,26 @@ class BrandsPage extends StatefulWidget {
 
 class _BrandsPageState extends State<BrandsPage> {
   final Set<int> _selected = <int>{};
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
     context.read<BrandsBloc>().add(BrandsLoadEvent());
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<BrandsBloc>().add(BrandsLoadEvent(isLoadMore: true));
+    }
   }
 
   @override
@@ -109,19 +125,41 @@ class _BrandsPageState extends State<BrandsPage> {
                   Expanded(
                     child: BlocBuilder<BrandsBloc, BrandsState>(
                         builder: (context, state) {
-                      if (state is BrandsLoading)
+                      if (state is BrandsLoading) {
                         return const Center(child: CircularProgressIndicator());
-                      if (state is BrandsLoaded) {
+                      }
+                      if (state is BrandsLoaded ||
+                          (state is BrandsError &&
+                              context.read<BrandsBloc>().state
+                                  is BrandsLoaded)) {
+                        final items = state is BrandsLoaded
+                            ? state.items
+                            : (context.read<BrandsBloc>().state as BrandsLoaded)
+                                .items;
+                        final hasReachedMax =
+                            state is BrandsLoaded ? state.hasReachedMax : true;
+
                         return Column(
                           children: [
                             Expanded(
                               child: ListView.separated(
-                                itemCount: state.items.length,
+                                controller: _scrollController,
+                                itemCount: hasReachedMax
+                                    ? items.length
+                                    : items.length + 1,
                                 separatorBuilder: (_, __) => const Divider(
                                     height: 1,
                                     color: AppColors.neutralLight300),
                                 itemBuilder: (context, index) {
-                                  final b = state.items[index];
+                                  if (index >= items.length) {
+                                    return const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(8.0),
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    );
+                                  }
+                                  final b = items[index];
                                   final selected = _selected.contains(b.id);
                                   return ListTile(
                                     dense: true,
@@ -204,9 +242,10 @@ class _BrandsPageState extends State<BrandsPage> {
                           ],
                         );
                       }
-                      if (state is BrandsError)
+                      if (state is BrandsError) {
                         return const Center(
                             child: Text('Aucune marque trouvée'));
+                      }
                       return const SizedBox.shrink();
                     }),
                   ),

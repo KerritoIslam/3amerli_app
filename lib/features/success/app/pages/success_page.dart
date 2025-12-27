@@ -273,6 +273,7 @@ class _SuccessPageState extends State<SuccessPage>
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     const SizedBox(height: 10),
+                    /*
                     GestureDetector(
                       onTap: () {
                         if (widget.onInvoiceTap != null) {
@@ -290,6 +291,7 @@ class _SuccessPageState extends State<SuccessPage>
                               color: primary,
                               decoration: TextDecoration.underline)),
                     ),
+                    */
                   ],
                 ),
               ),

@@ -13,12 +13,14 @@ class BrandsRemoteDataSource {
   bool _isSuccess(int? status) =>
       status != null && status >= 200 && status < 300;
 
-  /// GET /products/brands
-  Future<List<BrandModel>> fetchBrands() async {
+  /// GET /brands?page=&limit=
+  Future<List<BrandModel>> fetchBrands({int page = 1, int limit = 50}) async {
     try {
-      final resp = await apiService.get('/brands');
+      final resp = await apiService
+          .get('/brands', queryParameters: {'page': page, 'limit': limit});
       if (_isSuccess(resp.statusCode) && resp.data != null) {
-        final list = resp.data as List<dynamic>;
+        final data = resp.data as Map<String, dynamic>;
+        final list = (data['data'] as List<dynamic>?) ?? [];
         return list
             .map((e) => BrandModel.fromJson(e as Map<String, dynamic>))
             .toList();
