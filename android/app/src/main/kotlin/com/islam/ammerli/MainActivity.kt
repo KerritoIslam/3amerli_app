@@ -1,4 +1,4 @@
-package com.example.amerli_app
+package com.islam.ammerli
 
 import android.os.Bundle
 import android.webkit.WebView

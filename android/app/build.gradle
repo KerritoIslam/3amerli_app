@@ -5,6 +5,14 @@ plugins {
     // Add the Google services Gradle plugin
     id "com.google.gms.google-services"
 }
+//loaf key properties
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {  
+    keystorePropertiesFile.withReader('UTF-8') { reader ->
+        keystoreProperties.load(reader)
+    } 
+}
 
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
@@ -25,7 +33,7 @@ if (flutterVersionName == null) {
 }
 
 android {
-    namespace "com.example.amerli_app"
+    namespace "com.islam.ammerli"
     compileSdk flutter.compileSdkVersion
     ndkVersion flutter.ndkVersion
 
@@ -42,6 +50,17 @@ android {
         // Use Java 17 target for Kotlin bytecode
         jvmTarget = '17'
     }
+    // sign the app 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    } 
 
     sourceSets {
         main.java.srcDirs += 'src/main/kotlin'
@@ -49,7 +68,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.example.amerli_app"
+        applicationId "com.islam.ammerli"
         // You can update the following values to match your application needs.
         // For more information, see: https://docs.flutter.dev/deployment/android#reviewing-the-gradle-build-configuration.
         minSdkVersion flutter.minSdkVersion
@@ -62,10 +81,12 @@ android {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
         }
     }
 }
+
+
 
 flutter {
     source '../..'

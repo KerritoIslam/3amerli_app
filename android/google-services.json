@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:223696002991:android:6220c1c0b6a84381dbd95a",
+        "mobilesdk_app_id": "1:223696002991:android:3f028b77978f818ddbd95a",
         "android_client_info": {
-          "package_name": "com.example.amerli_app"
+          "package_name": "com.islam.ammerli"
         }
       },
       "oauth_client": [],
